@@ -1,0 +1,40 @@
+{
+  "name": "aula-marcada",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace @aula-marcada/backend",
+    "dev:frontend": "npm run dev --workspace @aula-marcada/frontend",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "test:api": "npm run test --workspace @aula-marcada/backend",
+    "test:e2e": "npm run test:e2e --workspace @aula-marcada/frontend",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.48.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
+  }
+}
