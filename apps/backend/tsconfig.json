@@ -12,7 +12,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "types": ["node", "vitest/globals"],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }

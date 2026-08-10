@@ -250,7 +250,6 @@ app.listen(PORT, () => {
 ```ts
 import cors from "cors";
 import express from "express";
-import "express-async-errors";
 
 import { routes } from "@/routes";
 import { errorHandling } from "@/middlewares/error-handling";
@@ -266,6 +265,8 @@ app.use(errorHandling);
 
 export { app };
 ```
+
+Com Express 5, erros em handlers assíncronos são encaminhados ao middleware de erro sem `express-async-errors`.
 
 A ordem dos middlewares deve ser preservada:
 
