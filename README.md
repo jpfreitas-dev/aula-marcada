@@ -21,4 +21,12 @@ Artefatos em `docs/design/design-system/`:
 - `css-variables.css` — variáveis CSS para HTML estático e Tailwind
 - `preview.html` — preview visual dos componentes
 
-Os HTMLs em `docs/design/screens/` são **referência de layout**, não a aplicação em si.
+## Desenvolvimento local
+
+```bash
+cp .env.example .env
+npm install
+npm run docker:up    # PostgreSQL
+npm run dev:backend
+npm run dev:frontend
+```
