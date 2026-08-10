@@ -1,0 +1,81 @@
+---
+description: Frontend React architecture and development conventions
+globs:
+  - "apps/frontend/**/*.ts"
+  - "apps/frontend/**/*.tsx"
+  - "apps/frontend/**/*.css"
+alwaysApply: false
+---
+
+# Frontend Rules
+
+## Architecture
+
+Use React + TypeScript + Vite and follow the documented frontend structure.
+
+- `main.tsx` — React entry point.
+- `App.tsx` — main composition and providers.
+- `components/` — reusable UI components.
+- `context/` — shared state only when genuinely necessary.
+- `hooks/` — reusable hooks.
+- `pages/` — application screens.
+- `routes/` — frontend routing.
+- `services/` — communication with external services, especially the API.
+- `types/` — frontend types.
+- `utils/` — pure helper functions.
+
+## Routing
+
+- Use React Router.
+- Routes must reflect the real screens and flows defined in `.cursor/docs/overview.md`.
+- Do not create routing structures based on user roles.
+- Do not add undocumented screens or routes.
+
+## State
+
+Keep state as close as possible to where it is used.
+
+Preference order:
+
+1. local state;
+2. reusable hooks;
+3. Context when state is genuinely shared;
+4. global state only when clearly justified.
+
+Do not introduce global state or abstractions prematurely.
+
+## HTTP
+
+- Use one centralized Axios client.
+- Services must use the centralized client.
+- Keep HTTP communication isolated from UI components.
+- Do not create independent Axios instances without a concrete architectural reason.
+
+## Forms and validation
+
+- Use Zod for form validation.
+- Validate data before sending it to the API.
+- Add a form-management library only when form complexity justifies it.
+
+## Components
+
+- Components must have clear responsibilities.
+- UI components must not contain complex business logic.
+- UI components must not access the database.
+- Avoid putting HTTP calls directly into components when a service is appropriate.
+- Prefer composition when it provides real reuse.
+- Do not create generic components solely to eliminate small amounts of duplication.
+- Extract logic when it becomes sufficiently complex or genuinely reusable.
+
+## Styling
+
+- Use Tailwind CSS.
+- Follow the application's actual design.
+- Centralize visual tokens only when necessary.
+- Do not create unnecessary design tokens or visual abstractions.
+
+## Product behavior
+
+The functional behavior of the UI must come from `.cursor/docs/overview.md`.
+
+Do not invent UI states, actions, validations, or flows that are not supported by the functional specification.

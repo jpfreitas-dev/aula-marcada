@@ -1,0 +1,111 @@
+---
+description: Backend architecture and development conventions
+globs:
+  - "apps/backend/**/*.ts"
+  - "apps/backend/**/*.prisma"
+alwaysApply: false
+---
+
+# Backend Rules
+
+## Architecture
+
+Use the documented request flow:
+
+HTTP Request
+→ app.ts
+→ Routes
+→ Controller
+→ Service
+→ Prisma
+→ PostgreSQL
+
+Respect the responsibility of each layer.
+
+### Routes
+
+- Define HTTP routes and connect them to controllers.
+- Keep routes centralized through the documented route structure.
+- Do not create routes for undocumented product functionality.
+
+### Controllers
+
+Controllers:
+
+- know `Request` and `Response`;
+- validate external input;
+- call services;
+- define HTTP status codes;
+- must not access Prisma directly;
+- must not contain complex application/business logic.
+
+### Services
+
+Services:
+
+- represent application use cases;
+- receive validated data;
+- contain application logic;
+- coordinate persistence and other application operations;
+- must not depend on Express `Request` or `Response`.
+
+### Prisma
+
+- Use Prisma as the database access layer.
+- Keep the Prisma Client as a singleton.
+- Do not spread application logic across database queries.
+- Database models and relationships must be derived from the functional requirements.
+- Use versioned migrations.
+- Prefer UUID identifiers and consistent timestamps as documented.
+
+## Database Transactions
+
+Use Prisma transactions when a single application operation performs
+multiple database mutations that must succeed or fail together.
+
+Examples include:
+
+- registering and distributing a payment;
+- updating multiple financial records as part of one operation;
+- creating or linking records whose consistency depends on the complete operation;
+- updating related records where a partial update would leave inconsistent state.
+
+Do not use transactions unnecessarily for independent read operations
+or simple mutations that do not require atomicity.
+
+Before implementing a multi-step database mutation, determine whether
+the operation requires atomicity and use `prisma.$transaction` when appropriate.
+
+## Validation
+
+Use Zod for HTTP input validation.
+
+- Use schemas appropriate to the input source: body, query, or params.
+- Normalize input in the schema.
+- Coerce query parameters when required.
+- Centralize schemas only when there is real reuse.
+
+## Errors
+
+Use the application's error abstraction for known application errors.
+
+- Return consistent HTTP error responses.
+- Validation errors should use the documented validation response shape.
+- Internal errors must not expose ORM, database, or infrastructure details.
+
+## Environment
+
+- Document environment variables in `.env.example`.
+- Never commit the real `.env`.
+- Do not introduce environment variables for functionality that does not exist.
+
+## Naming
+
+Follow the conventions defined in `software-architecture.md`:
+
+- `<domain>-routes.ts`
+- `<domain>-controller.ts`
+- `<domain>-service.ts`
+- kebab-case for middleware and utility files
+
+Use real domain names rather than placeholder entities.

@@ -1,0 +1,71 @@
+---
+description: Testing strategy and quality requirements
+globs:
+  - "apps/backend/**/*.spec.ts"
+  - "apps/backend/**/*.test.ts"
+  - "apps/backend/src/tests/**"
+  - "apps/frontend/**/*.spec.ts"
+  - "apps/frontend/**/*.test.ts"
+  - "apps/frontend/tests/**"
+  - "apps/frontend/e2e/**"
+alwaysApply: false
+---
+
+# Testing Rules
+
+## General principles
+
+- Test behavior and outcomes rather than implementation details.
+- Tests must reflect the actual requirements in `.cursor/docs/overview.md`.
+- Prioritize business-critical behavior and important user flows.
+- Do not write tests merely to increase coverage numbers.
+
+## API tests
+
+Use:
+
+- Vitest;
+- Supertest;
+- a real PostgreSQL database for integration tests.
+
+Do not use Prisma mocks as the primary strategy for integration tests.
+
+Relevant functionality should cover, when applicable:
+
+1. the main successful path;
+2. invalid input;
+3. invalid business/application state;
+4. missing/nonexistent resources.
+
+## Unit tests
+
+Use unit tests for isolated logic and pure functions when isolation provides meaningful value.
+
+Keep unit tests focused and deterministic.
+
+## E2E tests
+
+Use Playwright for important complete user flows.
+
+Tests should represent real user actions and observable outcomes.
+
+Important flows should be derived from the functional specification, including examples such as:
+
+- creating a student;
+- configuring recurring classes;
+- scheduling a class;
+- marking attendance;
+- registering a payment;
+- registering an absence;
+- linking a make-up lesson;
+- viewing a student profile;
+- consulting financial information.
+
+The definitive E2E scope must come from `.cursor/docs/overview.md`.
+
+## Test isolation and maintainability
+
+- Keep test setup and helpers organized.
+- Avoid coupling tests to internal implementation details.
+- Prefer realistic integration behavior when persistence is part of the behavior being tested.
+- When a business rule changes, update the affected tests together with the implementation.

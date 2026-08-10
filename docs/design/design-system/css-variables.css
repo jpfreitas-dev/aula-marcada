@@ -1,0 +1,129 @@
+/**
+ * Tutor System — design tokens as CSS custom properties.
+ * Source of truth: tokens.json · docs/design/DESIGN_SYSTEM.md
+ */
+
+:root {
+  /* Semantic palette (app UI) */
+  --bg: #ffffff;
+  --bg-subtle: #f7f5fc;
+  --purple-900: #4c1d95;
+  --purple-600: #6d28d9;
+  --purple-400: #a78bfa;
+  --purple-100: #ede9fe;
+  --text: #1f1b2e;
+  --text-main: #1f1b2e;
+  --text-muted: #6b6478;
+
+  /* Status (independent of brand purple) */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-danger: #ef4444;
+  --status-info: #3b82f6;
+  --status-neutral: #d4d0dc;
+
+  /* Material / Stitch extended palette */
+  --surface: #fef7ff;
+  --surface-dim: #dfd7e5;
+  --surface-bright: #fef7ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f9f1ff;
+  --surface-container: #f3ebf9;
+  --surface-container-high: #ede5f3;
+  --surface-container-highest: #e8e0ee;
+  --on-surface: #1d1a24;
+  --on-surface-variant: #4a4455;
+  --inverse-surface: #332f39;
+  --inverse-on-surface: #f6eefc;
+  --outline: #7b7486;
+  --outline-variant: #ccc3d7;
+  --surface-tint: #7331df;
+
+  --primary: #5300b7;
+  --on-primary: #ffffff;
+  --primary-container: #6d28d9;
+  --on-primary-container: #dac5ff;
+  --inverse-primary: #d3bbff;
+
+  --secondary: #5e5c6e;
+  --on-secondary: #ffffff;
+  --secondary-container: #e4e0f5;
+  --on-secondary-container: #646274;
+
+  --tertiary: #6b3000;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #8f4200;
+  --on-tertiary-container: #ffc19e;
+
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  --primary-fixed: #ebddff;
+  --primary-fixed-dim: #d3bbff;
+  --on-primary-fixed: #250059;
+  --on-primary-fixed-variant: #5b00c5;
+
+  --secondary-fixed: #e4e0f5;
+  --secondary-fixed-dim: #c7c4d8;
+  --on-secondary-fixed: #1b1a29;
+  --on-secondary-fixed-variant: #464555;
+
+  --tertiary-fixed: #ffdbc8;
+  --tertiary-fixed-dim: #ffb68b;
+  --on-tertiary-fixed: #321300;
+  --on-tertiary-fixed-variant: #743400;
+
+  --background: #fef7ff;
+  --on-background: #1d1a24;
+  --surface-variant: #e8e0ee;
+
+  /* Typography */
+  --font-display: "Sora", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --text-display-lg-size: 32px;
+  --text-display-lg-weight: 700;
+  --text-display-lg-line-height: 1.2;
+
+  --text-headline-md-size: 20px;
+  --text-headline-md-weight: 600;
+  --text-headline-md-line-height: 1.4;
+
+  --text-body-md-size: 16px;
+  --text-body-md-weight: 400;
+  --text-body-md-line-height: 1.5;
+
+  --text-body-sm-size: 14px;
+  --text-body-sm-weight: 400;
+  --text-body-sm-line-height: 1.5;
+
+  --text-label-strong-size: 14px;
+  --text-label-strong-weight: 500;
+  --text-label-strong-line-height: 1.2;
+
+  --text-data-mono-size: 14px;
+  --text-data-mono-weight: 500;
+  --text-data-mono-line-height: 1;
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  --radius-card: 12px;
+
+  /* Spacing */
+  --spacing-margin-main: 1rem;
+  --spacing-gutter: 1rem;
+  --spacing-stack-sm: 0.5rem;
+  --spacing-stack-md: 1rem;
+  --spacing-card-padding: 1.25rem;
+
+  /* Signature element */
+  --class-card-status-stripe-width: 4px;
+}

@@ -1,0 +1,328 @@
+# Global Git Workflow
+
+## Branching Strategy
+
+Use the following branching strategy unless the project explicitly defines another workflow:
+
+- `main`: production-ready code.
+- `develop`: integration and development branch.
+- `feature/*`: new features, created from `develop`.
+- `fix/*`: non-critical bug fixes found during development, created from `develop`.
+- `chore/*`: independent maintenance and configuration tasks, created from `develop`.
+- `refactor/*`: independent code refactoring tasks, created from `develop`.
+- `hotfix/*`: critical production fixes, created from `main`.
+
+Do not create `release/*` branches.
+
+### Branch Flow
+
+Feature development:
+
+`develop` → `feature/*` → local merge → `develop`
+
+Development fixes:
+
+`develop` → `fix/*` → local merge → `develop`
+
+Maintenance tasks:
+
+`develop` → `chore/*` → local merge → `develop`
+
+Independent refactoring:
+
+`develop` → `refactor/*` → local merge → `develop`
+
+Production hotfix:
+
+`main` → `hotfix/*` → Pull Request → `main`
+
+Production deployment:
+
+`develop` → Pull Request → `main`
+
+When working alone, Pull Requests are not required for merging feature, fix, chore, or refactor branches into `develop`.
+
+### Branch Naming
+
+Use lowercase English names with hyphens.
+
+Examples:
+
+- `feature/student-registration`
+- `feature/payment-registration`
+- `feature/class-scheduling`
+- `fix/payment-calculation`
+- `fix/student-validation`
+- `chore/update-dependencies`
+- `chore/configure-ci`
+- `refactor/payment-service`
+- `refactor/student-module`
+- `hotfix/payment-duplication`
+
+Avoid:
+
+- spaces;
+- uppercase letters;
+- Portuguese names;
+- underscores;
+- vague names such as `feature/new-feature`;
+- unnecessarily long branch names.
+
+Keep branches focused on one logical change.
+
+## Protected Branches
+
+Treat `main` as a protected branch.
+
+Never commit directly to `main`.
+
+Changes must enter `main` through Pull Requests.
+
+When working alone, `develop` may receive local merges from dedicated feature, fix, chore, or refactor branches.
+
+Do not develop directly on `develop`.
+
+Do not bypass the Pull Request workflow for `main` unless the user explicitly requests it.
+
+## Conventional Commits
+
+Use Conventional Commits for all commits.
+
+Format:
+
+`type(scope): description`
+
+The commit description must be written in English, using the imperative form.
+
+Examples:
+
+- `feat(students): add student registration`
+- `feat(payments): implement payment allocation`
+- `fix(payments): prevent duplicate payment allocation`
+- `refactor(classes): extract scheduling service`
+- `test(payments): add payment allocation tests`
+- `docs(api): update payment documentation`
+- `chore(deps): update dependencies`
+- `build(docker): optimize production image`
+- `ci(github): add test workflow`
+
+### Commit Types
+
+Use these types when appropriate:
+
+- `feat`: new functionality.
+- `fix`: bug fix.
+- `refactor`: code restructuring without changing behavior.
+- `test`: adding or modifying tests.
+- `docs`: documentation changes.
+- `chore`: maintenance tasks that do not affect application behavior.
+- `build`: build system or dependency-related changes.
+- `ci`: CI/CD configuration changes.
+- `perf`: performance improvements.
+
+Do not invent new commit types unless the project explicitly defines them.
+
+### Commit Scope
+
+Use a short, meaningful scope representing the affected domain or area.
+
+Examples:
+
+- `students`
+- `payments`
+- `classes`
+- `attendance`
+- `auth`
+- `api`
+- `frontend`
+- `backend`
+- `database`
+
+Do not use meaningless scopes such as:
+
+- `stuff`
+- `changes`
+- `misc`
+- `code`
+
+### Commit Granularity
+
+Commits must be atomic and logically cohesive.
+
+A commit should represent one logical change.
+
+Prefer:
+
+`feat(payments): add payment allocation service`
+
+over:
+
+`feat(payments): implement everything`
+
+Do not create artificial commits merely to increase the number of commits.
+
+Keep related changes together when they form a single logical unit.
+
+A branch type does not require every commit on that branch to use the same commit type.
+
+For example, a `feature/*` branch may legitimately contain:
+
+- `feat(...)`
+- `test(...)`
+- `refactor(...)`
+- `docs(...)`
+- `chore(...)`
+
+when those changes are part of the same logical feature.
+
+## Pull Requests
+
+Use Pull Requests primarily to promote changes into `main` and to handle production hotfixes.
+
+When working alone, do not create Pull Requests merely for the purpose of merging every development branch into `develop`.
+
+Before creating a Pull Request:
+
+1. Ensure the branch is based on the correct parent branch.
+2. Ensure the implementation is complete.
+3. Run the relevant tests.
+4. Run linting and type checking when available.
+5. Review the changed files.
+6. Ensure there are no unrelated changes.
+7. Ensure commits follow Conventional Commits.
+
+### Pull Request Targets
+
+- `develop` → `main`
+- `hotfix/*` → `main`
+
+Feature, fix, chore, and refactor branches are normally merged locally into `develop` when working alone.
+
+Do not open feature Pull Requests directly into `main`.
+
+### Pull Request Scope
+
+A Pull Request should represent one logical release of accumulated changes or one critical production fix.
+
+Avoid mixing unrelated work when promoting `develop` to `main`.
+
+## Git Workflow
+
+### New Feature
+
+1. Start from an up-to-date `develop`.
+2. Create a `feature/*` branch.
+3. Implement the feature incrementally.
+4. Create atomic Conventional Commits.
+5. Run the relevant validation.
+6. Review the changes.
+7. Merge the feature branch into `develop` locally.
+8. Delete the feature branch after successful integration.
+
+### Development Bug Fix
+
+1. Start from an up-to-date `develop`.
+2. Create a `fix/*` branch.
+3. Implement and test the fix.
+4. Create appropriate Conventional Commits.
+5. Run the relevant validation.
+6. Merge the fix branch into `develop` locally.
+7. Delete the fix branch after successful integration.
+
+### Maintenance Task
+
+1. Start from an up-to-date `develop`.
+2. Create a `chore/*` branch.
+3. Perform the maintenance work.
+4. Create appropriate Conventional Commits.
+5. Run the relevant validation.
+6. Merge the chore branch into `develop` locally.
+7. Delete the chore branch after successful integration.
+
+### Independent Refactoring
+
+1. Start from an up-to-date `develop`.
+2. Create a `refactor/*` branch.
+3. Perform the refactoring without changing intended behavior.
+4. Create appropriate Conventional Commits.
+5. Run the relevant tests and validation.
+6. Merge the refactor branch into `develop` locally.
+7. Delete the refactor branch after successful integration.
+
+### Production Promotion
+
+1. Ensure `develop` contains the intended changes.
+2. Run the complete relevant validation suite.
+3. Push `develop` to the remote repository.
+4. Open a Pull Request from `develop` to `main`.
+5. Review the changes and CI results.
+6. Merge the Pull Request into `main`.
+7. Deploy `main` according to the project's deployment workflow.
+
+### Production-Critical Hotfix
+
+1. Start from an up-to-date `main`.
+2. Create a `hotfix/*` branch.
+3. Implement and test the fix.
+4. Create appropriate Conventional Commits.
+5. Push the hotfix branch.
+6. Open a Pull Request targeting `main`.
+7. Review the changes and CI results.
+8. Merge the Pull Request into `main`.
+9. Integrate the same fix into `develop`.
+10. Delete the hotfix branch after successful integration.
+
+## AI and Git Operations
+
+The AI may:
+
+- inspect the current Git state;
+- analyze branches;
+- recommend branch names;
+- recommend commit boundaries;
+- recommend Conventional Commit messages;
+- identify changes that should be separated into different commits;
+- recommend Pull Request structure;
+- prepare a Pull Request description when requested;
+- recommend the appropriate Git workflow for the current task.
+
+The AI must never perform the following actions without explicit user authorization:
+
+- create a commit;
+- amend, reset, rebase, or rewrite commits;
+- create a branch;
+- switch branches;
+- merge branches;
+- push to a remote repository;
+- create a Pull Request;
+- approve a Pull Request;
+- merge a Pull Request;
+- delete a branch;
+- force push;
+- perform destructive Git operations.
+
+The AI may recommend or prepare these operations, but the user must explicitly authorize their execution.
+
+When authorization is not explicit, stop before performing the Git operation and ask for confirmation.
+
+The AI must not assume that permission to implement code also grants permission to perform Git operations.
+
+## Planning Before Implementation
+
+When asked to implement a feature, analyze the repository and project documentation before modifying code.
+
+The implementation plan should consider:
+
+- the appropriate branch;
+- logical implementation steps;
+- commit boundaries;
+- required tests;
+- integration strategy;
+- Pull Request scope when applicable;
+- dependencies between changes.
+
+When preparing an implementation plan, recommend the Git operations that should occur, but do not execute them without explicit authorization.
+
+Do not create unnecessary branches or commits.
+
+Follow the project's existing Git conventions if they are more specific than these global rules.

@@ -1,0 +1,271 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Sora:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{try{
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "primary": "#5300b7",
+                            "purple-900": "#4C1D95",
+                            "secondary-fixed": "#e4e0f5",
+                            "status-danger": "#EF4444",
+                            "surface": "#ffffff",
+                            "on-surface-variant": "#4a4455",
+                            "status-success": "#10B981",
+                            "tertiary-fixed": "#ffdbc8",
+                            "on-background": "#1d1a24",
+                            "secondary": "#5e5c6e",
+                            "background": "#ffffff",
+                            "on-tertiary-container": "#ffc19e",
+                            "surface-variant": "#e8e0ee",
+                            "on-surface": "#1d1a24",
+                            "surface-container-low": "#f9f1ff",
+                            "status-info": "#3B82F6",
+                            "text-main": "#1F1B2E",
+                            "primary-container": "#6d28d9",
+                            "tertiary-container": "#8f4200",
+                            "text-muted": "#6B6478",
+                            "bg-subtle": "#F7F5FC",
+                            "primary-fixed": "#ebddff",
+                            "on-primary-fixed": "#250059",
+                            "on-tertiary-fixed-variant": "#743400",
+                            "secondary-container": "#e4e0f5",
+                            "surface-container": "#f3ebf9",
+                            "on-error": "#ffffff",
+                            "purple-400": "#A78BFA",
+                            "surface-container-highest": "#e8e0ee",
+                            "primary-fixed-dim": "#d3bbff",
+                            "on-primary": "#ffffff",
+                            "surface-tint": "#7331df",
+                            "inverse-surface": "#332f39",
+                            "on-secondary-fixed-variant": "#464555",
+                            "inverse-primary": "#d3bbff",
+                            "outline": "#7b7486",
+                            "on-secondary-container": "#646274",
+                            "surface-container-high": "#ede5f3",
+                            "on-primary-fixed-variant": "#5b00c5",
+                            "tertiary": "#6b3000",
+                            "surface-container-lowest": "#ffffff",
+                            "inverse-on-surface": "#f6eefc",
+                            "on-error-container": "#93000a",
+                            "outline-variant": "#ccc3d7",
+                            "on-tertiary": "#ffffff",
+                            "error": "#ba1a1a",
+                            "on-secondary": "#ffffff",
+                            "surface-dim": "#dfd7e5",
+                            "status-warning": "#F59E0B",
+                            "on-tertiary-fixed": "#321300",
+                            "error-container": "#ffdad6",
+                            "status-neutral": "#D4D0DC",
+                            "tertiary-fixed-dim": "#ffb68b",
+                            "on-secondary-fixed": "#1b1a29",
+                            "on-primary-container": "#dac5ff",
+                            "surface-bright": "#fef7ff",
+                            "secondary-fixed-dim": "#c7c4d8"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "margin-main": "1rem",
+                            "gutter": "1rem",
+                            "stack-md": "1rem",
+                            "stack-sm": "0.5rem",
+                            "card-padding": "1.25rem"
+                        },
+                        "fontFamily": {
+                            "body-md": ["Inter"],
+                            "display-lg": ["Sora"],
+                            "label-strong": ["Inter"],
+                            "body-sm": ["Inter"],
+                            "headline-md": ["Sora"],
+                            "data-mono": ["IBM Plex Mono"]
+                        },
+                        "fontSize": {
+                            "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                            "display-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                            "label-strong": ["14px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                            "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                            "headline-md": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                            "data-mono": ["14px", { "lineHeight": "1.0", "fontWeight": "500" }]
+                        }
+                    },
+                },
+            }
+        } catch (_e) {}
+    }catch(_e){}}catch(_e){}</script>
+
+
+<style id="responsive-polish">
+  :root { --app-max: 28rem; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { margin: 0 auto; width: 100%; position: relative; }
+  img, svg, video, canvas { max-width: 100%; height: auto; }
+  table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @media (min-width: 768px) {
+    body {
+      max-width: var(--app-max);
+      box-shadow: 0 0 0 1px rgba(76,29,149,.08), 0 24px 64px rgba(29,26,36,.12);
+      min-height: 100vh;
+    }
+    /* Constrain fixed layers to the centered mobile frame without overriding transforms */
+    header.fixed,
+    nav.fixed,
+    body > .fixed,
+    body > div.fixed {
+      left: max(0px, calc(50vw - (var(--app-max) / 2))) !important;
+      right: max(0px, calc(50vw - (var(--app-max) / 2))) !important;
+      width: auto !important;
+      max-width: var(--app-max);
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+</style>
+</head><body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col pt-24 pb-20 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-10 flex flex-col px-margin-main bg-purple-900 text-white shadow-sm pt-4 pb-2 gap-2">
+<h1 class="font-headline-md text-headline-md font-bold uppercase tracking-tight text-center">AULAS DE REFORÇO</h1>
+<div class="flex mx-auto bg-black/20 p-1 rounded-full w-48">
+<button class="flex-1 bg-white text-purple-900 rounded-full py-1 text-xs font-bold transition-all">Dia</button>
+<button class="flex-1 text-white/70 py-1 text-xs font-medium transition-all">Semana</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow px-margin-main py-stack-md flex flex-col gap-stack-md">
+<!-- Date Navigation -->
+<div class="flex items-center justify-between bg-surface rounded-lg p-3 border border-outline-variant/30 shadow-sm mt-2"><button class="text-primary"><span class="material-symbols-outlined">chevron_left</span></button><span class="font-bold text-text-main">Quinta, 20/07/2023</span><button class="text-primary"><span class="material-symbols-outlined">chevron_right</span></button></div>
+<!-- MANHÃ Section -->
+<section class="flex flex-col gap-stack-sm mt-4">
+<h3 class="font-label-strong text-text-muted uppercase tracking-wider text-xs px-2">MANHÃ</h3>
+<!-- Class Card: João -->
+<div class="relative rounded-[12px] shadow-sm border border-outline-variant p-card-padding flex items-start gap-4 overflow-hidden bg-[#FFFFFF]">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-status-success"></div>
+<div class="flex-grow flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-headline-md text-body-md font-semibold text-text-main">João</span>
+<div class="flex items-center gap-1 bg-[#D1FAE5] text-status-success px-2 py-0.5 rounded-full whitespace-nowrap">
+<span class="font-label-strong text-[12px] font-semibold">Pago com Pix</span>
+</div>
+</div>
+<div class="flex justify-between items-end mt-1">
+<div class="flex items-center gap-2 font-data-mono text-data-mono text-xs text-text-muted">
+
+                            08:00 - 09:00
+                        </div>
+<span class="font-data-mono text-data-mono text-sm font-medium text-text-main">R$ 50,00</span>
+</div>
+</div>
+</div>
+</section>
+<!-- TARDE/NOITE Section -->
+<section class="flex flex-col gap-stack-sm mt-4">
+<h3 class="font-label-strong text-text-muted uppercase tracking-wider text-xs px-2">TARDE/NOITE</h3>
+<!-- Empty Slot Card -->
+<button class="bg-[#F7F5FC] rounded-lg border border-dashed border-outline-variant p-card-padding flex items-center justify-center gap-2 hover:bg-surface-variant transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-text-muted" data-icon="add_circle">add_circle</span>
+<span class="font-label-strong text-label-strong text-text-muted">Adicionar aula</span>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-10 flex justify-around items-center px-2 pb-2 h-20 bg-surface border-t border-surface-variant shadow-lg">
+<a class="flex flex-col items-center justify-center text-primary font-bold transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="home" data-weight="fill" style="font-variation-settings: &quot;FILL&quot; 1;">home</span>
+<span class="font-label-strong text-[10px] mt-1">Início</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-strong text-[10px] mt-1">Alunos</span>
+</a>
+<!-- Central FAB -->
+<div class="relative -top-6">
+<button class="bg-primary-container text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center w-14 h-14 border-4 border-white">
+<span class="material-symbols-outlined text-3xl font-bold" data-icon="add">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-strong text-[10px] mt-1">Financeiro</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-strong text-[10px] mt-1">Mais</span>
+</a>
+</nav>
+<!-- Backdrop overlay -->
+<div class="fixed inset-0 bg-black/50 z-40 transition-opacity"></div>
+<!-- Bottom Sheet Modal - Reposição -->
+<div class="fixed bottom-0 left-0 right-0 h-[75%] bg-white rounded-t-[24px] z-50 flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transform transition-transform duration-300">
+<!-- Drag Handle -->
+<div class="flex justify-center pt-3 pb-2">
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full"></div>
+</div>
+<div class="flex-grow overflow-y-auto px-margin-main pb-24 flex flex-col gap-4 pt-2">
+<!-- Header -->
+<div class="flex justify-between items-start mb-2">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-text-main">Vincular reposição</h2>
+<div class="font-body-sm text-text-muted mt-1 flex items-center flex-wrap gap-1">
+<span class="">Selecione a falta do aluno(a)</span>
+<!-- Select Component Variation 1 -->
+<button class="inline-flex items-center gap-1 bg-surface-variant/30 px-2 py-0.5 rounded-md border border-outline-variant/50 cursor-pointer hover:bg-surface-variant/50 transition-colors">
+<span class="font-headline-md text-sm font-semibold text-text-main">João</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+</button>
+<!-- Select Component Variation 2 (Commented out for reference as requested)
+  <button class="inline-flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity">
+    <span class="font-headline-md text-sm font-semibold text-primary">João</span>
+    <span class="material-symbols-outlined text-[16px] text-primary">expand_more</span>
+  </button>
+  -->
+</div>
+</div>
+<button class="p-2 hover:bg-surface-variant rounded-full text-text-muted transition-colors"><span class="material-symbols-outlined">close</span></button>
+</div>
+<!-- Absence List -->
+<div class="flex flex-col gap-3">
+<!-- Card 1 (Active) -->
+<div class="relative rounded-[12px] shadow-sm border border-outline-variant/30 p-3 flex items-center gap-3 overflow-hidden bg-white cursor-pointer hover:bg-surface-variant/30 transition-colors">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#EF4444]"></div>
+<div class="flex-grow flex flex-col gap-1 pl-1">
+<span class="font-body-md text-text-main font-medium">10/07/2023</span>
+<span class="font-data-mono text-xs text-text-muted">08:00 - 09:00</span>
+</div>
+<div class="flex-shrink-0 bg-[#FEE2E2] text-[#EF4444] px-2 py-1 rounded-full whitespace-nowrap">
+<span class="font-label-strong text-[10px] font-bold uppercase tracking-wider">Não compareceu</span>
+</div>
+<div class="flex-shrink-0 w-5 h-5 rounded-full border-2 border-[#6D28D9] flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-[#6D28D9]"></div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="relative rounded-[12px] shadow-sm border border-outline-variant/30 p-3 flex items-center gap-3 overflow-hidden bg-white cursor-pointer hover:bg-surface-variant/30 transition-colors">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-[#EF4444]"></div>
+<div class="flex-grow flex flex-col gap-1 pl-1">
+<span class="font-body-md text-text-main font-medium">03/07/2023</span>
+<span class="font-data-mono text-xs text-text-muted">08:00 - 09:00</span>
+</div>
+<div class="flex-shrink-0 bg-[#FEE2E2] text-[#EF4444] px-2 py-1 rounded-full whitespace-nowrap">
+<span class="font-label-strong text-[10px] font-bold uppercase tracking-wider">Não compareceu</span>
+</div>
+<div class="flex-shrink-0 w-5 h-5 rounded-full border-2 border-outline-variant"></div>
+</div>
+<!-- Card 3 -->
+<!-- Card 4 -->
+<!-- Card 5 -->
+</div><div class="flex flex-col gap-3 mt-4"><h3 class="font-label-strong text-text-muted uppercase tracking-wider text-[10px] px-1">AJUSTAR HORÁRIO DA AULA ATUAL</h3><div class="flex items-center gap-3"><div class="flex-1 bg-[#F7F5FC] rounded-lg p-3 border border-outline-variant/30 flex items-center justify-center"><span class="font-data-mono text-data-mono text-text-main">08:00</span></div><span class="text-text-muted">-</span><div class="flex-1 bg-[#F7F5FC] rounded-lg p-3 border border-outline-variant/30 flex items-center justify-center"><span class="font-data-mono text-data-mono text-text-main">09:00</span></div></div><div class="flex flex-col gap-1 px-1"><p class="text-[12px] text-[#EF4444] font-medium">É necessário mais 1h de aula</p><p class="text-[12px] text-text-muted">Valor total atualizado: <span class="font-semibold text-text-main">R$ 100,00</span></p></div></div>
+</div>
+<!-- Footer Action -->
+<div class="absolute bottom-0 left-0 right-0 p-margin-main bg-white border-t border-surface-variant">
+<button class="w-full bg-[#6D28D9] hover:bg-primary text-white font-label-strong font-bold py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
+      Confirmar reposição
+    </button>
+</div>
+</div>
+
+
+</body></html>

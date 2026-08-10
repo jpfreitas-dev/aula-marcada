@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tutor System — Design System</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#5300b7",
+              "primary-container": "#6d28d9",
+              "purple-900": "#4C1D95",
+              "purple-400": "#A78BFA",
+              "bg-subtle": "#F7F5FC",
+              "text-main": "#1F1B2E",
+              "text-muted": "#6B6478",
+              "status-success": "#10B981",
+              "status-warning": "#F59E0B",
+              "status-danger": "#EF4444",
+              "status-info": "#3B82F6",
+              "status-neutral": "#D4D0DC",
+              "outline-variant": "#ccc3d7",
+              surface: "#ffffff",
+            },
+            fontFamily: {
+              display: ["Sora", "sans-serif"],
+              body: ["Inter", "sans-serif"],
+              mono: ["IBM Plex Mono", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style id="responsive-polish">
+      html,
+      body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      body {
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      img,
+      svg,
+      video,
+      canvas {
+        max-width: 100%;
+        height: auto;
+      }
+      table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-bg-subtle text-text-main font-body antialiased">
+    <header class="bg-purple-900 text-white px-4 py-6 sm:px-8">
+      <div class="max-w-5xl mx-auto">
+        <p class="text-sm text-white/70 mb-1">
+          Stitch · Gestor de Aulas de Reforço
+        </p>
+        <h1 class="font-display text-2xl sm:text-3xl font-bold">
+          Tutor System
+        </h1>
+        <p class="mt-2 text-white/80 max-w-2xl text-sm sm:text-base">
+          Sistema visual branco e roxo, focado em agenda e financeiro para aulas
+          de reforço.
+        </p>
+        <a
+          href="./index.html"
+          class="inline-block mt-4 text-sm underline underline-offset-4 text-white/90 hover:text-white"
+          >← Voltar ao índice</a
+        >
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-10">
+      <section>
+        <h2 class="font-display text-xl font-semibold text-purple-900 mb-4">
+          Paleta
+        </h2>
+        <div
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+        >
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #fef7ff"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">background</p>
+              <p class="font-mono text-xs text-text-muted">#fef7ff</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #f7f5fc"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">bg-subtle</p>
+              <p class="font-mono text-xs text-text-muted">#F7F5FC</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #5300b7"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">primary</p>
+              <p class="font-mono text-xs text-text-muted">#5300b7</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #6d28d9"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">
+                primary_container
+              </p>
+              <p class="font-mono text-xs text-text-muted">#6d28d9</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #4c1d95"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">purple-900</p>
+              <p class="font-mono text-xs text-text-muted">#4C1D95</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #a78bfa"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">purple-400</p>
+              <p class="font-mono text-xs text-text-muted">#A78BFA</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #1f1b2e"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">text-main</p>
+              <p class="font-mono text-xs text-text-muted">#1F1B2E</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #6b6478"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">text-muted</p>
+              <p class="font-mono text-xs text-text-muted">#6B6478</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #10b981"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">status-success</p>
+              <p class="font-mono text-xs text-text-muted">#10B981</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #f59e0b"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">status-warning</p>
+              <p class="font-mono text-xs text-text-muted">#F59E0B</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #ef4444"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">status-danger</p>
+              <p class="font-mono text-xs text-text-muted">#EF4444</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #3b82f6"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">status-info</p>
+              <p class="font-mono text-xs text-text-muted">#3B82F6</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #d4d0dc"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">status-neutral</p>
+              <p class="font-mono text-xs text-text-muted">#D4D0DC</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #fef7ff"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">surface</p>
+              <p class="font-mono text-xs text-text-muted">#fef7ff</p>
+            </div>
+          </div>
+          <div
+            class="rounded-xl border border-outline-variant/40 overflow-hidden bg-white shadow-sm"
+          >
+            <div class="h-20" style="background: #7b7486"></div>
+            <div class="p-3">
+              <p class="font-medium text-sm text-text-main">outline</p>
+              <p class="font-mono text-xs text-text-muted">#7b7486</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-semibold text-purple-900 mb-4">
+          Tipografia
+        </h2>
+        <div
+          class="bg-white rounded-xl border border-outline-variant/40 p-5 sm:p-6 space-y-4 shadow-sm"
+        >
+          <p class="font-display text-3xl font-bold text-purple-900">
+            Sora — Display
+          </p>
+          <p class="font-body text-base text-text-main">
+            Inter — Corpo e labels
+          </p>
+          <p class="font-mono text-sm text-text-main">
+            IBM Plex Mono — R$ 120,00 · 08:00–09:00
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-semibold text-purple-900 mb-4">
+          Componentes
+        </h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div
+            class="relative bg-white rounded-xl border border-outline-variant/40 p-5 shadow-sm overflow-hidden"
+          >
+            <div
+              class="absolute left-0 top-0 bottom-0 w-1 bg-status-success"
+            ></div>
+            <div class="pl-2">
+              <div class="flex justify-between items-start gap-2">
+                <p class="font-medium">João</p>
+                <span
+                  class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-status-success"
+                  >Pago com Pix</span
+                >
+              </div>
+              <div
+                class="mt-2 flex justify-between font-mono text-xs text-text-muted"
+              >
+                <span>08:00 - 09:00</span>
+                <span class="text-text-main font-medium">R$ 50,00</span>
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white rounded-xl border border-outline-variant/40 p-5 shadow-sm flex flex-wrap gap-2 items-center"
+          >
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-status-success"
+              >Compareceu</span
+            >
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-status-warning"
+              >Parcial</span
+            >
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-status-danger"
+              >Não pago</span
+            >
+            <span
+              class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-status-info"
+              >Reposição</span
+            >
+            <button
+              class="ml-auto bg-primary-container text-white text-sm font-medium px-4 py-2 rounded-lg"
+            >
+              Primário
+            </button>
+            <button
+              class="bg-purple-100 text-purple-900 text-sm font-medium px-4 py-2 rounded-lg"
+            >
+              Secundário
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-semibold text-purple-900 mb-4">
+          Guidelines
+        </h2>
+        <article
+          class="bg-white rounded-xl border border-outline-variant/40 p-5 sm:p-6 shadow-sm prose prose-sm max-w-none"
+        >
+          <pre
+            class="whitespace-pre-wrap font-body text-sm text-text-main leading-relaxed"
+          >
+## Brand &amp; Style
+
+The design system centers on a &quot;Personal Organizer&quot; aesthetic—moving away from sterile corporate SaaS environments toward something that feels like a well-maintained physical planner. The brand personality is clean, trustworthy, and highly organized, utilizing a white and purple foundation to convey academic reliability with a modern, approachable touch.
+
+The visual style is **Corporate / Modern** but softened with organic whitespace and a &quot;High-Utility&quot; focus. It prioritizes clarity for scheduling and financial tracking, using a systematic approach to status colors to ensure the interface remains legible and actionable at a glance.
+
+## Layout &amp; Spacing
+
+The layout follows a **Fluid Grid** philosophy optimized for mobile-first interactions. It relies on a consistent 4px/8px baseline shift to maintain rhythm.
+
+- **Margins:** A standard 16px (1rem) safe area is maintained on the horizontal edges of the screen.
+- **Structure:** Content is organized into clear vertical stacks. Large gaps are avoided in favor of subtle background shifts (`--bg-subtle`) to denote different functional areas.
+- **Financial Views:** Use tabular layouts with IBM Plex Mono, ensuring vertical alignment of decimal points for professional-grade financial clarity.
+
+## Elevation &amp; Depth
+
+This system utilizes **Tonal Layering** rather than heavy drop shadows to create a clean, modern aesthetic. 
+
+- **Level 0 (Background):** Pure white or `--bg-subtle`.
+- **Level 1 (Cards):** White surfaces with a very soft, low-opacity neutral shadow or a simple 1px border in `--purple-100` to define edges without adding visual weight.
+- **High Elevation:** Reserved specifically for the central &quot;Add (+)&quot; button in the bottom navigation, which uses a more pronounced shadow to signify its role as the primary system entry point.
+
+## Components
+
+### Card de Aula (Class Card)
+The flagship component. It must feature a white background and a 4px vertical status bar on the far left. The student&#x27;s name is rendered in **Inter 500**, while the time and price are rendered in **IBM Plex Mono** for data precision.
+
+### Navigation (Bottom Bar)
+A fixed 5-item navigation bar. The central &quot;Add&quot; button is elevated and colored in `--purple-600`. Icons should be line-based and use `--purple-600` for active states and `--text-muted` for inactive states.
+
+### Buttons &amp; Chips
+- **Primary Button:** Solid `--purple-600` with white text.
+- **Secondary Button:** Light `--purple-100` background with `--purple-900` text.
+- **Status Chips:** Small, rounded badges using the `--status` palette with a 10% opacity background of the same color for high legibility.
+
+### Inputs
+Text fields should use the `--bg-subtle` color for the fill with a subtle 1px border. Labels must be clear and use **Inter 500** for accessibility.</pre
+          >
+        </article>
+      </section>
+
+      <section>
+        <h2 class="font-display text-xl font-semibold text-purple-900 mb-4">
+          Arquivos
+        </h2>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a class="text-primary-container underline" href="./DESIGN.md"
+              >DESIGN.md</a
+            >
+            — spec portátil do projeto
+          </li>
+          <li>
+            <a
+              class="text-primary-container underline"
+              href="./DESIGN_SYSTEM.md"
+              >DESIGN_SYSTEM.md</a
+            >
+            — tema completo do asset Tutor System
+          </li>
+          <li>
+            <a
+              class="text-primary-container underline"
+              href="./raw/design_systems.json"
+              >design_systems.json</a
+            >
+            — export bruto da API
+          </li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

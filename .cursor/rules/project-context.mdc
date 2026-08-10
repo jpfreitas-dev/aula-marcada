@@ -1,0 +1,34 @@
+---
+description: Core project context and sources of truth
+alwaysApply: true
+---
+
+# Project Context
+
+This project is a Brazilian application for a teacher to manage students, classes, attendance, make-up lessons, payments, and financial information.
+
+## Sources of truth
+
+The project has two primary reference documents:
+
+- `.cursor/docs/overview.md` — source of truth for product behavior, functional flows, business rules, states, validations, and user interactions.
+- `.cursor/docs/software-architecture.md` — source of truth for technical structure, architecture, stack, engineering conventions, testing strategy, and local infrastructure.
+
+Use the appropriate document instead of guessing.
+
+## Mandatory principles
+
+- Never invent product behavior that is not supported by `overview.md`.
+- Never use the architecture document to redefine business rules.
+- When product behavior is unclear, inspect `overview.md` before implementing.
+- When technical structure is unclear, inspect `software-architecture.md` before introducing a new pattern.
+- Preserve existing decisions unless there is a concrete inconsistency.
+- Do not introduce authentication, authorization, roles, or permissions unless they become part of the defined product scope.
+- Keep the implementation aligned with the documented scope.
+- Future features explicitly marked as out of scope must not be implemented proactively.
+
+## Language conventions
+
+- Product/domain documentation may remain in Portuguese because the application targets a Brazilian context.
+- Source code, identifiers, and technical conventions should use English.
+- User-facing text should follow the product language and the requirements defined in the functional documentation.

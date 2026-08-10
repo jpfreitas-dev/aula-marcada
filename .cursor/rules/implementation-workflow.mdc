@@ -1,0 +1,67 @@
+---
+description: Workflow for implementing features and changes
+alwaysApply: true
+---
+
+# Implementation Workflow
+
+Follow this workflow before implementing a non-trivial feature or change.
+
+## 1. Understand the requirement
+
+- Identify the exact feature or behavior being requested.
+- Locate the relevant section of `.cursor/docs/overview.md`.
+- Extract the applicable business rules, states, validations, constraints, and side effects.
+- Do not infer missing product behavior when the documentation does not support it.
+
+## 2. Determine the technical impact
+
+Consult `.cursor/docs/software-architecture.md` and identify:
+
+- affected backend areas;
+- affected frontend areas;
+- persistence requirements;
+- API requirements;
+- validation requirements;
+- testing requirements.
+
+Do not create architecture merely because a new entity or endpoint exists.
+
+## 3. Plan before editing
+
+For meaningful changes:
+
+- identify the smallest set of files and layers involved;
+- preserve existing architectural boundaries;
+- reuse existing patterns when they are appropriate;
+- avoid premature abstractions.
+
+For changes involving multiple business rules, verify that all affected rules are represented in the implementation plan.
+
+## 4. Implement
+
+- Keep responsibilities separated according to the architecture document.
+- Keep business/application logic out of HTTP controllers and UI components when it belongs in services or other appropriate layers.
+- Do not modify unrelated code.
+- Do not add features outside the documented scope.
+
+## 5. Validate
+
+After implementation:
+
+- run the relevant type checks;
+- run lint/format checks when applicable;
+- run relevant unit/API tests;
+- run E2E tests for important user flows when applicable;
+- verify both the main path and important invalid/edge states.
+
+## 6. Review
+
+Before considering the task complete, verify:
+
+- the implementation matches `overview.md`;
+- the implementation follows `software-architecture.md`;
+- no unnecessary abstraction was introduced;
+- no undocumented behavior was invented;
+- tests cover the relevant behavior;
+- existing functionality was not unintentionally changed.

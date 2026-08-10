@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Sora:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "primary": "#5300b7",
+                            "purple-900": "#4C1D95",
+                            "secondary-fixed": "#e4e0f5",
+                            "status-danger": "#EF4444",
+                            "surface": "#ffffff",
+                            "on-surface-variant": "#4a4455",
+                            "status-success": "#10B981",
+                            "tertiary-fixed": "#ffdbc8",
+                            "on-background": "#1d1a24",
+                            "secondary": "#5e5c6e",
+                            "background": "#ffffff",
+                            "on-tertiary-container": "#ffc19e",
+                            "surface-variant": "#e8e0ee",
+                            "on-surface": "#1d1a24",
+                            "surface-container-low": "#f9f1ff",
+                            "status-info": "#3B82F6",
+                            "text-main": "#1F1B2E",
+                            "primary-container": "#6d28d9",
+                            "tertiary-container": "#8f4200",
+                            "text-muted": "#6B6478",
+                            "bg-subtle": "#F7F5FC",
+                            "primary-fixed": "#ebddff",
+                            "on-primary-fixed": "#250059",
+                            "on-tertiary-fixed-variant": "#743400",
+                            "secondary-container": "#e4e0f5",
+                            "surface-container": "#f3ebf9",
+                            "on-error": "#ffffff",
+                            "purple-400": "#A78BFA",
+                            "surface-container-highest": "#e8e0ee",
+                            "primary-fixed-dim": "#d3bbff",
+                            "on-primary": "#ffffff",
+                            "surface-tint": "#7331df",
+                            "inverse-surface": "#332f39",
+                            "on-secondary-fixed-variant": "#464555",
+                            "inverse-primary": "#d3bbff",
+                            "outline": "#7b7486",
+                            "on-secondary-container": "#646274",
+                            "surface-container-high": "#ede5f3",
+                            "on-primary-fixed-variant": "#5b00c5",
+                            "tertiary": "#6b3000",
+                            "surface-container-lowest": "#ffffff",
+                            "inverse-on-surface": "#f6eefc",
+                            "on-error-container": "#93000a",
+                            "outline-variant": "#ccc3d7",
+                            "on-tertiary": "#ffffff",
+                            "error": "#ba1a1a",
+                            "on-secondary": "#ffffff",
+                            "surface-dim": "#dfd7e5",
+                            "status-warning": "#F59E0B",
+                            "on-tertiary-fixed": "#321300",
+                            "error-container": "#ffdad6",
+                            "status-neutral": "#D4D0DC",
+                            "tertiary-fixed-dim": "#ffb68b",
+                            "on-secondary-fixed": "#1b1a29",
+                            "on-primary-container": "#dac5ff",
+                            "surface-bright": "#fef7ff",
+                            "secondary-fixed-dim": "#c7c4d8"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "margin-main": "1rem",
+                            "gutter": "1rem",
+                            "stack-md": "1rem",
+                            "stack-sm": "0.5rem",
+                            "card-padding": "1.25rem"
+                        },
+                        "fontFamily": {
+                            "body-md": ["Inter"],
+                            "display-lg": ["Sora"],
+                            "label-strong": ["Inter"],
+                            "body-sm": ["Inter"],
+                            "headline-md": ["Sora"],
+                            "data-mono": ["IBM Plex Mono"]
+                        },
+                        "fontSize": {
+                            "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                            "display-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                            "label-strong": ["14px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                            "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                            "headline-md": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                            "data-mono": ["14px", { "lineHeight": "1.0", "fontWeight": "500" }]
+                        }
+                    },
+                },
+            }
+        } catch (_e) {}
+    }catch(_e){}</script>
+
+
+<style id="responsive-polish">
+  :root { --app-max: 28rem; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { margin: 0 auto; width: 100%; position: relative; }
+  img, svg, video, canvas { max-width: 100%; height: auto; }
+  table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @media (min-width: 768px) {
+    body {
+      max-width: var(--app-max);
+      box-shadow: 0 0 0 1px rgba(76,29,149,.08), 0 24px 64px rgba(29,26,36,.12);
+      min-height: 100vh;
+    }
+    /* Constrain fixed layers to the centered mobile frame without overriding transforms */
+    header.fixed,
+    nav.fixed,
+    body > .fixed,
+    body > div.fixed {
+      left: max(0px, calc(50vw - (var(--app-max) / 2))) !important;
+      right: max(0px, calc(50vw - (var(--app-max) / 2))) !important;
+      width: auto !important;
+      max-width: var(--app-max);
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+</style>
+</head><body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col pt-16 pb-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex flex-col px-margin-main bg-purple-900 text-white shadow-sm py-4 gap-2">
+<h1 class="font-headline-md text-headline-md font-bold uppercase tracking-tight text-center">aulas de reforço</h1>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow px-margin-main py-stack-md flex flex-col gap-stack-md bg-[#F8F9FA]"><div class="flex bg-bg-subtle p-1 rounded-lg w-full mb-2"><button class="flex-1 py-2 text-sm font-label-strong text-text-muted rounded-lg">Semana</button><button class="flex-1 py-2 text-sm font-label-strong text-text-muted rounded-lg">Mês</button><button class="flex-1 py-2 text-sm font-label-strong bg-primary-container text-white rounded-lg shadow-sm">Ano</button></div>
+<!-- Filter Bar -->
+<div class="flex justify-between items-center w-full gap-4"><div class="flex items-center gap-2 bg-bg-subtle px-3 py-2 rounded-lg shadow-sm"><span class="material-symbols-outlined text-text-muted cursor-pointer text-[18px]">chevron_left</span><span class="text-sm font-body-md text-text-main">2026</span><span class="material-symbols-outlined text-text-muted cursor-pointer text-[18px]">chevron_right</span></div><select class="flex-1 bg-bg-subtle border-none rounded-lg text-sm font-body-md text-text-main py-2 focus:ring-0 shadow-sm cursor-pointer"><option>Todos os alunos</option></select></div>
+<!-- Financial KPI Cards -->
+<div class="flex flex-wrap gap-2 w-full">
+<div class="flex-1 bg-white rounded-xl shadow-sm p-3 min-w-[45%] flex flex-col justify-center">
+<span class="text-xs text-text-muted font-body-sm mb-1">Esperado (Ano) </span>
+<span class="font-data-mono font-bold text-text-main text-[16px]">R$ 1.500,00</span>
+</div>
+<div class="flex-1 bg-white rounded-xl shadow-sm p-3 min-w-[45%] flex flex-col justify-center">
+<span class="text-xs text-text-muted font-body-sm mb-1">Realizado</span>
+<span class="font-data-mono font-bold text-status-success text-[16px]">R$ 1.250,00</span>
+</div>
+<div class="w-full bg-white rounded-xl shadow-sm p-3 flex flex-col justify-center mt-2">
+<span class="text-xs text-text-muted font-body-sm mb-1">Impacto de Faltas</span>
+<span class="font-data-mono font-bold text-status-danger text-[16px]">- R$ 250,00</span>
+</div>
+</div>
+<!-- Expected vs Actual Graph -->
+<div class="flex flex-col gap-2 mt-2">
+<h2 class="font-headline-md text-base font-bold text-text-main">Comparativo do Período</h2>
+<div class="bg-white rounded-xl shadow-sm p-4 w-full">
+<!-- Legend -->
+<div class="flex gap-4 mb-4 justify-center">
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 rounded-full bg-surface-variant"></div>
+<span class="text-xs font-body-sm text-text-muted">Esperado</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+<span class="text-xs font-body-sm text-text-muted">Realizado</span>
+</div>
+</div>
+<!-- Chart Area (Mock) -->
+<div class="flex justify-between items-end h-32 w-full px-2"><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[80%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[80%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[100%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[70%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[60%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[60%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[90%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[30%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[70%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[50%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[85%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[75%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[75%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[65%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[80%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[70%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[90%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[80%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[85%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[75%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[70%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[60%]"></div></div><div class="flex gap-0.5 h-full items-end"><div class="w-1.5 bg-surface-variant rounded-t-sm h-[95%]"></div><div class="w-1.5 bg-primary-container rounded-t-sm h-[85%]"></div></div></div>
+<!-- X Axis Labels -->
+<div class="flex justify-between w-full px-2 mt-2 text-xs text-text-muted font-body-sm"><span class="flex-1 text-center">Jan</span><span class="flex-1 text-center">Fev</span><span class="flex-1 text-center">Mar</span><span class="flex-1 text-center">Abr</span><span class="flex-1 text-center">Mai</span><span class="flex-1 text-center">Jun</span><span class="flex-1 text-center">Jul</span><span class="flex-1 text-center">Ago</span><span class="flex-1 text-center">Set</span><span class="flex-1 text-center">Out</span><span class="flex-1 text-center">Nov</span><span class="flex-1 text-center">Dez</span></div>
+</div>
+</div>
+<!-- Pending Payments List -->
+<div class="flex flex-col gap-2 mt-2">
+<h2 class="font-headline-md text-base font-bold text-text-main">Pagamentos Pendentes</h2>
+<div class="flex flex-col gap-2">
+<!-- Item 1 -->
+<div class="bg-white rounded-lg shadow-sm p-3 border-l-4 border-l-status-danger flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-headline-md text-sm font-semibold text-text-main">João</span>
+<span class="font-body-sm text-xs text-text-muted mt-0.5">13/07</span>
+</div>
+<span class="font-data-mono font-bold text-text-main text-[14px]">R$ 50,00</span>
+</div>
+<!-- Item 2 -->
+<div class="bg-white rounded-lg shadow-sm p-3 border-l-4 border-l-status-danger flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-headline-md text-sm font-semibold text-text-main">Beatriz</span>
+<span class="font-body-sm text-xs text-text-muted mt-0.5">06/07</span>
+</div>
+<span class="font-data-mono font-bold text-text-main text-[14px]">R$ 100,00</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-2 pb-2 h-20 bg-surface border-t border-surface-variant shadow-lg">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-strong text-[10px] mt-1">Início</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-strong text-[10px] mt-1">Alunos</span>
+</a>
+<!-- Central FAB -->
+<div class="relative -top-6">
+<button class="bg-primary-container text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center w-14 h-14 border-4 border-white">
+<span class="material-symbols-outlined text-3xl font-bold" data-icon="add">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center text-primary-container font-bold transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="payments" data-weight="fill" style='font-variation-settings: "FILL" 1;'>payments</span>
+<span class="font-label-strong text-[10px] mt-1">Financeiro</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-transform duration-200 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-strong text-[10px] mt-1">Mais</span>
+</a>
+</nav>
+</body></html>
