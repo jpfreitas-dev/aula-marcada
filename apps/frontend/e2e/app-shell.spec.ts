@@ -1,10 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
 
-test("home page shows agenda shell", async ({ page }) => {
-  await page.goto("/");
+test('home page shows agenda shell', async ({ page }) => {
+  await page.goto('/');
 
-  await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible();
   await expect(
-    page.getByRole("navigation", { name: "Navegação principal" }),
+    page.getByRole('navigation', { name: 'Navegação principal' }),
   ).toBeVisible();
 });

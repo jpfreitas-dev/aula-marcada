@@ -4,7 +4,9 @@ export function NotFoundPage() {
       <h2 className="font-display text-lg font-semibold text-purple-900">
         Página não encontrada
       </h2>
-      <p className="mt-2 text-sm text-text-muted">A rota solicitada não existe.</p>
+      <p className="mt-2 text-sm text-text-muted">
+        A rota solicitada não existe.
+      </p>
     </section>
   );
 }

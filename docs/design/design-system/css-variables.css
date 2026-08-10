@@ -80,9 +80,9 @@
   --surface-variant: #e8e0ee;
 
   /* Typography */
-  --font-display: "Sora", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 
   --text-display-lg-size: 32px;
   --text-display-lg-weight: 700;

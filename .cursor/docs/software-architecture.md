@@ -234,9 +234,9 @@ A lógica de aplicação não deve ser espalhada diretamente pelas queries.
 Exemplo:
 
 ```ts
-import "dotenv/config";
+import 'dotenv/config';
 
-import { app } from "@/app";
+import { app } from '@/app';
 
 const PORT = Number(process.env.PORT) || 3333;
 
@@ -248,11 +248,11 @@ app.listen(PORT, () => {
 `app.ts` deve configurar a aplicação e exportá-la para utilização nos testes.
 
 ```ts
-import cors from "cors";
-import express from "express";
+import cors from 'cors';
+import express from 'express';
 
-import { routes } from "@/routes";
-import { errorHandling } from "@/middlewares/error-handling";
+import { routes } from '@/routes';
+import { errorHandling } from '@/middlewares/error-handling';
 
 const app = express();
 
@@ -284,23 +284,23 @@ As rotas devem ser centralizadas em `routes/index.ts`.
 Exemplo:
 
 ```ts
-import { Router } from "express";
+import { Router } from 'express';
 
-import { studentsRoutes } from "./students-routes";
-import { classesRoutes } from "./classes-routes";
-import { paymentsRoutes } from "./payments-routes";
+import { studentsRoutes } from './students-routes';
+import { classesRoutes } from './classes-routes';
+import { paymentsRoutes } from './payments-routes';
 
 const routes = Router();
 
-routes.get("/health", (_request, response) => {
+routes.get('/health', (_request, response) => {
   return response.status(200).json({
-    status: "ok",
+    status: 'ok',
   });
 });
 
-routes.use("/students", studentsRoutes);
-routes.use("/classes", classesRoutes);
-routes.use("/payments", paymentsRoutes);
+routes.use('/students', studentsRoutes);
+routes.use('/classes', classesRoutes);
+routes.use('/payments', paymentsRoutes);
 
 export { routes };
 ```
@@ -380,7 +380,7 @@ export const errorHandling: ErrorRequestHandler = (
 
   if (error instanceof ZodError) {
     response.status(400).json({
-      message: "Erro de validação",
+      message: 'Erro de validação',
       issues: error.format(),
     });
 
@@ -388,7 +388,7 @@ export const errorHandling: ErrorRequestHandler = (
   }
 
   response.status(500).json({
-    message: "Erro interno do servidor",
+    message: 'Erro interno do servidor',
   });
 };
 ```
@@ -423,10 +423,10 @@ O Prisma Client deve ser utilizado como singleton.
 Exemplo:
 
 ```ts
-import "dotenv/config";
+import 'dotenv/config';
 
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../generated/prisma/client";
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../../generated/prisma/client';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -490,7 +490,7 @@ class ExampleService {
     });
 
     if (!record) {
-      throw new AppError("Registro não encontrado", 404);
+      throw new AppError('Registro não encontrado', 404);
     }
 
     return record;
@@ -670,7 +670,7 @@ O frontend deve utilizar um único cliente HTTP centralizado.
 Exemplo:
 
 ```ts
-import axios from "axios";
+import axios from 'axios';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -684,7 +684,7 @@ Exemplo:
 ```ts
 export const studentsService = {
   async list() {
-    const response = await api.get("/students");
+    const response = await api.get('/students');
 
     return response.data;
   },
@@ -767,10 +767,10 @@ Os tokens visuais da aplicação devem ser definidos de forma centralizada quand
 Exemplo:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --default-font-family: "Open Sans", sans-serif;
+  --default-font-family: 'Open Sans', sans-serif;
 }
 ```
 
@@ -826,7 +826,7 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile.dev
     ports:
-      - "${BACKEND_PORT:-3333}:3333"
+      - '${BACKEND_PORT:-3333}:3333'
     environment:
       DATABASE_URL: postgresql://app:app@postgres:5432/app
     depends_on:
@@ -838,7 +838,7 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile.dev
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - '${FRONTEND_PORT:-5173}:5173'
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
 ```

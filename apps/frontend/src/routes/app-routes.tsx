@@ -1,11 +1,11 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { AppShell } from "@/components/layout/app-shell";
-import { FinancialPage } from "@/pages/financial-page";
-import { HomePage } from "@/pages/home-page";
-import { NotFoundPage } from "@/pages/not-found-page";
-import { StudentProfilePage } from "@/pages/student-profile-page";
-import { StudentsPage } from "@/pages/students-page";
+import { AppShell } from '@/components/layout/app-shell';
+import { FinancialPage } from '@/pages/financial-page';
+import { HomePage } from '@/pages/home-page';
+import { NotFoundPage } from '@/pages/not-found-page';
+import { StudentProfilePage } from '@/pages/student-profile-page';
+import { StudentsPage } from '@/pages/students-page';
 
 export function AppRoutes() {
   return (

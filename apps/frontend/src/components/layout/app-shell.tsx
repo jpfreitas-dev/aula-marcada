@@ -1,10 +1,10 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
-  { label: "Início", path: "/" },
-  { label: "Alunos", path: "/students" },
-  { label: "Financeiro", path: "/financial" },
-  { label: "Mais", path: "/more" },
+  { label: 'Início', path: '/' },
+  { label: 'Alunos', path: '/students' },
+  { label: 'Financeiro', path: '/financial' },
+  { label: 'Mais', path: '/more' },
 ] as const;
 
 export function AppShell() {
@@ -35,7 +35,9 @@ export function AppShell() {
               type="button"
               onClick={() => navigate(item.path)}
               className={`px-3 py-2 text-sm font-medium ${
-                location.pathname === item.path ? "text-primary" : "text-text-muted"
+                location.pathname === item.path
+                  ? 'text-primary'
+                  : 'text-text-muted'
               }`}
             >
               {item.label}
@@ -56,7 +58,9 @@ export function AppShell() {
               type="button"
               onClick={() => navigate(item.path)}
               className={`px-3 py-2 text-sm font-medium ${
-                location.pathname === item.path ? "text-primary" : "text-text-muted"
+                location.pathname === item.path
+                  ? 'text-primary'
+                  : 'text-text-muted'
               }`}
             >
               {item.label}
