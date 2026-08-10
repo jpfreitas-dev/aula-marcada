@@ -1,6 +1,7 @@
 {
   "name": "aula-marcada",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/backend",
     "apps/frontend"
