@@ -21,7 +21,8 @@ Este documento **não redefine** regras de negócio nem arquitetura. Fontes de v
 
 ## 0. Estado atual do repositório
 
-- Branch atual: `main`, **sem commits**.
+- Branch atual: `chore/repo-tooling` (Fase B concluída nesta branch).
+- `main` e `develop` existem; Fase B aguarda merge local `chore/repo-tooling` → `develop`.
 - Conteúdo existente:
   - `.cursor/` — docs de produto/arquitetura (`overview.md`, `software-architecture.md`) e rules;
   - `docs/design/` — export Google Stitch (telas HTML, JSON raw, design system parcial).
@@ -552,8 +553,7 @@ Antes de abrir/mergear qualquer PR:
 
 Quando autorizado a executar:
 
-1. Commit bootstrap em `main`: `chore(repo): add initial documentation and design references`.
-2. Criar e checkout `develop`.
-3. Abrir `chore/repo-tooling` e iniciar a Fase B.
+1. Merge local `chore/repo-tooling` → `develop`.
+2. Abrir `feature/frontend-shell` e iniciar a Fase C.
 
 Nenhuma branch de feature deve começar antes do bootstrap e da existência de `develop`.
