@@ -1,8 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { LinkMakeupModal } from '@/components/classes/link-makeup-modal';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
-import { LinkMakeupModal } from '@/components/classes/link-makeup-modal';
+import {
+  fieldControlClassName,
+  fieldLabelClassName,
+} from '@/components/ui/field';
+import { Icon } from '@/components/ui/icon';
+import { TimeRangeInput } from '@/components/ui/time-range-input';
+import { WorkdayDateInput } from '@/components/ui/workday-date-input';
 import type { ClassPeriod } from '@/types';
 import {
   calculateRequiredMakeupMinutes,
@@ -19,9 +26,16 @@ import {
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
 import {
+  AFTERNOON_PERIOD_END,
   addMinutesToTime,
+  applyStartTimeChange,
+  DEFAULT_CLASS_DURATION_MINUTES,
   defaultStartTimeForPeriod,
+  EARLY_MORNING_CUTOFF,
+  getMaxStartTimeForEndLimit,
+  getStartTimeBounds,
   minutesBetween,
+  periodFromStartTime,
 } from '@/utils/time';
 import {
   addWorkdays,
@@ -29,7 +43,6 @@ import {
   getDefaultAgendaDate,
   toDateKey,
 } from '@/utils/workday';
-import { useEffect } from 'react';
 
 export type ScheduleSlot = {
   date: string;
@@ -48,21 +61,45 @@ type MakeupDraft = {
   endTime: string;
 };
 
-type ScheduleClassFormProps = {
-  initialSlot?: ScheduleSlot;
-  onClose: () => void;
-};
+export function ScheduleClassModal({
+  open,
+  onClose,
+  initialSlot,
+}: ScheduleClassModalProps) {
+  if (!open) {
+    return null;
+  }
 
-function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
+  const formKey = `${initialSlot?.date ?? 'default'}-${initialSlot?.period ?? 'morning'}`;
+
+  return (
+    <ScheduleClassForm
+      key={formKey}
+      onClose={onClose}
+      initialSlot={initialSlot}
+    />
+  );
+}
+
+function ScheduleClassForm({
+  onClose,
+  initialSlot,
+}: {
+  onClose: () => void;
+  initialSlot?: ScheduleSlot;
+}) {
+  const initialPeriod = initialSlot?.period ?? 'morning';
+  const initialStart = getDefaultScheduleStart(initialPeriod);
+
   const [students, setStudents] = useState<Student[]>([]);
   const [date, setDate] = useState(
     initialSlot?.date ?? toDateKey(getDefaultAgendaDate()),
   );
-  const [period, setPeriod] = useState<ClassPeriod>(
-    initialSlot?.period ?? 'morning',
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(
+    addMinutesToTime(initialStart, DEFAULT_CLASS_DURATION_MINUTES),
   );
   const [studentId, setStudentId] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState(60);
   const [amountInput, setAmountInput] = useState('0,00');
   const [isMakeupOnly, setIsMakeupOnly] = useState(false);
   const [makeupDraft, setMakeupDraft] = useState<MakeupDraft | null>(null);
@@ -84,14 +121,24 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
       };
     });
   }, []);
+  const dateMin = workdayOptions[0]?.value;
+  const dateMax = workdayOptions[workdayOptions.length - 1]?.value;
 
   const selectedStudent = students.find((student) => student.id === studentId);
-  const startTime = makeupDraft?.startTime ?? getDefaultScheduleStart(period);
-  const endTime =
-    makeupDraft?.endTime ?? addMinutesToTime(startTime, durationMinutes);
-  const effectiveDuration = makeupDraft
-    ? minutesBetween(makeupDraft.startTime, makeupDraft.endTime)
-    : durationMinutes;
+  const period = periodFromStartTime(startTime);
+  const morningPeriodOccupied = !availablePeriods.includes('morning');
+  const effectiveStartTime = makeupDraft?.startTime ?? startTime;
+  const effectiveEndTime = makeupDraft?.endTime ?? endTime;
+  const effectiveDuration = minutesBetween(
+    effectiveStartTime,
+    effectiveEndTime,
+  );
+  const startTimeBounds = getStartTimeBounds(availablePeriods);
+  const startMaxTime = getMaxStartTimeForEndLimit(
+    startTimeBounds.max,
+    AFTERNOON_PERIOD_END,
+  );
+  const timesLocked = Boolean(makeupDraft);
 
   useEffect(() => {
     void listStudents().then(setStudents);
@@ -102,13 +149,36 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
       return;
     }
 
+    let cancelled = false;
+
     void getAvailablePeriods(date).then((periods) => {
-      setAvailablePeriods(periods);
-      if (!periods.includes(period) && periods[0]) {
-        setPeriod(periods[0]);
+      if (cancelled) {
+        return;
       }
+
+      setAvailablePeriods(periods);
+
+      if (periods.length === 0) {
+        return;
+      }
+
+      setStartTime((currentStart) => {
+        const currentPeriod = periodFromStartTime(currentStart);
+        if (periods.includes(currentPeriod)) {
+          return currentStart;
+        }
+
+        setMakeupDraft(null);
+        const nextStart = defaultStartTimeForPeriod(periods[0]);
+        setEndTime(addMinutesToTime(nextStart, DEFAULT_CLASS_DURATION_MINUTES));
+        return nextStart;
+      });
     });
-  }, [date, period]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [date]);
 
   const updateSuggestedAmount = (minutes: number, student: Student) => {
     setAmountInput(
@@ -125,16 +195,51 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
     }
   };
 
-  const handleDurationChange = (minutes: number) => {
-    setDurationMinutes(minutes);
+  const handleStartTimeChange = (nextStart: string) => {
+    const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
+      startTime,
+      endTime,
+      nextStart,
+      {
+        startMin: startTimeBounds.min,
+        startMax: startMaxTime,
+        endMax: AFTERNOON_PERIOD_END,
+        endFloor: morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined,
+      },
+    );
+
+    setStartTime(clampedStart);
+    setEndTime(nextEnd);
+    setMakeupDraft(null);
+
     if (selectedStudent) {
-      updateSuggestedAmount(minutes, selectedStudent);
+      updateSuggestedAmount(
+        minutesBetween(clampedStart, nextEnd),
+        selectedStudent,
+      );
+    }
+  };
+
+  const handleEndTimeChange = (nextEnd: string) => {
+    setEndTime(nextEnd);
+    setMakeupDraft(null);
+
+    if (selectedStudent) {
+      updateSuggestedAmount(
+        minutesBetween(startTime, nextEnd),
+        selectedStudent,
+      );
     }
   };
 
   const handleSave = async () => {
     if (!selectedStudent) {
       setError('Selecione um aluno.');
+      return;
+    }
+
+    if (availablePeriods.length === 0) {
+      setError('Não há períodos disponíveis nesta data.');
       return;
     }
 
@@ -151,7 +256,7 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
         studentId: selectedStudent.id,
         date,
         period,
-        startTime,
+        startTime: effectiveStartTime,
         durationMinutes: effectiveDuration,
         expectedAmount: parseCurrencyInput(amountInput),
         isMakeupOnly,
@@ -182,174 +287,150 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-2 gap-4">
+      <BottomSheet
+        open
+        tall
+        title="Agendar Aula"
+        onClose={onClose}
+        footer={
+          <Button
+            className="w-full"
+            onClick={() => void handleSave()}
+            disabled={saving}
+          >
+            Salvar agendamento
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex min-w-0 flex-col gap-2">
+              <span className={fieldLabelClassName}>Data</span>
+              <WorkdayDateInput
+                value={date}
+                min={dateMin}
+                max={dateMax}
+                onChange={(nextDate) => {
+                  setDate(nextDate);
+                  setMakeupDraft(null);
+                }}
+              />
+            </label>
+
+            <div className="flex min-w-0 flex-col gap-2">
+              <span className={fieldLabelClassName}>Horário</span>
+              <TimeRangeInput
+                startTime={effectiveStartTime}
+                endTime={effectiveEndTime}
+                startMinTime={startTimeBounds.min}
+                startMaxTime={startMaxTime}
+                endMaxTime={AFTERNOON_PERIOD_END}
+                endFloorTime={
+                  morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined
+                }
+                disabled={timesLocked}
+                onStartChange={handleStartTimeChange}
+                onEndChange={handleEndTimeChange}
+              />
+            </div>
+          </div>
+
           <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Data
-            </span>
-            <select
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              className="rounded-lg border border-outline bg-white px-3 py-3 text-sm shadow-sm"
-            >
-              {workdayOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <span className={fieldLabelClassName}>Aluno</span>
+            <div className="relative">
+              <select
+                value={studentId}
+                onChange={(event) => handleStudentChange(event.target.value)}
+                className={`${fieldControlClassName} appearance-none px-3 pr-10`}
+              >
+                <option value="">Selecione...</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.name}
+                  </option>
+                ))}
+              </select>
+              <Icon
+                name="expand_more"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-secondary"
+              />
+            </div>
           </label>
+
           <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Período
+            <span className={fieldLabelClassName}>Valor</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
+                R$
+              </span>
+              <input
+                value={amountInput}
+                onChange={(event) => setAmountInput(event.target.value)}
+                className={`${fieldControlClassName} pl-10 pr-3 font-mono`}
+              />
+            </div>
+            {selectedStudent ? (
+              <span className="text-xs text-text-muted">
+                Sugerido:{' '}
+                {formatCurrency(
+                  calculateExpectedAmount(
+                    effectiveDuration,
+                    selectedStudent.hourlyRate,
+                  ),
+                )}
+              </span>
+            ) : null}
+          </label>
+
+          <div className="flex items-center justify-between border-t border-surface-variant/50 pt-2">
+            <span className="font-medium text-text-main">
+              Marcar como reposição
             </span>
-            <select
-              value={period}
-              onChange={(event) => {
-                setPeriod(event.target.value as ClassPeriod);
+            <button
+              type="button"
+              onClick={() => {
+                setIsMakeupOnly((current) => !current);
                 setMakeupDraft(null);
               }}
-              className="rounded-lg border border-outline bg-white px-3 py-3 text-sm shadow-sm"
-            >
-              {availablePeriods.map((option) => (
-                <option key={option} value={option}>
-                  {option === 'morning' ? 'Manhã' : 'Tarde/noite'}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Horário
-          </span>
-          <div className="rounded-lg border border-outline bg-white px-3 py-3 text-center font-mono text-sm shadow-sm">
-            {startTime} - {endTime}
-          </div>
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Aluno
-          </span>
-          <select
-            value={studentId}
-            onChange={(event) => handleStudentChange(event.target.value)}
-            className="rounded-lg border border-outline bg-white px-3 py-3 text-sm shadow-sm"
-          >
-            <option value="">Selecione...</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Duração (min)
-          </span>
-          <input
-            type="number"
-            min={30}
-            step={15}
-            value={effectiveDuration}
-            disabled={Boolean(makeupDraft)}
-            onChange={(event) =>
-              handleDurationChange(Number(event.target.value))
-            }
-            className="rounded-lg border border-outline bg-white px-3 py-3 text-sm shadow-sm disabled:bg-bg-subtle"
-          />
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Valor
-          </span>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
-              R$
-            </span>
-            <input
-              value={amountInput}
-              onChange={(event) => setAmountInput(event.target.value)}
-              className="w-full rounded-lg border border-outline bg-white py-3 pl-10 pr-3 font-mono text-sm shadow-sm"
-            />
-          </div>
-          {selectedStudent ? (
-            <span className="text-xs text-text-muted">
-              Sugerido:{' '}
-              {formatCurrency(
-                calculateExpectedAmount(
-                  effectiveDuration,
-                  selectedStudent.hourlyRate,
-                ),
-              )}
-            </span>
-          ) : null}
-        </label>
-
-        <div className="flex items-center justify-between border-t border-surface-variant/50 pt-2">
-          <span className="font-medium text-text-main">
-            Marcar como reposição
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setIsMakeupOnly((current) => !current);
-              setMakeupDraft(null);
-            }}
-            className={`flex h-6 w-12 items-center rounded-full px-1 transition-colors ${
-              isMakeupOnly ? 'bg-primary-container' : 'bg-surface-variant'
-            }`}
-            aria-pressed={isMakeupOnly}
-          >
-            <span
-              className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                isMakeupOnly ? 'translate-x-6' : 'translate-x-0'
+              className={`flex h-6 w-12 items-center rounded-full px-1 transition-colors ${
+                isMakeupOnly ? 'bg-primary-container' : 'bg-surface-variant'
               }`}
-            />
-          </button>
-        </div>
-
-        {isMakeupOnly ? (
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setLinkModalOpen(true)}
-              disabled={!selectedStudent}
+              aria-pressed={isMakeupOnly}
             >
-              Vincular reposição
-            </Button>
-            {makeupDraft ? (
-              <p className="text-sm text-text-muted">
-                {makeupDraft.absenceIds.length} falta(s) vinculada(s). Duração
-                necessária: {requiredMakeupMinutes} min.
-              </p>
-            ) : (
-              <p className="text-sm text-status-danger">
-                Vincule ao menos uma falta para continuar.
-              </p>
-            )}
+              <span
+                className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                  isMakeupOnly ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
-        ) : null}
 
-        {error ? <p className="text-sm text-status-danger">{error}</p> : null}
-      </div>
+          {isMakeupOnly ? (
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setLinkModalOpen(true)}
+                disabled={!selectedStudent}
+              >
+                Vincular reposição
+              </Button>
+              {makeupDraft ? (
+                <p className="text-sm text-text-muted">
+                  {makeupDraft.absenceIds.length} falta(s) vinculada(s). Duração
+                  necessária: {requiredMakeupMinutes} min.
+                </p>
+              ) : (
+                <p className="text-sm text-status-danger">
+                  Vincule ao menos uma falta para continuar.
+                </p>
+              )}
+            </div>
+          ) : null}
 
-      <div className="mt-4">
-        <Button
-          className="w-full"
-          onClick={() => void handleSave()}
-          disabled={saving}
-        >
-          Salvar agendamento
-        </Button>
-      </div>
+          {error ? <p className="text-sm text-status-danger">{error}</p> : null}
+        </div>
+      </BottomSheet>
 
       {selectedStudent ? (
         <LinkMakeupModal
@@ -358,7 +439,7 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
           studentId={selectedStudent.id}
           studentName={selectedStudent.name}
           isMakeupOnly
-          initialStartTime={defaultStartTimeForPeriod(period)}
+          initialStartTime={startTime}
           initialDurationMinutes={effectiveDuration}
           onConfirm={(result) => {
             setMakeupDraft(result);
@@ -371,25 +452,5 @@ function ScheduleClassForm({ initialSlot, onClose }: ScheduleClassFormProps) {
         />
       ) : null}
     </>
-  );
-}
-
-export function ScheduleClassModal({
-  open,
-  onClose,
-  initialSlot,
-}: ScheduleClassModalProps) {
-  const formKey = `${initialSlot?.date ?? 'default'}-${initialSlot?.period ?? 'morning'}`;
-
-  return (
-    <BottomSheet open={open} tall title="Agendar Aula" onClose={onClose}>
-      {open ? (
-        <ScheduleClassForm
-          key={formKey}
-          initialSlot={initialSlot}
-          onClose={onClose}
-        />
-      ) : null}
-    </BottomSheet>
   );
 }

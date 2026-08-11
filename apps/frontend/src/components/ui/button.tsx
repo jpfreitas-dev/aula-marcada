@@ -25,7 +25,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 export function Button({
   variant = 'primary',
-  size = 'md',
+  size = 'lg',
   className = '',
   children,
   type = 'button',
@@ -34,7 +34,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center rounded-lg font-medium transition-colors disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-md font-medium transition-colors cursor-pointer disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {children}

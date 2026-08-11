@@ -2,21 +2,45 @@ import { useEffect, useState } from 'react';
 
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
+import { fieldLabelClassName } from '@/components/ui/field';
+import { TimeRangeInput } from '@/components/ui/time-range-input';
+import { WorkdayDateInput } from '@/components/ui/workday-date-input';
 import type { ClassPeriod, ClassSession } from '@/types';
 import { getAvailablePeriods, rescheduleClass } from '@/services/class-service';
-import { addMinutesToTime } from '@/utils/time';
 import {
-  addWorkdays,
-  formatWorkdayLabel,
-  getDefaultAgendaDate,
-  toDateKey,
-} from '@/utils/workday';
+  AFTERNOON_PERIOD_END,
+  addMinutesToTime,
+  applyStartTimeChange,
+  defaultStartTimeForPeriod,
+  EARLY_MORNING_CUTOFF,
+  formatHoursLabel,
+  getMaxStartTimeForEndLimit,
+  getStartTimeBounds,
+  MIN_CLASS_DURATION_MINUTES,
+  minutesBetween,
+  periodFromStartTime,
+} from '@/utils/time';
+import { addWorkdays, getDefaultAgendaDate, toDateKey } from '@/utils/workday';
 
 type RescheduleClassModalProps = {
   open: boolean;
   onClose: () => void;
   session: ClassSession;
 };
+
+export function RescheduleClassModal({
+  open,
+  onClose,
+  session,
+}: RescheduleClassModalProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <RescheduleClassForm key={session.id} session={session} onClose={onClose} />
+  );
+}
 
 type RescheduleClassFormProps = {
   session: ClassSession;
@@ -25,28 +49,88 @@ type RescheduleClassFormProps = {
 
 function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
   const [date, setDate] = useState(session.date);
-  const [period, setPeriod] = useState<ClassPeriod>(session.period);
   const [startTime, setStartTime] = useState(session.startTime);
-  const [durationMinutes, setDurationMinutes] = useState(
-    session.durationMinutes,
-  );
+  const [endTime, setEndTime] = useState(session.endTime);
   const [availablePeriods, setAvailablePeriods] = useState<ClassPeriod[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const workdayOptions = Array.from({ length: 20 }, (_, index) => {
-    const day = addWorkdays(getDefaultAgendaDate(), index);
-    return {
-      value: toDateKey(day),
-      label: formatWorkdayLabel(day),
-    };
-  });
+  const workdayDates = Array.from({ length: 20 }, (_, index) =>
+    toDateKey(addWorkdays(getDefaultAgendaDate(), index)),
+  );
+  const dateMin = workdayDates[0];
+  const dateMax = workdayDates[workdayDates.length - 1];
+
+  const startTimeBounds = getStartTimeBounds(availablePeriods);
+  const morningPeriodOccupied = !availablePeriods.includes('morning');
+  const startMaxTime = getMaxStartTimeForEndLimit(
+    startTimeBounds.max,
+    AFTERNOON_PERIOD_END,
+  );
+  const period = periodFromStartTime(startTime);
+  const durationMinutes = minutesBetween(startTime, endTime);
+  const minimumDuration = Math.max(
+    session.durationMinutes,
+    MIN_CLASS_DURATION_MINUTES,
+  );
 
   useEffect(() => {
-    void getAvailablePeriods(date, session.id).then(setAvailablePeriods);
-  }, [date, session.id]);
+    let cancelled = false;
+
+    void getAvailablePeriods(date, session.id).then((periods) => {
+      if (cancelled) {
+        return;
+      }
+
+      setAvailablePeriods(periods);
+
+      if (periods.length === 0) {
+        return;
+      }
+
+      setStartTime((currentStart) => {
+        const currentPeriod = periodFromStartTime(currentStart);
+        if (periods.includes(currentPeriod)) {
+          return currentStart;
+        }
+
+        const nextStart = defaultStartTimeForPeriod(periods[0]);
+        setEndTime(addMinutesToTime(nextStart, minimumDuration));
+        return nextStart;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [date, session.id, minimumDuration]);
+
+  const handleStartTimeChange = (nextStart: string) => {
+    const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
+      startTime,
+      endTime,
+      nextStart,
+      {
+        startMin: startTimeBounds.min,
+        startMax: startMaxTime,
+        endMax: AFTERNOON_PERIOD_END,
+        endFloor: morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined,
+        minDurationMinutes: minimumDuration,
+      },
+    );
+
+    setStartTime(clampedStart);
+    setEndTime(nextEnd);
+  };
 
   const handleSave = async () => {
+    if (durationMinutes < minimumDuration) {
+      setError(
+        `A duração mínima é ${formatHoursLabel(minimumDuration)} de aula.`,
+      );
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -70,80 +154,12 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
   };
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Data
-          </span>
-          <select
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-          >
-            {workdayOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Período
-          </span>
-          <select
-            value={period}
-            onChange={(event) => setPeriod(event.target.value as ClassPeriod)}
-            className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-          >
-            {availablePeriods.map((option) => (
-              <option key={option} value={option}>
-                {option === 'morning' ? 'Manhã' : 'Tarde/noite'}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Início
-            </span>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Duração (min)
-            </span>
-            <input
-              type="number"
-              min={30}
-              step={15}
-              value={durationMinutes}
-              onChange={(event) =>
-                setDurationMinutes(Number(event.target.value))
-              }
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-            />
-          </label>
-        </div>
-
-        <p className="font-mono text-sm text-text-muted">
-          Novo horário: {startTime} -{' '}
-          {addMinutesToTime(startTime, durationMinutes)}
-        </p>
-
-        {error ? <p className="text-sm text-status-danger">{error}</p> : null}
-      </div>
-
-      <div className="mt-4">
+    <BottomSheet
+      open
+      tall
+      title="Alterar horário"
+      onClose={onClose}
+      footer={
         <Button
           className="w-full"
           disabled={saving}
@@ -151,25 +167,38 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
         >
           Salvar horário
         </Button>
-      </div>
-    </>
-  );
-}
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <label className="flex flex-col gap-2">
+          <span className={fieldLabelClassName}>Data</span>
+          <WorkdayDateInput
+            value={date}
+            min={dateMin}
+            max={dateMax}
+            onChange={setDate}
+          />
+        </label>
 
-export function RescheduleClassModal({
-  open,
-  onClose,
-  session,
-}: RescheduleClassModalProps) {
-  return (
-    <BottomSheet open={open} title="Alterar horário" onClose={onClose}>
-      {open ? (
-        <RescheduleClassForm
-          key={session.id}
-          session={session}
-          onClose={onClose}
-        />
-      ) : null}
+        <div className="flex flex-col gap-2">
+          <span className={fieldLabelClassName}>Horário</span>
+          <TimeRangeInput
+            startTime={startTime}
+            endTime={endTime}
+            startMinTime={startTimeBounds.min}
+            startMaxTime={startMaxTime}
+            endMaxTime={AFTERNOON_PERIOD_END}
+            endFloorTime={
+              morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined
+            }
+            minDurationMinutes={minimumDuration}
+            onStartChange={handleStartTimeChange}
+            onEndChange={setEndTime}
+          />
+        </div>
+
+        {error ? <p className="text-sm text-status-danger">{error}</p> : null}
+      </div>
     </BottomSheet>
   );
 }

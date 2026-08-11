@@ -34,3 +34,18 @@ export function formatCurrencyInput(value: number): string {
     maximumFractionDigits: 2,
   });
 }
+
+export function formatCurrencyInputFromRaw(
+  raw: string,
+  maxAmount?: number,
+): string {
+  const digits = raw.replace(/\D/g, '');
+  const cents = digits === '' ? 0 : Number(digits);
+  let amount = cents / 100;
+
+  if (maxAmount !== undefined) {
+    amount = Math.min(amount, maxAmount);
+  }
+
+  return formatCurrencyInput(amount);
+}

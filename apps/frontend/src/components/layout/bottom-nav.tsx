@@ -34,13 +34,17 @@ export function BottomNav() {
           <NavLink
             key={item.path}
             to={item.path}
-            className={`flex h-16 w-16 flex-col items-center justify-center transition-colors ${
+            className={`group flex h-16 w-16 cursor-pointer flex-col items-center justify-center transition-colors ${
               active
                 ? 'font-bold text-primary'
                 : 'text-secondary hover:text-primary'
             }`}
           >
-            <Icon name={item.icon} filled={active} className="text-2xl" />
+            <Icon
+              name={item.icon}
+              filled={active}
+              className="text-2xl transition-transform duration-150 group-hover:scale-[1.2]"
+            />
             <span className="mt-1 text-[10px] font-medium">{item.label}</span>
           </NavLink>
         );
@@ -50,7 +54,7 @@ export function BottomNav() {
         <button
           type="button"
           onClick={() => openScheduleModal()}
-          className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-primary-container text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
+          className="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-4 border-white bg-primary-container text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
           aria-label="Adicionar aula"
         >
           <Icon name="add" className="text-3xl font-bold" />
@@ -64,13 +68,17 @@ export function BottomNav() {
           <NavLink
             key={item.path}
             to={item.path}
-            className={`flex h-16 w-16 flex-col items-center justify-center transition-colors ${
+            className={`group flex h-16 w-16 cursor-pointer flex-col items-center justify-center transition-colors ${
               active
                 ? 'font-bold text-primary'
                 : 'text-secondary hover:text-primary'
             }`}
           >
-            <Icon name={item.icon} filled={active} className="text-2xl" />
+            <Icon
+              name={item.icon}
+              filled={active}
+              className="text-2xl transition-transform duration-150 group-hover:scale-[1.2]"
+            />
             <span className="mt-1 text-[10px] font-medium">{item.label}</span>
           </NavLink>
         );

@@ -51,6 +51,18 @@ export function formatWorkdayLabel(date: Date): string {
   return `${weekday}, ${day}/${month}/${year}`;
 }
 
+export function formatShortDate(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = (date.getFullYear() % 100).toString().padStart(2, '0');
+
+  return `${day}/${month}/${year}`;
+}
+
+export function getWeekdayLabel(date: Date): string {
+  return WEEKDAY_LABELS[date.getDay()];
+}
+
 export function toDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -75,6 +87,14 @@ export function getWorkdaysOfWeek(weekStart: Date): Date[] {
     day.setDate(weekStart.getDate() + index);
     return day;
   });
+}
+
+export function formatWeekRange(weekStart: Date): string {
+  const workdays = getWorkdaysOfWeek(weekStart);
+  const firstDay = workdays[0];
+  const lastDay = workdays[workdays.length - 1];
+
+  return `${formatShortDate(firstDay)} - ${formatShortDate(lastDay)}`;
 }
 
 export function formatRelativeNextClass(dateIso?: string): string {

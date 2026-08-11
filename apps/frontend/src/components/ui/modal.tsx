@@ -24,7 +24,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative z-10 w-full max-w-sm rounded-xl bg-white p-card-padding shadow-xl"
+        className="relative z-10 w-full max-w-sm rounded-md bg-white p-card-padding shadow-xl"
       >
         <h2
           id="modal-title"

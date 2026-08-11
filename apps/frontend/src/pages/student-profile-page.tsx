@@ -25,7 +25,7 @@ export function StudentProfilePage() {
 
   if (!student) {
     return (
-      <section className="rounded-card bg-white p-card-padding shadow-sm">
+      <section className="rounded-md bg-white p-card-padding shadow-sm">
         <h2 className="font-display text-headline-md font-semibold text-purple-900">
           Perfil do aluno
         </h2>
@@ -51,7 +51,7 @@ export function StudentProfilePage() {
         ← Voltar
       </Link>
 
-      <section className="rounded-card border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="font-display text-headline-md font-semibold text-purple-900">
@@ -71,7 +71,7 @@ export function StudentProfilePage() {
         </div>
       </section>
 
-      <section className="rounded-card border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
           Financeiro
         </h3>
@@ -97,7 +97,7 @@ export function StudentProfilePage() {
         </Button>
       </section>
 
-      <section className="rounded-card border border-dashed border-outline-variant bg-bg-subtle p-card-padding">
+      <section className="rounded-md border border-dashed border-outline-variant bg-bg-subtle p-card-padding">
         <p className="text-sm text-text-muted">
           Histórico de aulas, configurações e modal de pagamento serão
           implementados na fase de alunos mockados.

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
 import { Icon } from '@/components/ui/icon';
+import { iconButtonClassName } from '@/components/ui/icon-button';
 import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
 import { useMockStore } from '@/hooks/use-mock-store';
@@ -15,8 +16,11 @@ import {
 import type { ClassPeriod, ClassSession } from '@/types';
 import {
   addWorkdays,
+  formatShortDate,
+  formatWeekRange,
   formatWorkdayLabel,
   getDefaultAgendaDate,
+  getWeekdayLabel,
   getWeekStart,
   getWorkdaysOfWeek,
   toDateKey,
@@ -132,15 +136,16 @@ export function HomePage() {
   };
 
   const weekDays = getWorkdaysOfWeek(getWeekStart(selectedDate));
+  const weekStart = getWeekStart(selectedDate);
   const todayKey = toDateKey(new Date());
 
   return (
     <div className="flex flex-col gap-stack-md">
-      <div className="mt-2 flex items-center justify-between rounded-lg border border-outline-variant/30 bg-surface p-3 shadow-sm">
+      <div className="mt-2 flex items-center justify-between rounded-md border border-outline-variant/30 bg-surface p-3 shadow-sm">
         <button
           type="button"
           onClick={() => navigateDate(-1)}
-          className="text-primary"
+          className={`${iconButtonClassName} h-8 w-8 text-primary`}
           aria-label="Período anterior"
         >
           <Icon name="chevron_left" />
@@ -148,12 +153,12 @@ export function HomePage() {
         <span className="text-center text-sm font-bold text-text-main">
           {view === 'day'
             ? formatWorkdayLabel(selectedDate)
-            : `Semana de ${formatWorkdayLabel(weekDays[0])}`}
+            : formatWeekRange(weekStart)}
         </span>
         <button
           type="button"
           onClick={() => navigateDate(1)}
-          className="text-primary"
+          className={`${iconButtonClassName} h-8 w-8 text-primary`}
           aria-label="Próximo período"
         >
           <Icon name="chevron_right" />
@@ -193,8 +198,8 @@ export function HomePage() {
               className="rounded-lg border border-outline-variant/20 bg-white p-3 shadow-sm"
             >
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-text-main">
-                  {formatWorkdayLabel(day)}
+                <h3 className="text-sm font-semibold text-purple-900">
+                  {getWeekdayLabel(day)}, {formatShortDate(day)}
                 </h3>
                 {isToday ? (
                   <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-xs font-semibold text-primary">

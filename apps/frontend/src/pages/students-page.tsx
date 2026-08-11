@@ -58,12 +58,12 @@ export function StudentsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar aluno..."
-            className="w-full rounded-lg border border-outline-variant bg-surface py-1.5 pl-9 pr-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-md border border-outline-variant bg-surface py-1.5 pl-9 pr-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         <Button
           type="button"
-          className="h-10 w-10 shrink-0 rounded-lg p-0"
+          className="h-10 w-10 shrink-0 rounded-md p-0"
           aria-label="Novo aluno"
         >
           <Icon name="person_add" className="text-xl" />
@@ -75,7 +75,7 @@ export function StudentsPage() {
           <li key={student.id}>
             <Link
               to={`/students/${student.id}`}
-              className="flex items-center justify-between rounded-card border border-outline-variant/30 bg-white p-card-padding shadow-sm transition-transform active:scale-[0.99]"
+              className="flex items-center justify-between rounded-lg border border-outline-variant/30 bg-white p-card-padding shadow-sm transition-transform active:scale-[0.99]"
             >
               <div className="flex flex-col gap-1">
                 <span className="font-display text-body-md font-semibold text-text-main">

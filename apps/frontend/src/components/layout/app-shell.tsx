@@ -13,9 +13,9 @@ function ShellLayout() {
   const { headerChildren } = usePageHeaderContext();
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg-subtle">
+    <div className="mx-auto flex h-dvh max-w-lg flex-col overflow-hidden bg-bg-subtle">
       <AppHeader>{headerChildren}</AppHeader>
-      <main className="flex-1 px-margin-main py-stack-md pb-24">
+      <main className="scroll-area flex-1 px-margin-main py-stack-md pb-24">
         <Outlet />
       </main>
       <BottomNav />

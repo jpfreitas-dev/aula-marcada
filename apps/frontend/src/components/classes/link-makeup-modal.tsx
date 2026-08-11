@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
+import { TimeRangeInput } from '@/components/ui/time-range-input';
 import type { ClassSession } from '@/types';
 import {
   calculateRequiredMakeupMinutes,
@@ -11,8 +12,13 @@ import {
 } from '@/services/class-service';
 import { formatWorkdayLabel } from '@/utils/workday';
 import {
+  AFTERNOON_PERIOD_END,
   addMinutesToTime,
+  applyStartTimeChange,
   formatHoursLabel,
+  getMaxStartTimeForEndLimit,
+  MORNING_PERIOD_START,
+  MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
 } from '@/utils/time';
 
@@ -31,6 +37,36 @@ type LinkMakeupModalProps = {
     endTime: string;
   }) => void;
 };
+
+export function LinkMakeupModal({
+  open,
+  onClose,
+  studentId,
+  studentName,
+  targetClass,
+  isMakeupOnly = false,
+  initialStartTime = '08:00',
+  initialDurationMinutes = 60,
+  onConfirm,
+}: LinkMakeupModalProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <LinkMakeupForm
+      key={`${studentId}-${initialStartTime}-${initialDurationMinutes}`}
+      onClose={onClose}
+      studentId={studentId}
+      studentName={studentName}
+      targetClass={targetClass}
+      isMakeupOnly={isMakeupOnly}
+      initialStartTime={initialStartTime}
+      initialDurationMinutes={initialDurationMinutes}
+      onConfirm={onConfirm}
+    />
+  );
+}
 
 type LinkMakeupFormProps = Omit<LinkMakeupModalProps, 'open'>;
 
@@ -54,7 +90,17 @@ function LinkMakeupForm({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    void getPendingAbsences(studentId).then(setAbsences);
+    let cancelled = false;
+
+    void getPendingAbsences(studentId).then((loadedAbsences) => {
+      if (!cancelled) {
+        setAbsences(loadedAbsences);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [studentId]);
 
   const requiredMinutes = useMemo(
@@ -69,6 +115,14 @@ function LinkMakeupForm({
 
   const currentMinutes = minutesBetween(startTime, endTime);
   const missingMinutes = Math.max(requiredMinutes - currentMinutes, 0);
+  const startMaxTime = getMaxStartTimeForEndLimit(
+    AFTERNOON_PERIOD_END,
+    AFTERNOON_PERIOD_END,
+  );
+  const minimumDuration = Math.max(
+    initialDurationMinutes,
+    MIN_CLASS_DURATION_MINUTES,
+  );
 
   const toggleAbsence = (id: string) => {
     setSelectedIds((current) =>
@@ -76,6 +130,23 @@ function LinkMakeupForm({
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+  };
+
+  const handleStartTimeChange = (nextStart: string) => {
+    const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
+      startTime,
+      endTime,
+      nextStart,
+      {
+        startMin: MORNING_PERIOD_START,
+        startMax: startMaxTime,
+        endMax: AFTERNOON_PERIOD_END,
+        minDurationMinutes: minimumDuration,
+      },
+    );
+
+    setStartTime(clampedStart);
+    setEndTime(nextEnd);
   };
 
   const handleConfirm = async () => {
@@ -124,7 +195,21 @@ function LinkMakeupForm({
   };
 
   return (
-    <>
+    <BottomSheet
+      open
+      tall
+      title="Vincular reposição"
+      onClose={onClose}
+      footer={
+        <Button
+          className="w-full"
+          disabled={saving || selectedIds.length === 0 || missingMinutes > 0}
+          onClick={() => void handleConfirm()}
+        >
+          Confirmar reposição
+        </Button>
+      }
+    >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-text-muted">
           Falta(s) do aluno(a){' '}
@@ -132,11 +217,11 @@ function LinkMakeupForm({
         </p>
 
         {absences.length === 0 ? (
-          <p className="rounded-lg bg-bg-subtle p-4 text-sm text-text-muted">
+          <p className="rounded-md bg-bg-subtle p-4 text-sm text-text-muted">
             Não há faltas pendentes de reposição para este aluno.
           </p>
         ) : (
-          <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
+          <div className="scroll-area max-h-56 space-y-3 pr-1">
             {absences.map((absence) => {
               const selected = selectedIds.includes(absence.id);
               return (
@@ -144,7 +229,7 @@ function LinkMakeupForm({
                   key={absence.id}
                   type="button"
                   onClick={() => toggleAbsence(absence.id)}
-                  className={`relative flex w-full items-center gap-3 overflow-hidden rounded-card border p-3 text-left shadow-sm transition-colors ${
+                  className={`relative flex w-full items-center gap-3 overflow-hidden rounded-md border p-3 text-left shadow-sm transition-colors ${
                     selected
                       ? 'border-primary bg-primary-fixed/20'
                       : 'border-outline-variant/30 bg-white'
@@ -172,79 +257,30 @@ function LinkMakeupForm({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Início
-            </span>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-              Fim
-            </span>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(event) => setEndTime(event.target.value)}
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm"
-            />
-          </label>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+            Horário
+          </span>
+          <TimeRangeInput
+            startTime={startTime}
+            endTime={endTime}
+            startMinTime={MORNING_PERIOD_START}
+            startMaxTime={startMaxTime}
+            endMaxTime={AFTERNOON_PERIOD_END}
+            minDurationMinutes={minimumDuration}
+            onStartChange={handleStartTimeChange}
+            onEndChange={setEndTime}
+          />
         </div>
 
         {missingMinutes > 0 ? (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
             Necessário mais {formatHoursLabel(missingMinutes)} de aula.
           </p>
         ) : null}
 
         {error ? <p className="text-sm text-status-danger">{error}</p> : null}
       </div>
-
-      <div className="mt-4">
-        <Button
-          className="w-full"
-          disabled={saving || selectedIds.length === 0 || missingMinutes > 0}
-          onClick={() => void handleConfirm()}
-        >
-          Confirmar reposição
-        </Button>
-      </div>
-    </>
-  );
-}
-
-export function LinkMakeupModal({
-  open,
-  onClose,
-  studentId,
-  studentName,
-  targetClass,
-  isMakeupOnly,
-  initialStartTime,
-  initialDurationMinutes,
-  onConfirm,
-}: LinkMakeupModalProps) {
-  return (
-    <BottomSheet open={open} tall title="Vincular reposição" onClose={onClose}>
-      {open ? (
-        <LinkMakeupForm
-          key={`${studentId}-${targetClass?.id ?? 'schedule'}`}
-          onClose={onClose}
-          studentId={studentId}
-          studentName={studentName}
-          targetClass={targetClass}
-          isMakeupOnly={isMakeupOnly}
-          initialStartTime={initialStartTime}
-          initialDurationMinutes={initialDurationMinutes}
-          onConfirm={onConfirm}
-        />
-      ) : null}
     </BottomSheet>
   );
 }
