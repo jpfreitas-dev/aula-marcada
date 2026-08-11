@@ -1,12 +1,207 @@
-export function HomePage() {
+import { useEffect, useMemo, useState } from 'react';
+
+import { ClassCard } from '@/components/classes/class-card';
+import { EmptySlot } from '@/components/ui/empty-slot';
+import { Icon } from '@/components/ui/icon';
+import { useScheduleModal } from '@/context/schedule-modal-context';
+import { usePageHeader } from '@/hooks/use-page-header';
+import {
+  getSessionForPeriod,
+  listClassesByDate,
+  listClassesByWeek,
+} from '@/services/class-service';
+import type { ClassPeriod, ClassSession } from '@/types';
+import {
+  addWorkdays,
+  formatWorkdayLabel,
+  getDefaultAgendaDate,
+  getWeekStart,
+  getWorkdaysOfWeek,
+  toDateKey,
+} from '@/utils/workday';
+
+type AgendaView = 'day' | 'week';
+
+const periodLabels: Record<ClassPeriod, string> = {
+  morning: 'MANHÃ',
+  afternoon: 'TARDE/NOITE',
+};
+
+function DayWeekToggle({
+  view,
+  onChange,
+}: {
+  view: AgendaView;
+  onChange: (view: AgendaView) => void;
+}) {
   return (
-    <section className="rounded-card bg-white p-4 shadow-sm">
-      <h2 className="font-display text-lg font-semibold text-purple-900">
-        Agenda
-      </h2>
-      <p className="mt-2 text-sm text-text-muted">
-        Shell da aplicação. Telas mockadas serão implementadas na Fase C.
-      </p>
+    <div className="mx-auto flex w-48 rounded-full bg-black/20 p-1">
+      <button
+        type="button"
+        onClick={() => onChange('day')}
+        className={`flex-1 rounded-full py-1 text-xs font-bold transition-all ${
+          view === 'day'
+            ? 'bg-white text-purple-900'
+            : 'font-medium text-white/70'
+        }`}
+      >
+        Dia
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('week')}
+        className={`flex-1 rounded-full py-1 text-xs font-bold transition-all ${
+          view === 'week'
+            ? 'bg-white text-purple-900'
+            : 'font-medium text-white/70'
+        }`}
+      >
+        Semana
+      </button>
+    </div>
+  );
+}
+
+function PeriodSection({
+  label,
+  session,
+  onAdd,
+}: {
+  label: string;
+  session?: ClassSession;
+  onAdd: () => void;
+}) {
+  return (
+    <section className="mt-4 flex flex-col gap-stack-sm">
+      <h3 className="px-2 text-xs font-medium uppercase tracking-wider text-text-muted">
+        {label}
+      </h3>
+      {session ? (
+        <ClassCard session={session} />
+      ) : (
+        <EmptySlot onClick={onAdd} />
+      )}
     </section>
+  );
+}
+
+export function HomePage() {
+  const [view, setView] = useState<AgendaView>('day');
+  const [selectedDate, setSelectedDate] = useState(() =>
+    getDefaultAgendaDate(),
+  );
+  const [sessions, setSessions] = useState<ClassSession[]>([]);
+  const { openScheduleModal } = useScheduleModal();
+
+  const headerToggle = useMemo(
+    () => <DayWeekToggle view={view} onChange={setView} />,
+    [view],
+  );
+  usePageHeader(headerToggle);
+
+  useEffect(() => {
+    async function loadSessions() {
+      if (view === 'day') {
+        setSessions(await listClassesByDate(selectedDate));
+        return;
+      }
+
+      setSessions(await listClassesByWeek(getWeekStart(selectedDate)));
+    }
+
+    void loadSessions();
+  }, [selectedDate, view]);
+
+  const navigateDate = (direction: -1 | 1) => {
+    if (view === 'day') {
+      setSelectedDate((current) => addWorkdays(current, direction));
+      return;
+    }
+
+    setSelectedDate((current) => addWorkdays(current, direction * 5));
+  };
+
+  const weekDays = getWorkdaysOfWeek(getWeekStart(selectedDate));
+  const todayKey = toDateKey(new Date());
+
+  return (
+    <div className="flex flex-col gap-stack-md">
+      <div className="mt-2 flex items-center justify-between rounded-lg border border-outline-variant/30 bg-surface p-3 shadow-sm">
+        <button
+          type="button"
+          onClick={() => navigateDate(-1)}
+          className="text-primary"
+          aria-label="Período anterior"
+        >
+          <Icon name="chevron_left" />
+        </button>
+        <span className="text-center text-sm font-bold text-text-main">
+          {view === 'day'
+            ? formatWorkdayLabel(selectedDate)
+            : `Semana de ${formatWorkdayLabel(weekDays[0])}`}
+        </span>
+        <button
+          type="button"
+          onClick={() => navigateDate(1)}
+          className="text-primary"
+          aria-label="Próximo período"
+        >
+          <Icon name="chevron_right" />
+        </button>
+      </div>
+
+      {view === 'day' ? (
+        <>
+          <PeriodSection
+            label={periodLabels.morning}
+            session={getSessionForPeriod(sessions, 'morning')}
+            onAdd={openScheduleModal}
+          />
+          <PeriodSection
+            label={periodLabels.afternoon}
+            session={getSessionForPeriod(sessions, 'afternoon')}
+            onAdd={openScheduleModal}
+          />
+        </>
+      ) : (
+        weekDays.map((day) => {
+          const dayKey = toDateKey(day);
+          const daySessions = sessions.filter(
+            (session) => session.date === dayKey,
+          );
+          const isToday = dayKey === todayKey;
+
+          return (
+            <section
+              key={dayKey}
+              className="rounded-lg border border-outline-variant/20 bg-white p-3 shadow-sm"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-text-main">
+                  {formatWorkdayLabel(day)}
+                </h3>
+                {isToday ? (
+                  <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-xs font-semibold text-primary">
+                    Hoje
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-2">
+                <PeriodSection
+                  label={periodLabels.morning}
+                  session={getSessionForPeriod(daySessions, 'morning')}
+                  onAdd={openScheduleModal}
+                />
+                <PeriodSection
+                  label={periodLabels.afternoon}
+                  session={getSessionForPeriod(daySessions, 'afternoon')}
+                  onAdd={openScheduleModal}
+                />
+              </div>
+            </section>
+          );
+        })
+      )}
+    </div>
   );
 }
