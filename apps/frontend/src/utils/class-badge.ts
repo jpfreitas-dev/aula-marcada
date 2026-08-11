@@ -17,7 +17,7 @@ export function getClassBadge(session: ClassSession): ClassBadge {
     };
   }
 
-  if (session.isMakeup) {
+  if (session.linkedAbsenceIds.length > 0) {
     return {
       label: 'Aula reposta',
       variant: 'info',

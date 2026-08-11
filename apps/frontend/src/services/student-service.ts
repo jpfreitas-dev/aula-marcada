@@ -1,12 +1,20 @@
-import { mockStudents } from '@/mocks';
+import {
+  ensureMockStoreInitialized,
+  getStudentById,
+  getStudentsSnapshot,
+} from '@/mocks';
 import type { Student } from '@/types';
 
 export async function listStudents(): Promise<Student[]> {
-  return [...mockStudents].sort((a, b) =>
+  ensureMockStoreInitialized();
+  return [...getStudentsSnapshot()].sort((a, b) =>
     a.name.localeCompare(b.name, 'pt-BR'),
   );
 }
 
-export async function getStudentById(id: string): Promise<Student | null> {
-  return mockStudents.find((student) => student.id === id) ?? null;
+export async function getStudentByIdService(
+  id: string,
+): Promise<Student | null> {
+  ensureMockStoreInitialized();
+  return getStudentById(id) ?? null;
 }

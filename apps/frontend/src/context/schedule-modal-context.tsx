@@ -7,10 +7,13 @@ import {
   type ReactNode,
 } from 'react';
 
-import { BottomSheet } from '@/components/ui/bottom-sheet';
+import {
+  ScheduleClassModal,
+  type ScheduleSlot,
+} from '@/components/classes/schedule-class-modal';
 
 type ScheduleModalContextValue = {
-  openScheduleModal: () => void;
+  openScheduleModal: (slot?: ScheduleSlot) => void;
   closeScheduleModal: () => void;
 };
 
@@ -20,9 +23,17 @@ const ScheduleModalContext = createContext<ScheduleModalContextValue | null>(
 
 export function ScheduleModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [initialSlot, setInitialSlot] = useState<ScheduleSlot | undefined>();
 
-  const openScheduleModal = useCallback(() => setOpen(true), []);
-  const closeScheduleModal = useCallback(() => setOpen(false), []);
+  const openScheduleModal = useCallback((slot?: ScheduleSlot) => {
+    setInitialSlot(slot);
+    setOpen(true);
+  }, []);
+
+  const closeScheduleModal = useCallback(() => {
+    setOpen(false);
+    setInitialSlot(undefined);
+  }, []);
 
   const value = useMemo(
     () => ({ openScheduleModal, closeScheduleModal }),
@@ -32,17 +43,11 @@ export function ScheduleModalProvider({ children }: { children: ReactNode }) {
   return (
     <ScheduleModalContext.Provider value={value}>
       {children}
-      <BottomSheet
+      <ScheduleClassModal
         open={open}
-        title="Agendar aula"
+        initialSlot={initialSlot}
         onClose={closeScheduleModal}
-      >
-        <p className="text-sm text-text-muted">
-          O formulário completo de agendamento será implementado na próxima
-          fase. Por enquanto, este painel confirma a navegação e o primitivo de
-          bottom sheet.
-        </p>
-      </BottomSheet>
+      />
     </ScheduleModalContext.Provider>
   );
 }

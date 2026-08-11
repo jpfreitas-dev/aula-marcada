@@ -49,7 +49,7 @@ export function BottomNav() {
       <div className="relative -top-6">
         <button
           type="button"
-          onClick={openScheduleModal}
+          onClick={() => openScheduleModal()}
           className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-primary-container text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
           aria-label="Adicionar aula"
         >

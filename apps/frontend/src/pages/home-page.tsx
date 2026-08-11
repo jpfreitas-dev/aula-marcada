@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
 import { Icon } from '@/components/ui/icon';
+import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
+import { useMockStore } from '@/hooks/use-mock-store';
 import { usePageHeader } from '@/hooks/use-page-header';
 import {
   getSessionForPeriod,
@@ -65,11 +67,17 @@ function DayWeekToggle({
 function PeriodSection({
   label,
   session,
+  date,
+  period,
   onAdd,
+  onOpenClass,
 }: {
   label: string;
   session?: ClassSession;
-  onAdd: () => void;
+  date: string;
+  period: ClassPeriod;
+  onAdd: (slot: { date: string; period: ClassPeriod }) => void;
+  onOpenClass: (classId: string) => void;
 }) {
   return (
     <section className="mt-4 flex flex-col gap-stack-sm">
@@ -77,21 +85,23 @@ function PeriodSection({
         {label}
       </h3>
       {session ? (
-        <ClassCard session={session} />
+        <ClassCard session={session} onClick={() => onOpenClass(session.id)} />
       ) : (
-        <EmptySlot onClick={onAdd} />
+        <EmptySlot onClick={() => onAdd({ date, period })} />
       )}
     </section>
   );
 }
 
 export function HomePage() {
+  useMockStore();
   const [view, setView] = useState<AgendaView>('day');
   const [selectedDate, setSelectedDate] = useState(() =>
     getDefaultAgendaDate(),
   );
   const [sessions, setSessions] = useState<ClassSession[]>([]);
   const { openScheduleModal } = useScheduleModal();
+  const { openClassDetail } = useClassDetail();
 
   const headerToggle = useMemo(
     () => <DayWeekToggle view={view} onChange={setView} />,
@@ -155,12 +165,18 @@ export function HomePage() {
           <PeriodSection
             label={periodLabels.morning}
             session={getSessionForPeriod(sessions, 'morning')}
+            date={toDateKey(selectedDate)}
+            period="morning"
             onAdd={openScheduleModal}
+            onOpenClass={openClassDetail}
           />
           <PeriodSection
             label={periodLabels.afternoon}
             session={getSessionForPeriod(sessions, 'afternoon')}
+            date={toDateKey(selectedDate)}
+            period="afternoon"
             onAdd={openScheduleModal}
+            onOpenClass={openClassDetail}
           />
         </>
       ) : (
@@ -190,12 +206,18 @@ export function HomePage() {
                 <PeriodSection
                   label={periodLabels.morning}
                   session={getSessionForPeriod(daySessions, 'morning')}
+                  date={dayKey}
+                  period="morning"
                   onAdd={openScheduleModal}
+                  onOpenClass={openClassDetail}
                 />
                 <PeriodSection
                   label={periodLabels.afternoon}
                   session={getSessionForPeriod(daySessions, 'afternoon')}
+                  date={dayKey}
+                  period="afternoon"
                   onAdd={openScheduleModal}
+                  onOpenClass={openClassDetail}
                 />
               </div>
             </section>

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getStudentById } from '@/services/student-service';
+import { getStudentByIdService } from '@/services/student-service';
 import type { Student } from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import {
@@ -20,7 +20,7 @@ export function StudentProfilePage() {
       return;
     }
 
-    void getStudentById(id).then(setStudent);
+    void getStudentByIdService(id).then(setStudent);
   }, [id]);
 
   if (!student) {

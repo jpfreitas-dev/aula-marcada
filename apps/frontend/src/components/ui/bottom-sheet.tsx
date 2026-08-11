@@ -7,6 +7,8 @@ type BottomSheetProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  footer?: ReactNode;
+  tall?: boolean;
 };
 
 export function BottomSheet({
@@ -14,6 +16,8 @@ export function BottomSheet({
   title,
   onClose,
   children,
+  footer,
+  tall = false,
 }: BottomSheetProps) {
   if (!open) {
     return null;
@@ -23,7 +27,7 @@ export function BottomSheet({
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
       <button
         type="button"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/50"
         aria-label="Fechar painel"
         onClick={onClose}
       />
@@ -31,12 +35,17 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
-        className="relative z-10 w-full max-w-lg rounded-t-2xl bg-white px-margin-main pb-6 pt-4 shadow-2xl"
+        className={`relative z-10 flex w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-2xl ${
+          tall ? 'h-[75dvh]' : 'max-h-[85dvh]'
+        }`}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1.5 w-12 rounded-full bg-outline-variant/50" />
+        </div>
+        <div className="flex items-center justify-between border-b border-surface-variant px-margin-main py-3">
           <h2
             id="bottom-sheet-title"
-            className="font-display text-headline-md font-semibold text-purple-900"
+            className="font-display text-headline-md font-bold text-text-main"
           >
             {title}
           </h2>
@@ -49,7 +58,14 @@ export function BottomSheet({
             <Icon name="close" />
           </button>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto px-margin-main py-4">
+          {children}
+        </div>
+        {footer ? (
+          <div className="border-t border-surface-variant bg-white px-margin-main py-4">
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>
   );

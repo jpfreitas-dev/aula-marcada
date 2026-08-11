@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { BottomNav } from '@/components/layout/bottom-nav';
+import { ClassDetailProvider } from '@/context/class-detail-context';
 import {
   PageHeaderProvider,
   usePageHeaderContext,
@@ -26,7 +27,9 @@ export function AppShell() {
   return (
     <PageHeaderProvider>
       <ScheduleModalProvider>
-        <ShellLayout />
+        <ClassDetailProvider>
+          <ShellLayout />
+        </ClassDetailProvider>
       </ScheduleModalProvider>
     </PageHeaderProvider>
   );

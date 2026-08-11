@@ -1,22 +1,69 @@
-import { mockClasses } from '@/mocks';
-import type { ClassPeriod, ClassSession } from '@/types';
+import {
+  ensureMockStoreInitialized,
+  getClassById,
+  getClassesSnapshot,
+  getStudentById,
+  setClasses,
+  setStudents,
+} from '@/mocks';
+import type {
+  ClassDetailInput,
+  ClassPeriod,
+  ClassSession,
+  CreateClassInput,
+  LinkMakeupInput,
+  RescheduleClassInput,
+} from '@/types';
+import {
+  calculateExpectedAmount,
+  computeFinancialStatus,
+} from '@/utils/class-value';
+import {
+  addMinutesToTime,
+  defaultStartTimeForPeriod,
+  minutesBetween,
+  periodFromStartTime,
+} from '@/utils/time';
 import { toDateKey } from '@/utils/workday';
 
+function syncFinancialStatus(session: ClassSession): ClassSession {
+  if (session.attendance !== 'attended') {
+    return {
+      ...session,
+      financialStatus: 'pending',
+    };
+  }
+
+  return {
+    ...session,
+    financialStatus: computeFinancialStatus(
+      session.expectedAmount,
+      session.paidAmount,
+    ),
+  };
+}
+
+function createId(prefix: string): string {
+  return `${prefix}-${crypto.randomUUID()}`;
+}
+
 export async function listClassesByDate(date: Date): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
   const dateKey = toDateKey(date);
-  return mockClasses.filter((session) => session.date === dateKey);
+  return getClassesSnapshot().filter((session) => session.date === dateKey);
 }
 
 export async function listClassesByWeek(
   weekStart: Date,
 ): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
   const dates = Array.from({ length: 5 }, (_, index) => {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + index);
     return toDateKey(day);
   });
 
-  return mockClasses.filter((session) => dates.includes(session.date));
+  return getClassesSnapshot().filter((session) => dates.includes(session.date));
 }
 
 export function getSessionForPeriod(
@@ -26,6 +73,411 @@ export function getSessionForPeriod(
   return sessions.find((session) => session.period === period);
 }
 
-export async function getClassById(id: string): Promise<ClassSession | null> {
-  return mockClasses.find((session) => session.id === id) ?? null;
+export async function getClassByIdService(
+  id: string,
+): Promise<ClassSession | null> {
+  ensureMockStoreInitialized();
+  return getClassById(id) ?? null;
+}
+
+export async function getAvailablePeriods(
+  date: string,
+  excludeClassId?: string,
+): Promise<ClassPeriod[]> {
+  ensureMockStoreInitialized();
+  const occupied = getClassesSnapshot()
+    .filter((session) => session.date === date && session.id !== excludeClassId)
+    .map((session) => session.period);
+
+  return (['morning', 'afternoon'] as ClassPeriod[]).filter(
+    (period) => !occupied.includes(period),
+  );
+}
+
+export async function createClass(
+  input: CreateClassInput,
+): Promise<ClassSession> {
+  ensureMockStoreInitialized();
+  const student = getStudentById(input.studentId);
+
+  if (!student) {
+    throw new Error('Student not found');
+  }
+
+  const available = await getAvailablePeriods(input.date);
+  if (!available.includes(input.period)) {
+    throw new Error('Period unavailable');
+  }
+
+  if (input.isMakeupOnly && input.linkedAbsenceIds.length === 0) {
+    throw new Error('Makeup class requires linked absences');
+  }
+
+  const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
+  const session: ClassSession = syncFinancialStatus({
+    id: createId('class'),
+    studentId: student.id,
+    studentName: student.name,
+    date: input.date,
+    period: input.period,
+    startTime: input.startTime,
+    endTime,
+    durationMinutes: input.durationMinutes,
+    expectedAmount: input.expectedAmount,
+    paidAmount: 0,
+    attendance: 'empty',
+    financialStatus: 'pending',
+    isMakeup: input.linkedAbsenceIds.length > 0,
+    isMakeupOnly: input.isMakeupOnly,
+    linkedAbsenceIds: input.linkedAbsenceIds,
+    hasManualAmountOverride: input.hasManualAmountOverride,
+  });
+
+  setClasses((current) => [...current, session]);
+
+  if (input.linkedAbsenceIds.length > 0) {
+    applyMakeupCoverage(
+      session.id,
+      input.linkedAbsenceIds,
+      session.durationMinutes,
+    );
+  }
+
+  return session;
+}
+
+function applyMakeupCoverage(
+  targetClassId: string,
+  absenceIds: string[],
+  availableMinutes: number,
+): void {
+  let remaining = availableMinutes;
+
+  setClasses((current) =>
+    current.map((session) => {
+      if (!absenceIds.includes(session.id)) {
+        return session;
+      }
+
+      const pending = session.pendingMakeupMinutes ?? session.durationMinutes;
+      const covered = Math.min(pending, remaining);
+      remaining -= covered;
+
+      return {
+        ...session,
+        pendingMakeupMinutes: pending - covered,
+      };
+    }),
+  );
+
+  setClasses((current) =>
+    current.map((session) =>
+      session.id === targetClassId
+        ? {
+            ...session,
+            linkedAbsenceIds: absenceIds,
+            isMakeup: true,
+          }
+        : session,
+    ),
+  );
+}
+
+export async function saveClassDetail(
+  id: string,
+  input: ClassDetailInput,
+): Promise<ClassSession> {
+  ensureMockStoreInitialized();
+  const existing = getClassById(id);
+
+  if (!existing) {
+    throw new Error('Class not found');
+  }
+
+  let next: ClassSession = { ...existing };
+
+  if (input.attendance === 'empty') {
+    next = {
+      ...next,
+      attendance: 'empty',
+      paidAmount: 0,
+      paymentMethod: undefined,
+      content: undefined,
+      notes: undefined,
+      financialStatus: 'pending',
+    };
+  }
+
+  if (input.attendance === 'absent') {
+    next = {
+      ...next,
+      attendance: 'absent',
+      paidAmount: 0,
+      paymentMethod: undefined,
+      content: undefined,
+      notes: undefined,
+      financialStatus: 'pending',
+      pendingMakeupMinutes: next.pendingMakeupMinutes ?? next.durationMinutes,
+    };
+  }
+
+  if (input.attendance === 'attended') {
+    const student = getStudentById(next.studentId);
+    let paidAmount = input.paidAmount;
+    let advanceBalance = student?.advanceBalance ?? 0;
+
+    if (student && advanceBalance > 0 && paidAmount < next.expectedAmount) {
+      const allocation = Math.min(
+        advanceBalance,
+        next.expectedAmount - paidAmount,
+      );
+      paidAmount += allocation;
+      advanceBalance -= allocation;
+
+      setStudents((current) =>
+        current.map((item) =>
+          item.id === student.id ? { ...item, advanceBalance } : item,
+        ),
+      );
+    }
+
+    next = syncFinancialStatus({
+      ...next,
+      attendance: 'attended',
+      paidAmount,
+      paymentMethod: input.paymentMethod,
+      content: input.content,
+      notes: input.notes,
+    });
+  }
+
+  setClasses((current) =>
+    current.map((session) => (session.id === id ? next : session)),
+  );
+
+  return next;
+}
+
+export async function deleteClass(id: string): Promise<void> {
+  ensureMockStoreInitialized();
+  const session = getClassById(id);
+
+  if (!session) {
+    return;
+  }
+
+  if (session.linkedAbsenceIds.length > 0) {
+    setClasses((current) =>
+      current.map((item) => {
+        if (!session.linkedAbsenceIds.includes(item.id)) {
+          return item;
+        }
+
+        return {
+          ...item,
+          pendingMakeupMinutes:
+            (item.pendingMakeupMinutes ?? 0) + item.durationMinutes,
+        };
+      }),
+    );
+  }
+
+  setClasses((current) => current.filter((item) => item.id !== id));
+}
+
+export async function getPendingAbsences(
+  studentId: string,
+): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
+  return getClassesSnapshot().filter(
+    (session) =>
+      session.studentId === studentId &&
+      session.attendance === 'absent' &&
+      (session.pendingMakeupMinutes ?? session.durationMinutes) > 0,
+  );
+}
+
+export function calculateRequiredMakeupMinutes(
+  targetClass: ClassSession | null,
+  absenceIds: string[],
+  isMakeupOnly: boolean,
+): number {
+  const absences = absenceIds
+    .map((id) => getClassById(id))
+    .filter((session): session is ClassSession => Boolean(session));
+
+  const absenceMinutes = absences.reduce(
+    (total, session) =>
+      total + (session.pendingMakeupMinutes ?? session.durationMinutes),
+    0,
+  );
+
+  if (isMakeupOnly || !targetClass) {
+    return absenceMinutes;
+  }
+
+  return targetClass.durationMinutes + absenceMinutes;
+}
+
+export async function linkMakeup(
+  input: LinkMakeupInput,
+): Promise<ClassSession> {
+  ensureMockStoreInitialized();
+  const durationMinutes = minutesBetween(input.startTime, input.endTime);
+  const student = getStudentById(input.studentId);
+
+  if (!student) {
+    throw new Error('Student not found');
+  }
+
+  if (input.absenceIds.length === 0) {
+    throw new Error('Select at least one absence');
+  }
+
+  if (input.targetClassId) {
+    const target = getClassById(input.targetClassId);
+
+    if (!target) {
+      throw new Error('Class not found');
+    }
+
+    if (target.attendance !== 'empty') {
+      throw new Error('Cannot link makeup to filled class');
+    }
+
+    const required = calculateRequiredMakeupMinutes(
+      target,
+      input.absenceIds,
+      false,
+    );
+
+    if (durationMinutes < required) {
+      throw new Error('Insufficient duration');
+    }
+
+    const expectedAmount = target.hasManualAmountOverride
+      ? Math.round(
+          (durationMinutes / target.durationMinutes) *
+            target.expectedAmount *
+            100,
+        ) / 100
+      : calculateExpectedAmount(durationMinutes, student.hourlyRate);
+
+    const updated: ClassSession = {
+      ...target,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      durationMinutes,
+      expectedAmount,
+      period: periodFromStartTime(input.startTime),
+      linkedAbsenceIds: input.absenceIds,
+      isMakeup: true,
+    };
+
+    setClasses((current) =>
+      current.map((session) => (session.id === updated.id ? updated : session)),
+    );
+
+    applyMakeupCoverage(updated.id, input.absenceIds, durationMinutes);
+
+    return updated;
+  }
+
+  if (!input.date || !input.period) {
+    throw new Error('Date and period are required for new makeup class');
+  }
+
+  const required = calculateRequiredMakeupMinutes(null, input.absenceIds, true);
+
+  if (durationMinutes < required) {
+    throw new Error('Insufficient duration');
+  }
+
+  const expectedAmount = calculateExpectedAmount(
+    durationMinutes,
+    student.hourlyRate,
+  );
+
+  return createClass({
+    studentId: student.id,
+    date: input.date,
+    period: input.period,
+    startTime: input.startTime,
+    durationMinutes,
+    expectedAmount,
+    isMakeupOnly: true,
+    linkedAbsenceIds: input.absenceIds,
+  });
+}
+
+export async function rescheduleClass(
+  id: string,
+  input: RescheduleClassInput,
+): Promise<ClassSession> {
+  ensureMockStoreInitialized();
+  const existing = getClassById(id);
+
+  if (!existing) {
+    throw new Error('Class not found');
+  }
+
+  if (existing.attendance !== 'empty') {
+    throw new Error('Cannot reschedule filled class');
+  }
+
+  const available = await getAvailablePeriods(input.date, id);
+  if (!available.includes(input.period)) {
+    throw new Error('Period unavailable');
+  }
+
+  const student = getStudentById(existing.studentId);
+  const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
+  const linkedAbsences = getClassesSnapshot().filter((session) =>
+    existing.linkedAbsenceIds.includes(session.id),
+  );
+  const requiredMakeup = linkedAbsences.reduce(
+    (total, session) =>
+      total + (session.pendingMakeupMinutes ?? session.durationMinutes),
+    0,
+  );
+  const minimumDuration = existing.durationMinutes + requiredMakeup;
+
+  if (
+    existing.linkedAbsenceIds.length > 0 &&
+    input.durationMinutes < minimumDuration
+  ) {
+    throw new Error('Insufficient duration for linked makeup');
+  }
+
+  const expectedAmount = existing.hasManualAmountOverride
+    ? Math.round(
+        (input.durationMinutes / existing.durationMinutes) *
+          existing.expectedAmount *
+          100,
+      ) / 100
+    : calculateExpectedAmount(input.durationMinutes, student?.hourlyRate ?? 0);
+
+  const updated: ClassSession = {
+    ...existing,
+    date: input.date,
+    period: input.period,
+    startTime: input.startTime,
+    endTime,
+    durationMinutes: input.durationMinutes,
+    expectedAmount,
+  };
+
+  setClasses((current) =>
+    current.map((session) => (session.id === id ? updated : session)),
+  );
+
+  return updated;
+}
+
+export function isMakeupFullyCovered(session: ClassSession): boolean {
+  return (session.pendingMakeupMinutes ?? session.durationMinutes) === 0;
+}
+
+export function getDefaultScheduleStart(period: ClassPeriod): string {
+  return defaultStartTimeForPeriod(period);
 }

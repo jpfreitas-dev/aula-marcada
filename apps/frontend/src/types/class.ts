@@ -1,3 +1,5 @@
+import type { PaymentMethod } from './payment';
+
 export type AttendanceStatus = 'empty' | 'attended' | 'absent';
 
 export type ClassFinancialStatus = 'pending' | 'partial' | 'settled';
@@ -18,8 +20,13 @@ export type ClassSession = {
   attendance: AttendanceStatus;
   financialStatus: ClassFinancialStatus;
   isMakeup: boolean;
-  linkedAbsenceId?: string;
-  paymentMethod?: 'pix' | 'cash';
+  isMakeupOnly: boolean;
+  linkedAbsenceIds: string[];
+  pendingMakeupMinutes?: number;
+  paymentMethod?: PaymentMethod;
+  content?: string;
+  notes?: string;
+  hasManualAmountOverride?: boolean;
 };
 
 export type ClassBadgeVariant =
@@ -28,4 +35,41 @@ export type ClassBadgeVariant =
 export type ClassBadge = {
   label: string;
   variant: ClassBadgeVariant;
+};
+
+export type CreateClassInput = {
+  studentId: string;
+  date: string;
+  period: ClassPeriod;
+  startTime: string;
+  durationMinutes: number;
+  expectedAmount: number;
+  isMakeupOnly: boolean;
+  linkedAbsenceIds: string[];
+  hasManualAmountOverride?: boolean;
+};
+
+export type ClassDetailInput = {
+  attendance: AttendanceStatus;
+  paidAmount: number;
+  paymentMethod?: PaymentMethod;
+  content?: string;
+  notes?: string;
+};
+
+export type LinkMakeupInput = {
+  targetClassId?: string;
+  studentId: string;
+  absenceIds: string[];
+  startTime: string;
+  endTime: string;
+  date?: string;
+  period?: ClassPeriod;
+};
+
+export type RescheduleClassInput = {
+  date: string;
+  period: ClassPeriod;
+  startTime: string;
+  durationMinutes: number;
 };

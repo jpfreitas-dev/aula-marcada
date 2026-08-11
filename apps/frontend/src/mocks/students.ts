@@ -46,4 +46,13 @@ export const mockStudents: Student[] = [
     nextClassAt: nextClassAt(1, '14:00'),
     financialStatus: 'partial',
   },
+  {
+    id: 'student-carlos',
+    name: 'Carlos',
+    phone: '(11) 96543-2109',
+    hourlyRate: 50,
+    advanceBalance: 0,
+    nextClassAt: nextClassAt(2, '18:00'),
+    financialStatus: 'pending',
+  },
 ];
