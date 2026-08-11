@@ -130,7 +130,7 @@ export function TimeRangeInput({
 
       {activeField === 'start' ? (
         <div
-          className={`absolute left-0 right-0 z-30 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
+          className={`absolute left-0 right-0 z-50 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
         >
@@ -145,7 +145,7 @@ export function TimeRangeInput({
 
       {activeField === 'end' ? (
         <div
-          className={`absolute left-0 right-0 z-30 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
+          className={`absolute left-0 right-0 z-50 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
         >

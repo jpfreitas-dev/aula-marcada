@@ -5,7 +5,7 @@ import type { StudentWeekday } from '@/types';
 import {
   clampTimeToBounds,
   getEffectiveEndMinTime,
-  getTimeRangeBoundsForStartTime,
+  getRecurrenceTimeRangeBounds,
   MIN_CLASS_DURATION_MINUTES,
 } from '@/utils/time';
 
@@ -35,7 +35,7 @@ export function StudentRecurrenceRow({
   onEndChange,
   onRemove,
 }: StudentRecurrenceRowProps) {
-  const timeRangeBounds = getTimeRangeBoundsForStartTime(row.startTime);
+  const timeRangeBounds = getRecurrenceTimeRangeBounds(row.startTime);
 
   return (
     <div className={`${fieldClassName} flex min-w-0 items-center gap-1 px-1`}>
@@ -45,7 +45,7 @@ export function StudentRecurrenceRow({
           onChange={(event) =>
             onWeekdayChange(Number(event.target.value) as StudentWeekday)
           }
-          className="w-full appearance-none truncate border-none bg-transparent py-0 pl-2 pr-6 text-sm text-text-main focus:ring-0"
+          className="w-full appearance-none truncate border-none bg-transparent py-0 pl-2 pr-6 text-sm text-text-main outline-none focus:border-none focus:outline-none focus:ring-0 focus-visible:outline-none"
         >
           {weekdayOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -63,7 +63,7 @@ export function StudentRecurrenceRow({
 
       <TimeRangeInput
         variant="plain"
-        pickerPlacement="above"
+        pickerPlacement="below"
         className="min-w-0 flex-1"
         startTime={row.startTime}
         endTime={row.endTime}

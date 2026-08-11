@@ -39,7 +39,7 @@ export function BottomSheet({
           tall ? 'h-[85dvh]' : 'max-h-[95dvh]'
         }`}
       >
-        <div className="shrink-0">
+        <div className="relative z-20 shrink-0 bg-white">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1.5 w-12 rounded-full bg-outline-variant/50" />
           </div>
@@ -58,7 +58,7 @@ export function BottomSheet({
             />
           </div>
         </div>
-        <div className="scrollbar-hidden min-h-0 flex-1 px-margin-main py-4">
+        <div className="scrollbar-hidden relative z-10 min-h-0 flex-1 overflow-x-visible px-margin-main py-4">
           {children}
         </div>
         {footer ? (

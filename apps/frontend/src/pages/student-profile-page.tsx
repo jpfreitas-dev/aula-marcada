@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { DeactivateStudentModal } from '@/components/students/deactivate-student-modal';
 import { EditStudentPersonalModal } from '@/components/students/edit-student-personal-modal';
 import { EditStudentSettingsModal } from '@/components/students/edit-student-settings-modal';
+import { ReceivePaymentModal } from '@/components/students/receive-payment-modal';
 import { StudentAttendanceCard } from '@/components/students/student-attendance-card';
 import { StudentFinancialCard } from '@/components/students/student-financial-card';
 import { StudentSettingsCard } from '@/components/students/student-settings-card';
@@ -31,6 +32,7 @@ export function StudentProfilePage() {
   const [personalModalOpen, setPersonalModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [receivePaymentOpen, setReceivePaymentOpen] = useState(false);
 
   const backTo =
     student && !student.active ? '/students?view=former' : '/students';
@@ -104,6 +106,9 @@ export function StudentProfilePage() {
       <StudentFinancialCard
         label={financialContent.label}
         tone={financialContent.tone}
+        onReceivePayment={
+          student.active ? () => setReceivePaymentOpen(true) : undefined
+        }
       />
 
       <StudentSettingsCard
@@ -147,6 +152,13 @@ export function StudentProfilePage() {
         open={deactivateModalOpen}
         student={student}
         onClose={() => setDeactivateModalOpen(false)}
+      />
+
+      <ReceivePaymentModal
+        open={receivePaymentOpen}
+        student={student}
+        pending={pending}
+        onClose={() => setReceivePaymentOpen(false)}
       />
     </div>
   );

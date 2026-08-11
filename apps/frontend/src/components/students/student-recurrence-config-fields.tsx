@@ -13,7 +13,7 @@ import {
 import { formatCurrencyInputFromRaw } from '@/utils/class-value';
 import {
   applyStartTimeChange,
-  getTimeRangeBoundsForStartTime,
+  getRecurrenceTimeRangeBounds,
   MIN_CLASS_DURATION_MINUTES,
 } from '@/utils/time';
 
@@ -24,6 +24,10 @@ export const studentConfigLabelClassName =
 
 export const studentConfigFieldClassName =
   'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+
+/** Recurrence row wrapper — no focus ring (focus lives on inner controls). */
+export const studentConfigRowClassName =
+  'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm';
 
 function toRecurrenceInput(row: RecurrenceRowValue) {
   return {
@@ -128,7 +132,7 @@ export function StudentRecurrenceConfigFields({
           return row;
         }
 
-        const bounds = getTimeRangeBoundsForStartTime(nextStart);
+        const bounds = getRecurrenceTimeRangeBounds(nextStart);
         const { startTime, endTime } = applyStartTimeChange(
           row.startTime,
           row.endTime,
@@ -167,7 +171,7 @@ export function StudentRecurrenceConfigFields({
                     row.weekday,
                     excludeStudentId,
                   )}
-                  fieldClassName={studentConfigFieldClassName}
+                  fieldClassName={studentConfigRowClassName}
                   onWeekdayChange={(weekday) =>
                     updateRecurrence(row.id, { weekday })
                   }
@@ -200,13 +204,15 @@ export function StudentRecurrenceConfigFields({
             className="ml-1 flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-purple-900"
           >
             <Icon name="add_circle" className="text-base" />
-            Adicionar outra aula
+            {recurrences.length === 0
+              ? 'Adicionar aula'
+              : 'Adicionar outra aula'}
           </button>
         ) : null}
       </div>
 
       <label className="flex flex-col">
-        <span className={studentConfigLabelClassName}>Valor por Aula (R$)</span>
+        <span className={studentConfigLabelClassName}>Valor por hora (R$)</span>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
             R$

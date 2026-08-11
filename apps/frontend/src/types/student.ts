@@ -5,7 +5,10 @@ export type Student = {
   phone: string;
   email?: string;
   hourlyRate: number;
-  advanceBalance: number;
+  /** Advance received via Pix that has not yet been consumed by classes. */
+  advanceBalancePix: number;
+  /** Advance received via Cash that has not yet been consumed by classes. */
+  advanceBalanceCash: number;
   nextClassAt?: string;
   financialStatus: StudentFinancialStatus;
   active: boolean;

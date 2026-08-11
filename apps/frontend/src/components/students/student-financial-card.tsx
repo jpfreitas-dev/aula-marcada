@@ -24,9 +24,15 @@ export function StudentFinancialCard({
         Financeiro
       </h3>
       <p className={`mt-3 text-base font-bold ${toneClasses[tone]}`}>{label}</p>
-      <Button type="button" className="mt-4 w-full" onClick={onReceivePayment}>
-        + Receber pagamento
-      </Button>
+      {onReceivePayment ? (
+        <Button
+          type="button"
+          className="mt-4 w-full"
+          onClick={onReceivePayment}
+        >
+          + Receber pagamento
+        </Button>
+      ) : null}
     </section>
   );
 }

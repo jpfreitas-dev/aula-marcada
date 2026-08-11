@@ -7,6 +7,21 @@ function paymentMethodLabel(method: PaymentMethod): string {
 }
 
 function settledBadgeLabel(session: ClassSession): string {
+  const paidPix = session.paidPix ?? 0;
+  const paidCash = session.paidCash ?? 0;
+
+  if (paidPix > 0 && paidCash > 0) {
+    return 'Pago';
+  }
+
+  if (paidPix > 0) {
+    return 'Pago · Pix';
+  }
+
+  if (paidCash > 0) {
+    return 'Pago · Dinheiro';
+  }
+
   if (!session.paymentMethod) {
     return 'Pago';
   }

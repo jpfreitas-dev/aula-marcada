@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import {
-  createRecurrenceRow,
   StudentRecurrenceConfigFields,
   toCreateRecurrenceInputs,
   type RecurrenceRowValue,
@@ -34,9 +33,7 @@ function CreateStudentForm({ onClose }: { onClose: () => void }) {
     phone: '',
   });
   const [hourlyRateInput, setHourlyRateInput] = useState('50,00');
-  const [recurrences, setRecurrences] = useState<RecurrenceRowValue[]>([
-    createRecurrenceRow(),
-  ]);
+  const [recurrences, setRecurrences] = useState<RecurrenceRowValue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 

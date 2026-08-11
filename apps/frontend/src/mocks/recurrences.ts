@@ -10,6 +10,14 @@ function weekdayFromWorkdayOffset(
   ).getDay() as StudentRecurrence['weekday'];
 }
 
+/**
+ * Recurrences aligned with mock classes:
+ * - João: today (offset 0) morning 08:00–09:00 (today's class is already filled;
+ *   horizon still generates future same-weekday empties).
+ * - Pedro: tomorrow morning 10:00–11:00.
+ * - Ana: tomorrow afternoon 14:00–15:00.
+ * Lucas (ex-aluno) has no recurrence.
+ */
 export function createInitialRecurrences(): StudentRecurrence[] {
   return [
     {

@@ -32,7 +32,7 @@ export function StudentSettingsCard({
 
       <div className="mt-3 flex flex-col gap-3">
         <p className="text-sm text-text-main">
-          Valor por aula:{' '}
+          Valor por hora:{' '}
           <span className="font-medium">{formatCurrency(hourlyRate)}</span>
         </p>
 

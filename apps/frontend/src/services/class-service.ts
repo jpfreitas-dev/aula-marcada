@@ -15,7 +15,14 @@ import type {
   RescheduleClassInput,
 } from '@/types';
 import {
+  allocateMethodPayment,
+  consumeAdvanceBalance,
+  resolvePaymentMethodFromParts,
+  roundMoney,
+} from '@/utils/advance-balance';
+import {
   calculateExpectedAmount,
+  calculateStudentPendingSummary,
   computeFinancialStatus,
 } from '@/utils/class-value';
 import {
@@ -23,6 +30,7 @@ import {
   isLockedRepostaAbsence,
 } from '@/utils/class-session';
 import { isSchedulePeriodOpen } from '@/utils/schedule-period';
+import { resolveStudentFinancialView } from '@/utils/student-financial';
 import {
   addMinutesToTime,
   defaultStartTimeForPeriod,
@@ -54,6 +62,84 @@ function syncFinancialStatus(session: ClassSession): ClassSession {
       session.paidAmount,
     ),
   };
+}
+
+function restoreAdvanceFromSession(
+  session: ClassSession,
+  options?: { excludeClassId?: string },
+): void {
+  const advancePix = session.advanceAppliedPix ?? 0;
+  const advanceCash = session.advanceAppliedCash ?? 0;
+  if (advancePix <= 0 && advanceCash <= 0) {
+    return;
+  }
+
+  const student = getStudentById(session.studentId);
+  if (!student) {
+    return;
+  }
+
+  const nextBuckets = {
+    advanceBalancePix: roundMoney(student.advanceBalancePix + advancePix),
+    advanceBalanceCash: roundMoney(student.advanceBalanceCash + advanceCash),
+  };
+
+  const studentClasses = getClassesSnapshot().filter(
+    (item) =>
+      item.studentId === student.id &&
+      item.id !== (options?.excludeClassId ?? session.id),
+  );
+  const pending = calculateStudentPendingSummary(studentClasses);
+  const financialView = resolveStudentFinancialView(
+    { ...student, ...nextBuckets },
+    pending,
+  );
+
+  setStudents((current) =>
+    current.map((item) =>
+      item.id === student.id
+        ? {
+            ...item,
+            ...nextBuckets,
+            financialStatus:
+              financialView === 'pending'
+                ? 'pending'
+                : financialView === 'advance'
+                  ? 'advance'
+                  : 'up_to_date',
+          }
+        : item,
+    ),
+  );
+}
+
+function refreshStudentFinancialStatus(studentId: string): void {
+  const student = getStudentById(studentId);
+  if (!student) {
+    return;
+  }
+
+  const studentClasses = getClassesSnapshot().filter(
+    (session) => session.studentId === studentId,
+  );
+  const pending = calculateStudentPendingSummary(studentClasses);
+  const financialView = resolveStudentFinancialView(student, pending);
+
+  setStudents((current) =>
+    current.map((item) =>
+      item.id === studentId
+        ? {
+            ...item,
+            financialStatus:
+              financialView === 'pending'
+                ? 'pending'
+                : financialView === 'advance'
+                  ? 'advance'
+                  : 'up_to_date',
+          }
+        : item,
+    ),
+  );
 }
 
 function createId(prefix: string): string {
@@ -245,6 +331,10 @@ export async function createClass(
     durationMinutes: input.durationMinutes,
     expectedAmount: input.expectedAmount,
     paidAmount: 0,
+    paidPix: 0,
+    paidCash: 0,
+    advanceAppliedPix: 0,
+    advanceAppliedCash: 0,
     attendance: 'empty',
     financialStatus: 'pending',
     isMakeup: input.linkedAbsenceIds.length > 0,
@@ -333,10 +423,17 @@ export async function saveClassDetail(
   }
 
   if (input.attendance === 'empty') {
+    if (existing.attendance === 'attended') {
+      restoreAdvanceFromSession(existing);
+    }
     next = {
       ...next,
       attendance: 'empty',
       paidAmount: 0,
+      paidPix: 0,
+      paidCash: 0,
+      advanceAppliedPix: 0,
+      advanceAppliedCash: 0,
       paymentMethod: undefined,
       content: undefined,
       notes: undefined,
@@ -345,10 +442,17 @@ export async function saveClassDetail(
   }
 
   if (input.attendance === 'absent') {
+    if (existing.attendance === 'attended') {
+      restoreAdvanceFromSession(existing);
+    }
     next = {
       ...next,
       attendance: 'absent',
       paidAmount: 0,
+      paidPix: 0,
+      paidCash: 0,
+      advanceAppliedPix: 0,
+      advanceAppliedCash: 0,
       paymentMethod: undefined,
       content: undefined,
       notes: undefined,
@@ -359,20 +463,96 @@ export async function saveClassDetail(
 
   if (input.attendance === 'attended') {
     const student = getStudentById(next.studentId);
-    let paidAmount = input.paidAmount;
-    let advanceBalance = student?.advanceBalance ?? 0;
+    const wasAlreadyAttended = existing.attendance === 'attended';
+    let methodPaid = roundMoney(Math.max(input.paidAmount, 0));
 
-    if (student && advanceBalance > 0 && paidAmount < next.expectedAmount) {
-      const allocation = Math.min(
-        advanceBalance,
-        next.expectedAmount - paidAmount,
+    if (methodPaid > 0 && !input.paymentMethod) {
+      throw new Error('Selecione Pix ou Dinheiro para o valor recebido agora.');
+    }
+
+    let paidPix = existing.paidPix ?? 0;
+    let paidCash = existing.paidCash ?? 0;
+    let advanceAppliedPix = existing.advanceAppliedPix ?? 0;
+    let advanceAppliedCash = existing.advanceAppliedCash ?? 0;
+    let nextAdvancePix = student?.advanceBalancePix ?? 0;
+    let nextAdvanceCash = student?.advanceBalanceCash ?? 0;
+
+    if (!wasAlreadyAttended) {
+      const consumption = consumeAdvanceBalance(
+        {
+          advanceBalancePix: nextAdvancePix,
+          advanceBalanceCash: nextAdvanceCash,
+        },
+        next.expectedAmount,
       );
-      paidAmount += allocation;
-      advanceBalance -= allocation;
+      nextAdvancePix = consumption.remainingPix;
+      nextAdvanceCash = consumption.remainingCash;
+      advanceAppliedPix = consumption.usedPix;
+      advanceAppliedCash = consumption.usedCash;
+      paidPix = consumption.usedPix;
+      paidCash = consumption.usedCash;
+
+      const maxNewMoney = roundMoney(
+        Math.max(next.expectedAmount - consumption.usedTotal, 0),
+      );
+      methodPaid = Math.min(methodPaid, maxNewMoney);
+
+      const newPayment = allocateMethodPayment(methodPaid, input.paymentMethod);
+      paidPix = roundMoney(paidPix + newPayment.paidPix);
+      paidCash = roundMoney(paidCash + newPayment.paidCash);
+    } else if (methodPaid > 0) {
+      const maxNewMoney = roundMoney(
+        Math.max(next.expectedAmount - (existing.paidAmount ?? 0), 0),
+      );
+      methodPaid = Math.min(methodPaid, maxNewMoney);
+
+      const newPayment = allocateMethodPayment(methodPaid, input.paymentMethod);
+      paidPix = roundMoney(paidPix + newPayment.paidPix);
+      paidCash = roundMoney(paidCash + newPayment.paidCash);
+    }
+
+    const paidAmount = roundMoney(paidPix + paidCash);
+    const paymentMethod = resolvePaymentMethodFromParts(paidPix, paidCash);
+
+    if (student) {
+      const studentClasses = getClassesSnapshot()
+        .filter((session) => session.studentId === student.id)
+        .map((session) =>
+          session.id === id
+            ? {
+                ...session,
+                attendance: 'attended' as const,
+                paidAmount,
+                paidPix,
+                paidCash,
+                advanceAppliedPix,
+                advanceAppliedCash,
+              }
+            : session,
+        );
+      const pending = calculateStudentPendingSummary(studentClasses);
+      const nextStudent = {
+        ...student,
+        advanceBalancePix: nextAdvancePix,
+        advanceBalanceCash: nextAdvanceCash,
+      };
+      const financialView = resolveStudentFinancialView(nextStudent, pending);
 
       setStudents((current) =>
         current.map((item) =>
-          item.id === student.id ? { ...item, advanceBalance } : item,
+          item.id === student.id
+            ? {
+                ...item,
+                advanceBalancePix: nextAdvancePix,
+                advanceBalanceCash: nextAdvanceCash,
+                financialStatus:
+                  financialView === 'pending'
+                    ? 'pending'
+                    : financialView === 'advance'
+                      ? 'advance'
+                      : 'up_to_date',
+              }
+            : item,
         ),
       );
     }
@@ -381,7 +561,11 @@ export async function saveClassDetail(
       ...next,
       attendance: 'attended',
       paidAmount,
-      paymentMethod: input.paymentMethod,
+      paidPix,
+      paidCash,
+      advanceAppliedPix,
+      advanceAppliedCash,
+      paymentMethod,
       content: input.content,
       notes: input.notes,
     });
@@ -408,6 +592,10 @@ export async function deleteClass(id: string): Promise<void> {
     );
   }
 
+  if (session.attendance === 'attended') {
+    restoreAdvanceFromSession(session, { excludeClassId: session.id });
+  }
+
   if (session.linkedAbsenceIds.length > 0) {
     setClasses((current) =>
       current.map((item) => {
@@ -424,6 +612,7 @@ export async function deleteClass(id: string): Promise<void> {
   }
 
   setClasses((current) => current.filter((item) => item.id !== id));
+  refreshStudentFinancialStatus(session.studentId);
 }
 
 export async function getPendingAbsences(

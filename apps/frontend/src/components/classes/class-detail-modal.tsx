@@ -7,7 +7,12 @@ import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Modal } from '@/components/ui/modal';
-import type { AttendanceStatus, ClassSession, PaymentMethod } from '@/types';
+import type {
+  AttendanceStatus,
+  ClassSession,
+  PaymentMethod,
+  Student,
+} from '@/types';
 import {
   deleteClass,
   getClassByIdService,
@@ -15,6 +20,14 @@ import {
   isMakeupFullyCovered,
   saveClassDetail,
 } from '@/services/class-service';
+import { getStudentByIdService } from '@/services/student-service';
+import {
+  consumeAdvanceBalance,
+  getAdvanceAppliedTotal,
+  getDirectPaidAmount,
+  getStudentAdvanceBalance,
+  resolveDirectPaymentMethod,
+} from '@/utils/advance-balance';
 import {
   formatCurrencyInput,
   formatCurrencyInputFromRaw,
@@ -38,6 +51,7 @@ export function ClassDetailModal({
   onClose,
 }: ClassDetailModalProps) {
   const [session, setSession] = useState<ClassSession | null>(null);
+  const [student, setStudent] = useState<Student | null>(null);
   const [attendance, setAttendance] = useState<AttendanceDraft>('empty');
   const [paidAmountInput, setPaidAmountInput] = useState('0,00');
   const [paymentMethod, setPaymentMethod] = useState<
@@ -51,16 +65,65 @@ export function ClassDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const applySession = (loaded: ClassSession) => {
+  const applySession = (
+    loaded: ClassSession,
+    loadedStudent?: Student | null,
+  ) => {
     setSession(loaded);
     setAttendance(loaded.attendance);
-    setPaidAmountInput(
-      formatCurrencyInput(loaded.paidAmount || loaded.expectedAmount),
-    );
-    setPaymentMethod(loaded.paymentMethod);
     setContent(loaded.content ?? '');
     setNotes(loaded.notes ?? '');
     setError(null);
+
+    if (loaded.attendance === 'attended') {
+      const advanceApplied = getAdvanceAppliedTotal(loaded);
+      const directPaid = getDirectPaidAmount(loaded);
+      const due = Math.max(loaded.expectedAmount - loaded.paidAmount, 0);
+      const directMethod = resolveDirectPaymentMethod(loaded);
+
+      if (advanceApplied >= loaded.expectedAmount && due === 0) {
+        setPaidAmountInput(formatCurrencyInput(0));
+        setPaymentMethod(undefined);
+        return;
+      }
+
+      if (due === 0) {
+        setPaidAmountInput(formatCurrencyInput(directPaid));
+        setPaymentMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
+        return;
+      }
+
+      if (advanceApplied > 0 || directPaid > 0) {
+        setPaidAmountInput(formatCurrencyInput(due));
+        setPaymentMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
+        return;
+      }
+
+      setPaidAmountInput(formatCurrencyInput(due || loaded.expectedAmount));
+      setPaymentMethod(undefined);
+      return;
+    }
+
+    const advanceTotal = loadedStudent
+      ? getStudentAdvanceBalance(loadedStudent)
+      : 0;
+    const advanceAllocation = Math.min(advanceTotal, loaded.expectedAmount);
+    const remainingDue = Math.max(loaded.expectedAmount - advanceAllocation, 0);
+
+    if (advanceAllocation >= loaded.expectedAmount) {
+      setPaidAmountInput(formatCurrencyInput(0));
+      setPaymentMethod(undefined);
+      return;
+    }
+
+    if (advanceAllocation > 0) {
+      setPaidAmountInput(formatCurrencyInput(remainingDue));
+      setPaymentMethod('pix');
+      return;
+    }
+
+    setPaidAmountInput(formatCurrencyInput(loaded.expectedAmount));
+    setPaymentMethod(loaded.paymentMethod);
   };
 
   const reloadSession = async () => {
@@ -69,9 +132,13 @@ export function ClassDetailModal({
     }
 
     const loaded = await getClassByIdService(classId);
-    if (loaded) {
-      applySession(loaded);
+    if (!loaded) {
+      return;
     }
+
+    const loadedStudent = await getStudentByIdService(loaded.studentId);
+    setStudent(loadedStudent ?? null);
+    applySession(loaded, loadedStudent);
   };
 
   useEffect(() => {
@@ -81,10 +148,18 @@ export function ClassDetailModal({
 
     let cancelled = false;
 
-    void getClassByIdService(classId).then((loaded) => {
-      if (!cancelled && loaded) {
-        applySession(loaded);
+    void getClassByIdService(classId).then(async (loaded) => {
+      if (cancelled || !loaded) {
+        return;
       }
+
+      const loadedStudent = await getStudentByIdService(loaded.studentId);
+      if (cancelled) {
+        return;
+      }
+
+      setStudent(loadedStudent ?? null);
+      applySession(loaded, loadedStudent);
     });
 
     return () => {
@@ -105,10 +180,72 @@ export function ClassDetailModal({
   const makeupCovered =
     session.attendance === 'absent' && isMakeupFullyCovered(session);
   const paidAmount = parseCurrencyInput(paidAmountInput);
-  const paymentRemaining = Math.max(session.expectedAmount - paidAmount, 0);
   const classEnded = isClassSessionEnded(session);
   const attendanceLocked = lockedReposta;
   const deleteBlocked = lockedReposta;
+
+  const willApplyAdvance =
+    attendance === 'attended' && session.attendance !== 'attended';
+  const isAlreadyAttended = session.attendance === 'attended';
+  const storedAdvanceAllocation = getAdvanceAppliedTotal(session);
+  const advanceConsumption =
+    willApplyAdvance && student
+      ? consumeAdvanceBalance(
+          {
+            advanceBalancePix: student.advanceBalancePix,
+            advanceBalanceCash: student.advanceBalanceCash,
+          },
+          session.expectedAmount,
+        )
+      : null;
+  const advanceAllocation = willApplyAdvance
+    ? (advanceConsumption?.usedTotal ?? 0)
+    : storedAdvanceAllocation;
+  const remainingDue = willApplyAdvance
+    ? Math.max(session.expectedAmount - advanceAllocation, 0)
+    : Math.max(session.expectedAmount - session.paidAmount, 0);
+  const fullyCoveredByAdvance =
+    advanceAllocation >= session.expectedAmount &&
+    (willApplyAdvance || remainingDue === 0);
+  const partiallyCoveredByAdvance =
+    advanceAllocation > 0 && advanceAllocation < session.expectedAmount;
+  /** Max receivable now in this modal — extras only via student profile. */
+  const maxPaymentAmount = remainingDue;
+  const settledWithoutMoreDue = isAlreadyAttended && remainingDue === 0;
+
+  const effectivePaidPreview = (() => {
+    if (settledWithoutMoreDue) {
+      return session.paidAmount;
+    }
+    if (willApplyAdvance) {
+      if (fullyCoveredByAdvance) {
+        return advanceAllocation;
+      }
+      return (
+        advanceAllocation +
+        (paymentMethod ? Math.min(paidAmount, maxPaymentAmount) : 0)
+      );
+    }
+    return (
+      session.paidAmount +
+      (paymentMethod ? Math.min(paidAmount, maxPaymentAmount) : 0)
+    );
+  })();
+  const stillDuePreview = Math.max(
+    session.expectedAmount - effectivePaidPreview,
+    0,
+  );
+
+  const showMethodSelectors =
+    attendance === 'attended' && !fullyCoveredByAdvance;
+  const allowUnpaidOption =
+    showMethodSelectors &&
+    advanceAllocation === 0 &&
+    !(isAlreadyAttended && session.paidAmount > 0);
+  const showPaymentAmount =
+    attendance === 'attended' &&
+    (fullyCoveredByAdvance || Boolean(paymentMethod));
+  const inputDisabled = fullyCoveredByAdvance || settledWithoutMoreDue;
 
   const toggleAttendance = (next: Exclude<AttendanceStatus, 'empty'>) => {
     if (attendanceLocked) {
@@ -120,8 +257,49 @@ export function ClassDetailModal({
         return classEnded ? current : 'empty';
       }
 
+      if (next === 'attended' && student) {
+        const consumption = consumeAdvanceBalance(
+          {
+            advanceBalancePix: student.advanceBalancePix,
+            advanceBalanceCash: student.advanceBalanceCash,
+          },
+          session.expectedAmount,
+        );
+        const due = Math.max(session.expectedAmount - consumption.usedTotal, 0);
+
+        if (consumption.usedTotal >= session.expectedAmount) {
+          setPaidAmountInput(formatCurrencyInput(0));
+          setPaymentMethod(undefined);
+        } else if (consumption.usedTotal > 0) {
+          setPaidAmountInput(formatCurrencyInput(due));
+          setPaymentMethod('pix');
+        } else {
+          setPaidAmountInput(formatCurrencyInput(session.expectedAmount));
+          setPaymentMethod(undefined);
+        }
+      }
+
       return next;
     });
+  };
+
+  const handleSelectPaymentMethod = (method: PaymentMethod | undefined) => {
+    setPaymentMethod(method);
+    if (method && attendance === 'attended' && willApplyAdvance) {
+      setPaidAmountInput(
+        formatCurrencyInput(
+          Math.max(session.expectedAmount - advanceAllocation, 0),
+        ),
+      );
+    } else if (method && attendance === 'attended' && !willApplyAdvance) {
+      setPaidAmountInput(
+        formatCurrencyInput(
+          settledWithoutMoreDue
+            ? getDirectPaidAmount(session)
+            : Math.max(session.expectedAmount - session.paidAmount, 0),
+        ),
+      );
+    }
   };
 
   const handleSave = async () => {
@@ -134,13 +312,22 @@ export function ClassDetailModal({
     setError(null);
 
     try {
+      const newMoney =
+        attendance === 'attended' && !fullyCoveredByAdvance && paymentMethod
+          ? Math.min(parseCurrencyInput(paidAmountInput), maxPaymentAmount)
+          : 0;
+
       await saveClassDetail(session.id, {
         attendance,
-        paidAmount:
-          attendance === 'attended' && paymentMethod
-            ? parseCurrencyInput(paidAmountInput)
-            : 0,
-        paymentMethod: attendance === 'attended' ? paymentMethod : undefined,
+        paidAmount: newMoney,
+        paymentMethod:
+          attendance === 'attended' && newMoney > 0
+            ? paymentMethod
+            : attendance === 'attended' && fullyCoveredByAdvance
+              ? undefined
+              : attendance === 'attended'
+                ? paymentMethod
+                : undefined,
         content: attendance === 'attended' ? content : undefined,
         notes: attendance === 'attended' ? notes : undefined,
       });
@@ -268,34 +455,55 @@ export function ClassDetailModal({
                 <span className="text-sm font-medium text-text-main">
                   Pagamento
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  {(['pix', 'cash'] as PaymentMethod[]).map((method) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setPaymentMethod(method)}
-                      className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                        paymentMethod === method
-                          ? 'border-status-success/20 bg-emerald-100 text-emerald-800'
-                          : 'border-outline-variant bg-surface text-on-surface-variant'
-                      }`}
-                    >
-                      {method === 'pix' ? 'Pix' : 'Dinheiro'}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod(undefined)}
-                    className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                      !paymentMethod
-                        ? 'border-status-warning/20 bg-amber-100 text-amber-800'
-                        : 'border-outline-variant bg-surface text-on-surface-variant'
-                    }`}
-                  >
-                    Não pago
-                  </button>
-                </div>
-                {paymentMethod ? (
+
+                {fullyCoveredByAdvance ? (
+                  <p className="rounded-md bg-bg-subtle px-3 py-2 text-sm text-text-muted">
+                    Aula coberta pelo saldo adiantado (
+                    {formatCurrency(advanceAllocation)}). Nenhum valor adicional
+                    a receber agora.
+                  </p>
+                ) : null}
+
+                {partiallyCoveredByAdvance ? (
+                  <p className="text-sm text-text-muted">
+                    {formatCurrency(advanceAllocation)} já abatidos do saldo
+                    adiantado.
+                  </p>
+                ) : null}
+
+                {showMethodSelectors ? (
+                  <div className="flex flex-wrap gap-2">
+                    {(['pix', 'cash'] as PaymentMethod[]).map((method) => (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => handleSelectPaymentMethod(method)}
+                        className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                          paymentMethod === method
+                            ? 'border-status-success/20 bg-emerald-100 text-emerald-800'
+                            : 'border-outline-variant bg-surface text-on-surface-variant'
+                        }`}
+                      >
+                        {method === 'pix' ? 'Pix' : 'Dinheiro'}
+                      </button>
+                    ))}
+                    {allowUnpaidOption ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectPaymentMethod(undefined)}
+                        className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                          !paymentMethod
+                            ? 'border-status-warning/20 bg-amber-100 text-amber-800'
+                            : 'border-outline-variant bg-surface text-on-surface-variant'
+                        }`}
+                      >
+                        Não pago
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {showPaymentAmount ? (
                   <>
                     <div className="relative mt-2">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
@@ -303,16 +511,19 @@ export function ClassDetailModal({
                       </span>
                       <input
                         inputMode="numeric"
+                        disabled={inputDisabled}
                         value={paidAmountInput}
                         onChange={(event) =>
                           setPaidAmountInput(
                             formatCurrencyInputFromRaw(
                               event.target.value,
-                              session.expectedAmount,
+                              maxPaymentAmount > 0
+                                ? maxPaymentAmount
+                                : undefined,
                             ),
                           )
                         }
-                        className="w-full rounded-md border border-outline-variant py-2.5 pl-10 pr-3 font-mono text-sm"
+                        className="w-full rounded-md border border-outline-variant py-2.5 pl-10 pr-3 font-mono text-sm disabled:bg-bg-subtle disabled:text-text-muted"
                       />
                     </div>
                     <p className="mt-1 text-sm text-text-muted">
@@ -321,10 +532,10 @@ export function ClassDetailModal({
                         {formatCurrency(session.expectedAmount)}
                       </span>
                     </p>
-                    {paymentRemaining > 0 ? (
+                    {stillDuePreview > 0 ? (
                       <div className="mt-2">
                         <Badge
-                          label={`Falta ${formatCurrency(paymentRemaining)}`}
+                          label={`Falta ${formatCurrency(stillDuePreview)}`}
                           variant="warning"
                         />
                       </div>

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import {
-  createRecurrenceRow,
   StudentRecurrenceConfigFields,
   toCreateRecurrenceInputs,
   type RecurrenceRowValue,
@@ -18,14 +17,7 @@ type EditStudentSettingsModalProps = {
   onClose: () => void;
 };
 
-function toDraftRows(
-  recurrences: StudentRecurrence[],
-  excludeStudentId: string,
-): RecurrenceRowValue[] {
-  if (recurrences.length === 0) {
-    return [createRecurrenceRow([], excludeStudentId)];
-  }
-
+function toDraftRows(recurrences: StudentRecurrence[]): RecurrenceRowValue[] {
   return recurrences.map((recurrence) => ({
     id: recurrence.id,
     weekday: recurrence.weekday,
@@ -68,7 +60,7 @@ function EditStudentSettingsForm({
   );
   const [draftRecurrences, setDraftRecurrences] = useState<
     RecurrenceRowValue[]
-  >(() => toDraftRows(recurrences, student.id));
+  >(() => toDraftRows(recurrences));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 

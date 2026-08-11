@@ -16,13 +16,23 @@ export type ClassSession = {
   endTime: string;
   durationMinutes: number;
   expectedAmount: number;
+  /** Total paid toward this class (paidPix + paidCash). */
   paidAmount: number;
+  /** Portion paid/attributed as Pix (includes advance originally received as Pix). */
+  paidPix: number;
+  /** Portion paid/attributed as Cash (includes advance originally received as Cash). */
+  paidCash: number;
+  /** Advance (Pix origin) applied to this class when Compareceu was first saved. */
+  advanceAppliedPix: number;
+  /** Advance (Cash origin) applied to this class when Compareceu was first saved. */
+  advanceAppliedCash: number;
   attendance: AttendanceStatus;
   financialStatus: ClassFinancialStatus;
   isMakeup: boolean;
   isMakeupOnly: boolean;
   linkedAbsenceIds: string[];
   pendingMakeupMinutes?: number;
+  /** Single method when only one form contributed; omitted when mixed. */
   paymentMethod?: PaymentMethod;
   content?: string;
   notes?: string;

@@ -243,6 +243,35 @@ export function getTimeRangeBoundsForStartTime(
   };
 }
 
+/**
+ * Recurrence rows have no separate period selector: start may be any operating
+ * hour (08:00–22:00), while end stays within the period implied by start.
+ */
+export function getRecurrenceTimeRangeBounds(
+  startTime: string,
+  options?: { minDurationMinutes?: number },
+): {
+  startMin: string;
+  startMax: string;
+  endMax: string;
+} {
+  const minDuration = options?.minDurationMinutes ?? MIN_CLASS_DURATION_MINUTES;
+  const periodEndMax = getTimeRangeBoundsForStartTime(startTime, {
+    minDurationMinutes: minDuration,
+  }).endMax;
+  const startMax = getMaxStartTimeForEndLimit(
+    AFTERNOON_PERIOD_END,
+    AFTERNOON_PERIOD_END,
+    minDuration,
+  );
+
+  return {
+    startMin: MORNING_PERIOD_START,
+    startMax,
+    endMax: periodEndMax,
+  };
+}
+
 export function getMaxDurationMinutesForStartTime(startTime: string): number {
   const bounds = getTimeRangeBoundsForStartTime(startTime);
   return minutesBetween(startTime, bounds.endMax);
