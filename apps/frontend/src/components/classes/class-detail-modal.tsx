@@ -20,6 +20,7 @@ import {
   parseCurrencyInput,
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
+import { formatWorkdayLabel } from '@/utils/workday';
 
 type ClassDetailModalProps = {
   open: boolean;
@@ -48,29 +49,52 @@ export function ClassDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const applySession = (loaded: ClassSession) => {
+    setSession(loaded);
+    setAttendance(loaded.attendance);
+    setPaidAmountInput(
+      formatCurrencyInput(loaded.paidAmount || loaded.expectedAmount),
+    );
+    setPaymentMethod(loaded.paymentMethod);
+    setContent(loaded.content ?? '');
+    setNotes(loaded.notes ?? '');
+    setError(null);
+  };
+
+  const reloadSession = async () => {
+    if (!classId) {
+      return;
+    }
+
+    const loaded = await getClassByIdService(classId);
+    if (loaded) {
+      applySession(loaded);
+    }
+  };
+
   useEffect(() => {
     if (!open || !classId) {
       return;
     }
 
-    void getClassByIdService(classId).then((loaded) => {
-      if (!loaded) {
-        return;
-      }
+    let cancelled = false;
 
-      setSession(loaded);
-      setAttendance(loaded.attendance);
-      setPaidAmountInput(
-        formatCurrencyInput(loaded.paidAmount || loaded.expectedAmount),
-      );
-      setPaymentMethod(loaded.paymentMethod);
-      setContent(loaded.content ?? '');
-      setNotes(loaded.notes ?? '');
-      setError(null);
+    void getClassByIdService(classId).then((loaded) => {
+      if (!cancelled && loaded) {
+        applySession(loaded);
+      }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, classId]);
 
-  if (!session) {
+  if (!open || !classId) {
+    return null;
+  }
+
+  if (!session || session.id !== classId) {
     return null;
   }
 
@@ -135,15 +159,16 @@ export function ClassDetailModal({
         }
       >
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between gap-3">
-            <p className="min-w-0 font-mono text-sm text-text-muted">
-              {session.startTime} - {session.endTime}
-              <span className="mx-1.5">/</span>
-              <span className="font-medium text-text-main">
-                {formatCurrency(session.expectedAmount)}
-              </span>
-            </p>
-            <div className="flex shrink-0 items-center gap-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex flex-col gap-1">
+              <p className="flex h-8 items-center text-sm text-text-muted">
+                {formatWorkdayLabel(new Date(`${session.date}T12:00:00`))}
+              </p>
+              <p className="font-mono text-sm font-medium text-text-main">
+                {session.startTime} - {session.endTime}
+              </p>
+            </div>
+            <div className="flex h-8 shrink-0 items-center gap-1">
               <IconButton
                 icon="calendar_month"
                 disabled={actionsBlocked}
@@ -246,6 +271,12 @@ export function ClassDetailModal({
                         className="w-full rounded-md border border-outline-variant py-2.5 pl-10 pr-3 font-mono text-sm"
                       />
                     </div>
+                    <p className="mt-1 text-sm text-text-muted">
+                      Valor da aula:{' '}
+                      <span className="font-mono font-medium text-text-main">
+                        {formatCurrency(session.expectedAmount)}
+                      </span>
+                    </p>
                     {paymentRemaining > 0 ? (
                       <div className="mt-2">
                         <Badge
@@ -330,7 +361,10 @@ export function ClassDetailModal({
 
       <LinkMakeupModal
         open={linkOpen}
-        onClose={() => setLinkOpen(false)}
+        onClose={() => {
+          setLinkOpen(false);
+          void reloadSession();
+        }}
         studentId={session.studentId}
         studentName={session.studentName}
         targetClass={session}
@@ -338,7 +372,10 @@ export function ClassDetailModal({
 
       <RescheduleClassModal
         open={rescheduleOpen}
-        onClose={() => setRescheduleOpen(false)}
+        onClose={() => {
+          setRescheduleOpen(false);
+          void reloadSession();
+        }}
         session={session}
       />
     </>

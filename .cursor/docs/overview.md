@@ -75,13 +75,13 @@ O badge deve comunicar **uma** situação principal, nesta ordem de prioridade:
 2. Se presença = **Não compareceu** → **Não compareceu**  
    (se a falta já tiver sido vinculada a uma reposição: manter **Não compareceu** no card; o detalhe “Aula reposta? Sim” aparece só no modal)
 3. Se presença = **Compareceu** e a aula é de reposição (tem falta vinculada) → **Aula reposta**
-4. Se presença = **Compareceu** e situação financeira = **quitada** → **Pago**
+4. Se presença = **Compareceu** e situação financeira = **quitada** → **Pago**; quando houver uma única forma de pagamento registrada na aula, exibir também no badge: **Pago · Pix** ou **Pago · Dinheiro**
 5. Se presença = **Compareceu** e situação financeira = **parcial** → **Falta R$ X** (onde X é o valor ainda pendente daquela aula)
 6. Se presença = **Compareceu** e situação financeira = **pendente** (nada pago) → **Pendente**
 
-Não utilizar **Pix** ou **Dinheiro** como estado principal do card.
+Quando a aula estiver quitada com pagamento misto (mais de uma forma), o badge permanece **Pago**, sem detalhar Pix ou Dinheiro no card.
 
-A forma de pagamento é informação financeira detalhada (modal da aula, perfil, financeiro), não o estado principal da aula.
+A forma de pagamento detalhada continua disponível no modal da aula, no perfil do aluno e no financeiro.
 
 ## Situação financeira da aula (conceito separado da presença)
 
@@ -378,7 +378,7 @@ No registro feito **pelo modal da aula**, o professor escolhe **uma** forma por 
 
 Se precisar registrar mais de uma forma para a mesma aula (pagamento misto), deve fazer **registros sucessivos** (ex.: primeiro R$ 30 Pix, depois R$ 20 Dinheiro), ou quitar pelo perfil com pagamentos separados. Cada registro preserva sua forma.
 
-A forma de pagamento **não** é o estado principal da aula. O badge continua sendo Pago / Falta R$ X / Pendente.
+A forma de pagamento **não** substitui o estado principal da aula. O badge continua sendo Pago / Falta R$ X / Pendente; quando quitada com uma única forma, pode complementar com **Pago · Pix** ou **Pago · Dinheiro**.
 
 ## Consumo de saldo adiantado
 
@@ -978,7 +978,7 @@ Essas funcionalidades serão definidas posteriormente.
 
 | Tema                                 | Decisão adotada                                                               |
 | ------------------------------------ | ----------------------------------------------------------------------------- |
-| Badge do card                        | Hierarquia explícita (§2); sem Pix/Dinheiro como status                       |
+| Badge do card                        | Hierarquia explícita (§2); Pago · Pix/Dinheiro quando quitada com forma única |
 | “+” central                          | Igual a adicionar aula                                                        |
 | Valor padrão                         | Por **hora**, base do cálculo automático                                      |
 | Marcar como reposição no agendamento | Exige vincular antes de salvar; aula exclusiva de reposição                   |
