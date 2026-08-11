@@ -15,9 +15,9 @@ export const mockStudents: Student[] = [
     phone: '(11) 98765-4321',
     email: 'joao@email.com',
     hourlyRate: 50,
-    advanceBalance: 0,
-    nextClassAt: nextClassAt(0, '08:00'),
-    financialStatus: 'up_to_date',
+    advanceBalance: 100,
+    nextClassAt: nextClassAt(1, '08:00'),
+    financialStatus: 'advance',
   },
   {
     id: 'student-maria',
@@ -25,6 +25,7 @@ export const mockStudents: Student[] = [
     phone: '(11) 91234-5678',
     hourlyRate: 60,
     advanceBalance: 0,
+    nextClassAt: nextClassAt(2, '14:00'),
     financialStatus: 'up_to_date',
   },
   {
@@ -51,7 +52,7 @@ export const mockStudents: Student[] = [
     phone: '(11) 96543-2109',
     hourlyRate: 50,
     advanceBalance: 0,
-    nextClassAt: nextClassAt(2, '18:00'),
+    nextClassAt: nextClassAt(0, '14:00'),
     financialStatus: 'pending',
   },
 ];

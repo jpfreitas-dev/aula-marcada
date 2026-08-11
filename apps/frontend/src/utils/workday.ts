@@ -99,44 +99,79 @@ export function formatWeekRange(weekStart: Date): string {
 
 export function formatRelativeNextClass(dateIso?: string): string {
   if (!dateIso) {
-    return 'Sem aula agendada';
+    return 'Sem aulas agendadas';
   }
 
   const date = new Date(dateIso);
+  const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  date.setHours(0, 0, 0, 0);
+  const classDay = new Date(date);
+  classDay.setHours(0, 0, 0, 0);
 
   const diffDays = Math.round(
-    (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    (classDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays === 0) {
-    return 'Hoje';
+    return `Hoje, ${time}`;
   }
 
   if (diffDays === 1) {
-    return 'Amanhã';
+    return `Amanhã, ${time}`;
   }
 
-  if (diffDays > 1 && diffDays <= 7) {
-    return `Em ${diffDays} dias`;
+  if (diffDays === 2) {
+    return `Depois de amanhã, ${time}`;
   }
 
-  return formatWorkdayLabel(date);
+  if (diffDays > 2 && diffDays <= 6) {
+    return `${getWeekdayLabel(classDay)}, ${time}`;
+  }
+
+  return `${formatWorkdayLabel(classDay)}, ${time}`;
 }
 
+type StudentFinancialDisplay = {
+  financialStatus: 'up_to_date' | 'pending' | 'partial' | 'advance';
+  advanceBalance: number;
+  hourlyRate: number;
+};
+
 export function getStudentFinancialLabel(
-  status: 'up_to_date' | 'pending' | 'partial' | 'advance',
+  student: StudentFinancialDisplay,
 ): string {
-  switch (status) {
-    case 'up_to_date':
-      return 'Em dia';
-    case 'pending':
-      return 'Pendente';
-    case 'partial':
-      return 'Parcial';
-    case 'advance':
-      return 'Saldo adiantado';
+  if (
+    student.financialStatus === 'pending' ||
+    student.financialStatus === 'partial'
+  ) {
+    return 'Pendente';
   }
+
+  if (student.financialStatus === 'advance' || student.advanceBalance > 0) {
+    const lessons = Math.floor(student.advanceBalance / student.hourlyRate);
+
+    if (lessons > 0) {
+      return `Saldo: ${lessons} aula${lessons === 1 ? '' : 's'}`;
+    }
+  }
+
+  return 'Em dia';
+}
+
+export function getStudentFinancialBadgeVariant(
+  student: StudentFinancialDisplay,
+): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
+  if (
+    student.financialStatus === 'pending' ||
+    student.financialStatus === 'partial'
+  ) {
+    return 'danger';
+  }
+
+  if (student.financialStatus === 'advance' || student.advanceBalance > 0) {
+    return 'success';
+  }
+
+  return 'info';
 }

@@ -12,6 +12,7 @@ import { calculateStudentPendingAmount } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
 import {
   formatRelativeNextClass,
+  getStudentFinancialBadgeVariant,
   getStudentFinancialLabel,
 } from '@/utils/workday';
 import { subscribe } from '@/mocks';
@@ -78,10 +79,8 @@ export function StudentProfilePage() {
             ) : null}
           </div>
           <Badge
-            label={getStudentFinancialLabel(student.financialStatus)}
-            variant={
-              student.financialStatus === 'up_to_date' ? 'success' : 'warning'
-            }
+            label={getStudentFinancialLabel(student)}
+            variant={getStudentFinancialBadgeVariant(student)}
           />
         </div>
       </section>
