@@ -12,10 +12,8 @@ import {
 } from '@/services/student-service';
 import { formatCurrencyInputFromRaw } from '@/utils/class-value';
 import {
-  AFTERNOON_PERIOD_END,
   applyStartTimeChange,
-  getMaxStartTimeForEndLimit,
-  getStartTimeBounds,
+  getTimeRangeBoundsForStartTime,
   MIN_CLASS_DURATION_MINUTES,
 } from '@/utils/time';
 
@@ -26,12 +24,6 @@ export const studentConfigLabelClassName =
 
 export const studentConfigFieldClassName =
   'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
-
-const recurrenceTimeBounds = getStartTimeBounds(['morning', 'afternoon']);
-const recurrenceStartMaxTime = getMaxStartTimeForEndLimit(
-  recurrenceTimeBounds.max,
-  AFTERNOON_PERIOD_END,
-);
 
 function toRecurrenceInput(row: RecurrenceRowValue) {
   return {
@@ -136,14 +128,15 @@ export function StudentRecurrenceConfigFields({
           return row;
         }
 
+        const bounds = getTimeRangeBoundsForStartTime(nextStart);
         const { startTime, endTime } = applyStartTimeChange(
           row.startTime,
           row.endTime,
           nextStart,
           {
-            startMin: recurrenceTimeBounds.min,
-            startMax: recurrenceStartMaxTime,
-            endMax: AFTERNOON_PERIOD_END,
+            startMin: bounds.startMin,
+            startMax: bounds.startMax,
+            endMax: bounds.endMax,
             minDurationMinutes: MIN_CLASS_DURATION_MINUTES,
           },
         );
@@ -174,8 +167,6 @@ export function StudentRecurrenceConfigFields({
                     row.weekday,
                     excludeStudentId,
                   )}
-                  startMinTime={recurrenceTimeBounds.min}
-                  startMaxTime={recurrenceStartMaxTime}
                   fieldClassName={studentConfigFieldClassName}
                   onWeekdayChange={(weekday) =>
                     updateRecurrence(row.id, { weekday })

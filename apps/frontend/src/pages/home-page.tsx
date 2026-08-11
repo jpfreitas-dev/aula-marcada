@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
@@ -7,13 +7,13 @@ import { iconButtonClassName } from '@/components/ui/icon-button';
 import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
 import { useMockStore } from '@/hooks/use-mock-store';
-import { usePageHeader } from '@/hooks/use-page-header';
 import {
   getSessionForPeriod,
   listClassesByDate,
   listClassesByWeek,
 } from '@/services/class-service';
 import type { ClassPeriod, ClassSession } from '@/types';
+import { isSchedulePeriodOpen } from '@/utils/schedule-period';
 import {
   addWorkdays,
   formatShortDate,
@@ -41,14 +41,14 @@ function DayWeekToggle({
   onChange: (view: AgendaView) => void;
 }) {
   return (
-    <div className="mx-auto flex w-48 rounded-full bg-black/20 p-1">
+    <div className="mx-auto flex w-48 rounded-full bg-purple-100 p-1">
       <button
         type="button"
         onClick={() => onChange('day')}
-        className={`flex-1 rounded-full py-1 text-xs font-bold transition-all ${
+        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${
           view === 'day'
-            ? 'bg-white text-purple-900'
-            : 'font-medium text-white/70'
+            ? 'bg-white text-purple-900 shadow-sm'
+            : 'font-medium text-purple-700/70'
         }`}
       >
         Dia
@@ -56,10 +56,10 @@ function DayWeekToggle({
       <button
         type="button"
         onClick={() => onChange('week')}
-        className={`flex-1 rounded-full py-1 text-xs font-bold transition-all ${
+        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${
           view === 'week'
-            ? 'bg-white text-purple-900'
-            : 'font-medium text-white/70'
+            ? 'bg-white text-purple-900 shadow-sm'
+            : 'font-medium text-purple-700/70'
         }`}
       >
         Semana
@@ -83,6 +83,8 @@ function PeriodSection({
   onAdd: (slot: { date: string; period: ClassPeriod }) => void;
   onOpenClass: (classId: string) => void;
 }) {
+  const canSchedule = isSchedulePeriodOpen(date, period);
+
   return (
     <section className="mt-4 flex flex-col gap-stack-sm">
       <h3 className="px-2 text-xs font-medium uppercase tracking-wider text-text-muted">
@@ -91,7 +93,10 @@ function PeriodSection({
       {session ? (
         <ClassCard session={session} onClick={() => onOpenClass(session.id)} />
       ) : (
-        <EmptySlot onClick={() => onAdd({ date, period })} />
+        <EmptySlot
+          disabled={!canSchedule}
+          onClick={() => onAdd({ date, period })}
+        />
       )}
     </section>
   );
@@ -106,12 +111,6 @@ export function HomePage() {
   const [sessions, setSessions] = useState<ClassSession[]>([]);
   const { openScheduleModal } = useScheduleModal();
   const { openClassDetail } = useClassDetail();
-
-  const headerToggle = useMemo(
-    () => <DayWeekToggle view={view} onChange={setView} />,
-    [view],
-  );
-  usePageHeader(headerToggle);
 
   useEffect(() => {
     async function loadSessions() {
@@ -141,7 +140,9 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-stack-md">
-      <div className="mt-2 flex items-center justify-between rounded-md border border-outline-variant/30 bg-surface p-3 shadow-sm">
+      <DayWeekToggle view={view} onChange={setView} />
+
+      <div className="flex items-center justify-between rounded-md border border-outline-variant/30 bg-surface p-3 shadow-sm">
         <button
           type="button"
           onClick={() => navigateDate(-1)}

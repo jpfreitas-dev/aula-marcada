@@ -10,15 +10,15 @@ export function AppHeader() {
 
   if (variant === 'profile') {
     return (
-      <header className="sticky top-0 z-40 flex items-center bg-purple-900 px-margin-main py-3 text-white shadow-sm">
+      <header className="sticky top-0 z-40 flex items-center gap-1 bg-purple-900 px-margin-main py-3 text-white shadow-sm">
         <Link
           to={profileBackTo}
-          className={`${iconButtonClassName} h-10 w-10 text-white`}
-          aria-label="Voltar"
+          className={`${iconButtonClassName} h-10 w-10 shrink-0 text-white`}
+          aria-label="Voltar para lista de alunos"
         >
           <Icon name="arrow_back" />
         </Link>
-        <h1 className="flex-1 text-center font-display text-headline-md font-bold pr-10">
+        <h1 className="min-w-0 flex-1 truncate font-display text-headline-md font-bold">
           {profileTitle}
         </h1>
       </header>

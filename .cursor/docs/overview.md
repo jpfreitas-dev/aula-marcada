@@ -122,7 +122,7 @@ O dia e os horários apresentados devem considerar apenas períodos disponíveis
 
 Não deve ser possível selecionar um período que já possua uma aula.
 
-O horário de início deve cair no período escolhido (manhã ou tarde/noite). A duração pode atravessar o limite do meio-dia apenas se o período de início for manhã e o fim ultrapassar 12h — **neste fluxo, a aula pertence ao período do horário de início**. O fim deve ser posterior ao início.
+O horário de início e o horário de término devem permanecer dentro do período escolhido (manhã: 08h–12h; tarde/noite: 12h–22h). O fim deve ser posterior ao início.
 
 ## Aluno
 
@@ -282,13 +282,13 @@ Toda aula possui exatamente um dos seguintes estados de presença:
 
 O professor pode alternar entre esses estados.
 
-Se o estado atual for selecionado novamente, ele deve ser desmarcado e a aula deve retornar ao estado **vazio**.
+Se o estado atual for selecionado novamente, ele deve ser desmarcado e a aula deve retornar ao estado **vazio** — **somente enquanto a data/horário de término da aula ainda não tiver passado**. Após o fim da aula, uma presença já marcada como **Compareceu** ou **Não compareceu** não pode voltar ao vazio.
 
 A situação financeira da aula é uma informação separada da situação de presença.
 
 ## Ao voltar para vazio
 
-Ao desmarcar Compareceu ou Não compareceu (retorno ao vazio):
+Ao desmarcar Compareceu ou Não compareceu (retorno ao vazio), quando permitido:
 
 - campos de pagamento, conteúdo, observações e bloco de reposição **somem da interface**;
 - dados eventualmente digitados naquela sessão **não são mantidos** se o professor salvar nesse estado vazio (a aula volta a “Aguardando preenchimento”);
@@ -561,6 +561,8 @@ As ações de:
 - vincular reposição;
 
 devem ficar **bloqueadas** quando a aula já tiver sido preenchida (Compareceu **ou** Não compareceu).
+
+Enquanto a aula ainda não tiver terminado, o professor pode desmarcar a presença (voltar ao vazio) para corrigir cliques acidentais e então alterar horário ou vincular reposição.
 
 Somente uma aula ainda **vazia** pode ter horário alterado ou receber nova vinculação de reposição por esses fluxos.
 

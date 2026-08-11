@@ -13,14 +13,12 @@ import {
   listRecentClassesByStudent,
 } from '@/services/class-service';
 import {
-  AFTERNOON_PERIOD_END,
   addMinutesToTime,
   applyStartTimeChange,
   clampTimeToBounds,
   formatHoursLabel,
   getEffectiveEndMinTime,
-  getMaxStartTimeForEndLimit,
-  MORNING_PERIOD_START,
+  getTimeRangeBoundsForStartTime,
   MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
 } from '@/utils/time';
@@ -149,19 +147,22 @@ function LinkMakeupForm({
     nextEnd: string,
     minMinutes: number,
   ) => {
+    const bounds = getTimeRangeBoundsForStartTime(nextStart, {
+      minDurationMinutes: minMinutes,
+    });
     const endMinTime = getEffectiveEndMinTime(nextStart, {
       minDurationMinutes: minMinutes,
     });
     const duration = minutesBetween(nextStart, nextEnd);
 
     if (duration >= minMinutes) {
-      return clampTimeToBounds(nextEnd, endMinTime, AFTERNOON_PERIOD_END);
+      return clampTimeToBounds(nextEnd, endMinTime, bounds.endMax);
     }
 
     return clampTimeToBounds(
       addMinutesToTime(nextStart, minMinutes),
       endMinTime,
-      AFTERNOON_PERIOD_END,
+      bounds.endMax,
     );
   };
 
@@ -178,11 +179,9 @@ function LinkMakeupForm({
 
   const currentMinutes = minutesBetween(startTime, endTime);
   const missingMinutes = Math.max(requiredMinutes - currentMinutes, 0);
-  const startMaxTime = getMaxStartTimeForEndLimit(
-    AFTERNOON_PERIOD_END,
-    AFTERNOON_PERIOD_END,
-    requiredMinutes,
-  );
+  const timeRangeBounds = getTimeRangeBoundsForStartTime(startTime, {
+    minDurationMinutes: requiredMinutes,
+  });
 
   const toggleSelection = (id: string) => {
     setError(null);
@@ -196,14 +195,17 @@ function LinkMakeupForm({
   };
 
   const handleStartTimeChange = (nextStart: string) => {
+    const bounds = getTimeRangeBoundsForStartTime(nextStart, {
+      minDurationMinutes: requiredMinutes,
+    });
     const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
       startTime,
       endTime,
       nextStart,
       {
-        startMin: MORNING_PERIOD_START,
-        startMax: startMaxTime,
-        endMax: AFTERNOON_PERIOD_END,
+        startMin: bounds.startMin,
+        startMax: bounds.startMax,
+        endMax: bounds.endMax,
         minDurationMinutes: requiredMinutes,
       },
     );
@@ -213,10 +215,13 @@ function LinkMakeupForm({
   };
 
   const handleEndTimeChange = (nextEnd: string) => {
+    const bounds = getTimeRangeBoundsForStartTime(startTime, {
+      minDurationMinutes: requiredMinutes,
+    });
     const endMinTime = getEffectiveEndMinTime(startTime, {
       minDurationMinutes: requiredMinutes,
     });
-    setEndTime(clampTimeToBounds(nextEnd, endMinTime, AFTERNOON_PERIOD_END));
+    setEndTime(clampTimeToBounds(nextEnd, endMinTime, bounds.endMax));
   };
 
   const handleConfirm = async () => {
@@ -321,9 +326,9 @@ function LinkMakeupForm({
             <TimeRangeInput
               startTime={startTime}
               endTime={endTime}
-              startMinTime={MORNING_PERIOD_START}
-              startMaxTime={startMaxTime}
-              endMaxTime={AFTERNOON_PERIOD_END}
+              startMinTime={timeRangeBounds.startMin}
+              startMaxTime={timeRangeBounds.startMax}
+              endMaxTime={timeRangeBounds.endMax}
               minDurationMinutes={requiredMinutes}
               onStartChange={handleStartTimeChange}
               onEndChange={handleEndTimeChange}

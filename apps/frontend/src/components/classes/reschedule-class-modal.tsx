@@ -5,20 +5,21 @@ import { Button } from '@/components/ui/button';
 import { fieldLabelClassName } from '@/components/ui/field';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
 import { WorkdayDateInput } from '@/components/ui/workday-date-input';
-import type { ClassPeriod, ClassSession } from '@/types';
+import type { ClassSession } from '@/types';
 import { getAvailablePeriods, rescheduleClass } from '@/services/class-service';
+import { getEffectiveStartMinTime } from '@/utils/schedule-period';
 import {
-  AFTERNOON_PERIOD_END,
   addMinutesToTime,
   applyStartTimeChange,
+  clampTimeToBounds,
   defaultStartTimeForPeriod,
-  EARLY_MORNING_CUTOFF,
   formatHoursLabel,
-  getMaxStartTimeForEndLimit,
-  getStartTimeBounds,
+  getEffectiveEndMinTime,
+  getTimeRangeBoundsForStartTime,
   MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
   periodFromStartTime,
+  timeToMinutes,
 } from '@/utils/time';
 import { addWorkdays, getDefaultAgendaDate, toDateKey } from '@/utils/workday';
 
@@ -51,7 +52,6 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
   const [date, setDate] = useState(session.date);
   const [startTime, setStartTime] = useState(session.startTime);
   const [endTime, setEndTime] = useState(session.endTime);
-  const [availablePeriods, setAvailablePeriods] = useState<ClassPeriod[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -60,19 +60,19 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
   );
   const dateMin = workdayDates[0];
   const dateMax = workdayDates[workdayDates.length - 1];
-
-  const startTimeBounds = getStartTimeBounds(availablePeriods);
-  const morningPeriodOccupied = !availablePeriods.includes('morning');
-  const startMaxTime = getMaxStartTimeForEndLimit(
-    startTimeBounds.max,
-    AFTERNOON_PERIOD_END,
-  );
-  const period = periodFromStartTime(startTime);
   const durationMinutes = minutesBetween(startTime, endTime);
   const minimumDuration = Math.max(
     session.durationMinutes,
     MIN_CLASS_DURATION_MINUTES,
   );
+  const timeRangeBounds = getTimeRangeBoundsForStartTime(startTime, {
+    minDurationMinutes: minimumDuration,
+  });
+  const effectiveStartMinTime = getEffectiveStartMinTime(
+    date,
+    timeRangeBounds.startMin,
+  );
+  const period = periodFromStartTime(startTime);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,8 +81,6 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
       if (cancelled) {
         return;
       }
-
-      setAvailablePeriods(periods);
 
       if (periods.length === 0) {
         return;
@@ -106,15 +104,21 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
   }, [date, session.id, minimumDuration]);
 
   const handleStartTimeChange = (nextStart: string) => {
+    const bounds = getTimeRangeBoundsForStartTime(nextStart, {
+      minDurationMinutes: minimumDuration,
+    });
+    const startMin =
+      timeToMinutes(effectiveStartMinTime) > timeToMinutes(bounds.startMin)
+        ? effectiveStartMinTime
+        : bounds.startMin;
     const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
       startTime,
       endTime,
       nextStart,
       {
-        startMin: startTimeBounds.min,
-        startMax: startMaxTime,
-        endMax: AFTERNOON_PERIOD_END,
-        endFloor: morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined,
+        startMin,
+        startMax: bounds.startMax,
+        endMax: bounds.endMax,
         minDurationMinutes: minimumDuration,
       },
     );
@@ -185,15 +189,24 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
           <TimeRangeInput
             startTime={startTime}
             endTime={endTime}
-            startMinTime={startTimeBounds.min}
-            startMaxTime={startMaxTime}
-            endMaxTime={AFTERNOON_PERIOD_END}
-            endFloorTime={
-              morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined
+            startMinTime={
+              timeToMinutes(effectiveStartMinTime) >
+              timeToMinutes(timeRangeBounds.startMin)
+                ? effectiveStartMinTime
+                : timeRangeBounds.startMin
             }
+            startMaxTime={timeRangeBounds.startMax}
+            endMaxTime={timeRangeBounds.endMax}
             minDurationMinutes={minimumDuration}
             onStartChange={handleStartTimeChange}
-            onEndChange={setEndTime}
+            onEndChange={(nextEnd) => {
+              const endMinTime = getEffectiveEndMinTime(startTime, {
+                minDurationMinutes: minimumDuration,
+              });
+              setEndTime(
+                clampTimeToBounds(nextEnd, endMinTime, timeRangeBounds.endMax),
+              );
+            }}
           />
         </div>
 

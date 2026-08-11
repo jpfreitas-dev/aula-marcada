@@ -2,7 +2,12 @@ import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
 import type { StudentWeekday } from '@/types';
-import { AFTERNOON_PERIOD_END, MIN_CLASS_DURATION_MINUTES } from '@/utils/time';
+import {
+  clampTimeToBounds,
+  getEffectiveEndMinTime,
+  getTimeRangeBoundsForStartTime,
+  MIN_CLASS_DURATION_MINUTES,
+} from '@/utils/time';
 
 export type RecurrenceRowValue = {
   id: string;
@@ -14,8 +19,6 @@ export type RecurrenceRowValue = {
 type StudentRecurrenceRowProps = {
   row: RecurrenceRowValue;
   weekdayOptions: Array<{ value: StudentWeekday; label: string }>;
-  startMinTime: string;
-  startMaxTime: string;
   fieldClassName: string;
   onWeekdayChange: (weekday: StudentWeekday) => void;
   onStartChange: (value: string) => void;
@@ -26,14 +29,14 @@ type StudentRecurrenceRowProps = {
 export function StudentRecurrenceRow({
   row,
   weekdayOptions,
-  startMinTime,
-  startMaxTime,
   fieldClassName,
   onWeekdayChange,
   onStartChange,
   onEndChange,
   onRemove,
 }: StudentRecurrenceRowProps) {
+  const timeRangeBounds = getTimeRangeBoundsForStartTime(row.startTime);
+
   return (
     <div className={`${fieldClassName} flex min-w-0 items-center gap-1 px-1`}>
       <div className="relative min-w-0 w-[30%]">
@@ -64,12 +67,19 @@ export function StudentRecurrenceRow({
         className="min-w-0 flex-1"
         startTime={row.startTime}
         endTime={row.endTime}
-        startMinTime={startMinTime}
-        startMaxTime={startMaxTime}
-        endMaxTime={AFTERNOON_PERIOD_END}
+        startMinTime={timeRangeBounds.startMin}
+        startMaxTime={timeRangeBounds.startMax}
+        endMaxTime={timeRangeBounds.endMax}
         minDurationMinutes={MIN_CLASS_DURATION_MINUTES}
         onStartChange={onStartChange}
-        onEndChange={onEndChange}
+        onEndChange={(nextEnd) => {
+          const endMinTime = getEffectiveEndMinTime(row.startTime, {
+            minDurationMinutes: MIN_CLASS_DURATION_MINUTES,
+          });
+          onEndChange(
+            clampTimeToBounds(nextEnd, endMinTime, timeRangeBounds.endMax),
+          );
+        }}
       />
 
       <div className="h-6 w-px shrink-0 bg-purple-100" />

@@ -2,9 +2,9 @@ export const QUARTER_MINUTES = [0, 15, 30, 45] as const;
 
 export const MORNING_PERIOD_START = '08:00';
 export const EARLY_MORNING_CUTOFF = '08:00';
-export const MORNING_PERIOD_END = '11:45';
+export const MORNING_PERIOD_END = '12:00';
 export const AFTERNOON_PERIOD_START = '12:00';
-export const AFTERNOON_PERIOD_END = '22:45';
+export const AFTERNOON_PERIOD_END = '22:00';
 export const DEFAULT_CLASS_DURATION_MINUTES = 60;
 export const MIN_CLASS_DURATION_MINUTES = 60;
 
@@ -217,6 +217,30 @@ export function getMaxStartTimeForEndLimit(
   const periodMax = timeToMinutes(startMaxTime);
 
   return minutesToTime(Math.min(periodMax, endLimit));
+}
+
+export function getTimeRangeBoundsForStartTime(
+  startTime: string,
+  options?: { minDurationMinutes?: number },
+): {
+  startMin: string;
+  startMax: string;
+  endMax: string;
+} {
+  const period = periodFromStartTime(startTime);
+  const bounds = getPeriodTimeBounds(period);
+  const minDuration = options?.minDurationMinutes ?? MIN_CLASS_DURATION_MINUTES;
+  const startMax = getMaxStartTimeForEndLimit(
+    bounds.max,
+    bounds.max,
+    minDuration,
+  );
+
+  return {
+    startMin: bounds.min,
+    startMax,
+    endMax: bounds.max,
+  };
 }
 
 export function formatHoursLabel(minutes: number): string {

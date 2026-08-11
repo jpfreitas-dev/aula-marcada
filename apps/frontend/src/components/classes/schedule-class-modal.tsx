@@ -25,17 +25,18 @@ import {
   parseCurrencyInput,
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
+import { getEffectiveStartMinTime } from '@/utils/schedule-period';
 import {
-  AFTERNOON_PERIOD_END,
   addMinutesToTime,
   applyStartTimeChange,
+  clampTimeToBounds,
   DEFAULT_CLASS_DURATION_MINUTES,
   defaultStartTimeForPeriod,
-  EARLY_MORNING_CUTOFF,
-  getMaxStartTimeForEndLimit,
-  getStartTimeBounds,
+  getEffectiveEndMinTime,
+  getTimeRangeBoundsForStartTime,
   minutesBetween,
   periodFromStartTime,
+  timeToMinutes,
 } from '@/utils/time';
 import {
   addWorkdays,
@@ -126,17 +127,16 @@ function ScheduleClassForm({
 
   const selectedStudent = students.find((student) => student.id === studentId);
   const period = periodFromStartTime(startTime);
-  const morningPeriodOccupied = !availablePeriods.includes('morning');
+  const timeRangeBounds = getTimeRangeBoundsForStartTime(startTime);
   const effectiveStartTime = makeupDraft?.startTime ?? startTime;
   const effectiveEndTime = makeupDraft?.endTime ?? endTime;
   const effectiveDuration = minutesBetween(
     effectiveStartTime,
     effectiveEndTime,
   );
-  const startTimeBounds = getStartTimeBounds(availablePeriods);
-  const startMaxTime = getMaxStartTimeForEndLimit(
-    startTimeBounds.max,
-    AFTERNOON_PERIOD_END,
+  const effectiveStartMinTime = getEffectiveStartMinTime(
+    date,
+    timeRangeBounds.startMin,
   );
   const timesLocked = Boolean(makeupDraft);
 
@@ -164,13 +164,33 @@ function ScheduleClassForm({
 
       setStartTime((currentStart) => {
         const currentPeriod = periodFromStartTime(currentStart);
-        if (periods.includes(currentPeriod)) {
-          return currentStart;
+        const activePeriod = periods.includes(currentPeriod)
+          ? currentPeriod
+          : periods[0];
+        const bounds = getTimeRangeBoundsForStartTime(
+          defaultStartTimeForPeriod(activePeriod),
+        );
+        const minStart = getEffectiveStartMinTime(date, bounds.startMin);
+        const maxStart = bounds.startMax;
+
+        let nextStart = currentStart;
+        if (!periods.includes(currentPeriod)) {
+          setMakeupDraft(null);
+          nextStart = defaultStartTimeForPeriod(periods[0]);
         }
 
-        setMakeupDraft(null);
-        const nextStart = defaultStartTimeForPeriod(periods[0]);
-        setEndTime(addMinutesToTime(nextStart, DEFAULT_CLASS_DURATION_MINUTES));
+        if (timeToMinutes(nextStart) < timeToMinutes(minStart)) {
+          nextStart = minStart;
+        }
+
+        nextStart = clampTimeToBounds(nextStart, minStart, maxStart);
+        const nextBounds = getTimeRangeBoundsForStartTime(nextStart);
+        const nextEnd = clampTimeToBounds(
+          addMinutesToTime(nextStart, DEFAULT_CLASS_DURATION_MINUTES),
+          getEffectiveEndMinTime(nextStart),
+          nextBounds.endMax,
+        );
+        setEndTime(nextEnd);
         return nextStart;
       });
     });
@@ -196,15 +216,19 @@ function ScheduleClassForm({
   };
 
   const handleStartTimeChange = (nextStart: string) => {
+    const bounds = getTimeRangeBoundsForStartTime(nextStart);
+    const startMin =
+      timeToMinutes(effectiveStartMinTime) > timeToMinutes(bounds.startMin)
+        ? effectiveStartMinTime
+        : bounds.startMin;
     const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
       startTime,
       endTime,
       nextStart,
       {
-        startMin: startTimeBounds.min,
-        startMax: startMaxTime,
-        endMax: AFTERNOON_PERIOD_END,
-        endFloor: morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined,
+        startMin,
+        startMax: bounds.startMax,
+        endMax: bounds.endMax,
       },
     );
 
@@ -221,12 +245,15 @@ function ScheduleClassForm({
   };
 
   const handleEndTimeChange = (nextEnd: string) => {
-    setEndTime(nextEnd);
+    const bounds = getTimeRangeBoundsForStartTime(startTime);
+    const endMinTime = getEffectiveEndMinTime(startTime);
+    const clampedEnd = clampTimeToBounds(nextEnd, endMinTime, bounds.endMax);
+    setEndTime(clampedEnd);
     setMakeupDraft(null);
 
     if (selectedStudent) {
       updateSuggestedAmount(
-        minutesBetween(startTime, nextEnd),
+        minutesBetween(startTime, clampedEnd),
         selectedStudent,
       );
     }
@@ -322,12 +349,14 @@ function ScheduleClassForm({
               <TimeRangeInput
                 startTime={effectiveStartTime}
                 endTime={effectiveEndTime}
-                startMinTime={startTimeBounds.min}
-                startMaxTime={startMaxTime}
-                endMaxTime={AFTERNOON_PERIOD_END}
-                endFloorTime={
-                  morningPeriodOccupied ? EARLY_MORNING_CUTOFF : undefined
+                startMinTime={
+                  timeToMinutes(effectiveStartMinTime) >
+                  timeToMinutes(timeRangeBounds.startMin)
+                    ? effectiveStartMinTime
+                    : timeRangeBounds.startMin
                 }
+                startMaxTime={timeRangeBounds.startMax}
+                endMaxTime={timeRangeBounds.endMax}
                 disabled={timesLocked}
                 onStartChange={handleStartTimeChange}
                 onEndChange={handleEndTimeChange}

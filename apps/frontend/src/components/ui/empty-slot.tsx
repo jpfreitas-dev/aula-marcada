@@ -14,7 +14,7 @@ export function EmptySlot({
   return (
     <button
       type="button"
-      className={`flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-outline-variant bg-bg-subtle p-card-padding transition-colors hover:bg-surface-variant active:scale-[0.98] ${className}`}
+      className={`flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-outline-variant bg-bg-subtle p-card-padding transition-colors hover:bg-surface-variant active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-bg-subtle disabled:active:scale-100 ${className}`}
       {...props}
     >
       <Icon name="add_circle" className="text-xl text-text-muted" />

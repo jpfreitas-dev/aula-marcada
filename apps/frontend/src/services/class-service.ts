@@ -18,12 +18,14 @@ import {
   calculateExpectedAmount,
   computeFinancialStatus,
 } from '@/utils/class-value';
+import { isClassSessionEnded } from '@/utils/class-session';
 import {
   addMinutesToTime,
   defaultStartTimeForPeriod,
   minutesBetween,
   periodFromStartTime,
 } from '@/utils/time';
+import { isSchedulePeriodOpen } from '@/utils/schedule-period';
 import { toDateKey } from '@/utils/workday';
 
 function syncFinancialStatus(session: ClassSession): ClassSession {
@@ -128,7 +130,8 @@ export async function getAvailablePeriods(
     .map((session) => session.period);
 
   return (['morning', 'afternoon'] as ClassPeriod[]).filter(
-    (period) => !occupied.includes(period),
+    (period) =>
+      !occupied.includes(period) && isSchedulePeriodOpen(date, period),
   );
 }
 
@@ -233,6 +236,16 @@ export async function saveClassDetail(
   }
 
   let next: ClassSession = { ...existing };
+
+  if (
+    input.attendance === 'empty' &&
+    existing.attendance !== 'empty' &&
+    isClassSessionEnded(existing)
+  ) {
+    throw new Error(
+      'Não é possível desmarcar a presença de uma aula que já terminou.',
+    );
+  }
 
   if (input.attendance === 'empty') {
     next = {

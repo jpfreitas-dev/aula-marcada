@@ -19,6 +19,7 @@ import {
   formatCurrencyInputFromRaw,
   parseCurrencyInput,
 } from '@/utils/class-value';
+import { isClassSessionEnded } from '@/utils/class-session';
 import { formatCurrency } from '@/utils/currency';
 import { formatWorkdayLabel } from '@/utils/workday';
 
@@ -103,9 +104,16 @@ export function ClassDetailModal({
     session.attendance === 'absent' && isMakeupFullyCovered(session);
   const paidAmount = parseCurrencyInput(paidAmountInput);
   const paymentRemaining = Math.max(session.expectedAmount - paidAmount, 0);
+  const classEnded = isClassSessionEnded(session);
 
   const toggleAttendance = (next: Exclude<AttendanceStatus, 'empty'>) => {
-    setAttendance((current) => (current === next ? 'empty' : next));
+    setAttendance((current) => {
+      if (current === next) {
+        return classEnded ? current : 'empty';
+      }
+
+      return next;
+    });
   };
 
   const handleSave = async () => {
