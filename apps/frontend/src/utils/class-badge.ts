@@ -1,6 +1,18 @@
-import type { ClassBadge, ClassSession } from '@/types';
+import type { ClassBadge, ClassSession, PaymentMethod } from '@/types';
 
 import { formatCurrency } from './currency';
+
+function paymentMethodLabel(method: PaymentMethod): string {
+  return method === 'pix' ? 'Pix' : 'Dinheiro';
+}
+
+function settledBadgeLabel(session: ClassSession): string {
+  if (!session.paymentMethod) {
+    return 'Pago';
+  }
+
+  return `Pago · ${paymentMethodLabel(session.paymentMethod)}`;
+}
 
 export function getClassBadge(session: ClassSession): ClassBadge {
   if (session.attendance === 'empty') {
@@ -26,7 +38,7 @@ export function getClassBadge(session: ClassSession): ClassBadge {
 
   if (session.financialStatus === 'settled') {
     return {
-      label: 'Pago',
+      label: settledBadgeLabel(session),
       variant: 'success',
     };
   }

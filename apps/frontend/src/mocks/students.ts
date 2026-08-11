@@ -25,7 +25,7 @@ export const mockStudents: Student[] = [
     phone: '(11) 91234-5678',
     hourlyRate: 60,
     advanceBalance: 0,
-    financialStatus: 'pending',
+    financialStatus: 'up_to_date',
   },
   {
     id: 'student-pedro',
@@ -34,7 +34,7 @@ export const mockStudents: Student[] = [
     hourlyRate: 55,
     advanceBalance: 30,
     nextClassAt: nextClassAt(1, '10:00'),
-    financialStatus: 'advance',
+    financialStatus: 'partial',
   },
   {
     id: 'student-ana',

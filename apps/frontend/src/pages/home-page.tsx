@@ -98,7 +98,7 @@ function PeriodSection({
 }
 
 export function HomePage() {
-  useMockStore();
+  const storeVersion = useMockStore();
   const [view, setView] = useState<AgendaView>('day');
   const [selectedDate, setSelectedDate] = useState(() =>
     getDefaultAgendaDate(),
@@ -124,7 +124,7 @@ export function HomePage() {
     }
 
     void loadSessions();
-  }, [selectedDate, view]);
+  }, [selectedDate, view, storeVersion]);
 
   const navigateDate = (direction: -1 | 1) => {
     if (view === 'day') {

@@ -99,10 +99,10 @@ export function FinancialPage() {
           totais acima já vêm dos mocks compartilhados.
         </p>
         <Link
-          to="/students/student-maria"
+          to="/students/student-pedro"
           className="mt-4 inline-flex items-center justify-center rounded-md bg-secondary-container px-4 py-2 text-sm font-medium text-on-secondary-container transition-colors hover:bg-secondary-fixed"
         >
-          Ver aluno com pendência
+          Ver aluno com pendência parcial
         </Link>
       </section>
     </div>

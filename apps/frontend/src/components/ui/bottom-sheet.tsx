@@ -58,7 +58,7 @@ export function BottomSheet({
             />
           </div>
         </div>
-        <div className="scroll-area min-h-0 flex-1 px-margin-main py-4">
+        <div className="scrollbar-hidden min-h-0 flex-1 px-margin-main py-4">
           {children}
         </div>
         {footer ? (

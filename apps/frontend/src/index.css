@@ -162,6 +162,17 @@ button:disabled,
   border-radius: 9999px;
 }
 
+.scrollbar-hidden {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 .font-display {
   font-family: var(--font-display);
 }
