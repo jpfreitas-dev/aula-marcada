@@ -25,8 +25,23 @@ Artefatos em `docs/design/design-system/`:
 
 ```bash
 cp .env.example .env
+cp apps/backend/.env.example apps/backend/.env
 npm install
-npm run docker:up    # PostgreSQL
-npm run dev:backend
-npm run dev:frontend
+npm run docker:up    # PostgreSQL + backend + frontend
+npm run dev:backend  # opcional se não usar Docker para o backend
+npm run dev:frontend # opcional se não usar Docker para o frontend
 ```
+
+### Docker / PostgreSQL
+
+O Postgres do projeto usa usuário `app`, senha `app` e database `app` (ver `.env.example`).
+
+Se o log mostrar `role "app" does not exist`, o volume `postgres_data` foi criado com credenciais antigas. Recrie o ambiente:
+
+```bash
+npm run docker:down
+docker compose down -v
+npm run docker:up
+```
+
+O `-v` apaga o volume local do Postgres. Use apenas em desenvolvimento (sem dados importantes).
