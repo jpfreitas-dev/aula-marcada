@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
+import { MakeupSelectableClassCard } from '@/components/classes/makeup-selectable-class-card';
+import { getRecentClassesTitle } from '@/components/classes/student-recent-classes-section';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
@@ -9,18 +10,40 @@ import {
   calculateRequiredMakeupMinutes,
   getPendingAbsences,
   linkMakeup,
+  listRecentClassesByStudent,
 } from '@/services/class-service';
-import { formatWorkdayLabel } from '@/utils/workday';
 import {
   AFTERNOON_PERIOD_END,
   addMinutesToTime,
   applyStartTimeChange,
+  clampTimeToBounds,
   formatHoursLabel,
+  getEffectiveEndMinTime,
   getMaxStartTimeForEndLimit,
   MORNING_PERIOD_START,
   MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
 } from '@/utils/time';
+
+function resolveRequiredMakeupMinutes(
+  targetClass: ClassSession | null | undefined,
+  selectedIds: string[],
+  isMakeupOnly: boolean,
+  initialDurationMinutes: number,
+): number {
+  if (selectedIds.length === 0) {
+    return Math.max(initialDurationMinutes, MIN_CLASS_DURATION_MINUTES);
+  }
+
+  return Math.max(
+    calculateRequiredMakeupMinutes(
+      targetClass ?? null,
+      selectedIds,
+      isMakeupOnly,
+    ),
+    MIN_CLASS_DURATION_MINUTES,
+  );
+}
 
 type LinkMakeupModalProps = {
   open: boolean;
@@ -81,6 +104,7 @@ function LinkMakeupForm({
   onConfirm,
 }: LinkMakeupFormProps) {
   const [absences, setAbsences] = useState<ClassSession[]>([]);
+  const [recentClasses, setRecentClasses] = useState<ClassSession[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(
@@ -98,19 +122,58 @@ function LinkMakeupForm({
       }
     });
 
+    void listRecentClassesByStudent(studentId, 2).then((sessions) => {
+      if (!cancelled) {
+        setRecentClasses(sessions);
+      }
+    });
+
     return () => {
       cancelled = true;
     };
   }, [studentId]);
 
+  const selectableSessions = absences.length > 0 ? absences : recentClasses;
+  const showMakeupPending = absences.length > 0;
+
+  const resolveRequiredMinutes = (ids: string[]) =>
+    resolveRequiredMakeupMinutes(
+      targetClass,
+      ids,
+      isMakeupOnly,
+      initialDurationMinutes,
+    );
+
+  const applyMinimumEndTime = (
+    nextStart: string,
+    nextEnd: string,
+    minMinutes: number,
+  ) => {
+    const endMinTime = getEffectiveEndMinTime(nextStart, {
+      minDurationMinutes: minMinutes,
+    });
+    const duration = minutesBetween(nextStart, nextEnd);
+
+    if (duration >= minMinutes) {
+      return clampTimeToBounds(nextEnd, endMinTime, AFTERNOON_PERIOD_END);
+    }
+
+    return clampTimeToBounds(
+      addMinutesToTime(nextStart, minMinutes),
+      endMinTime,
+      AFTERNOON_PERIOD_END,
+    );
+  };
+
   const requiredMinutes = useMemo(
     () =>
-      calculateRequiredMakeupMinutes(
-        targetClass ?? null,
+      resolveRequiredMakeupMinutes(
+        targetClass,
         selectedIds,
         isMakeupOnly,
+        initialDurationMinutes,
       ),
-    [targetClass, selectedIds, isMakeupOnly],
+    [targetClass, selectedIds, isMakeupOnly, initialDurationMinutes],
   );
 
   const currentMinutes = minutesBetween(startTime, endTime);
@@ -118,18 +181,18 @@ function LinkMakeupForm({
   const startMaxTime = getMaxStartTimeForEndLimit(
     AFTERNOON_PERIOD_END,
     AFTERNOON_PERIOD_END,
-  );
-  const minimumDuration = Math.max(
-    initialDurationMinutes,
-    MIN_CLASS_DURATION_MINUTES,
+    requiredMinutes,
   );
 
-  const toggleAbsence = (id: string) => {
-    setSelectedIds((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
+  const toggleSelection = (id: string) => {
+    setError(null);
+    const nextIds = selectedIds.includes(id)
+      ? selectedIds.filter((item) => item !== id)
+      : [...selectedIds, id];
+    const nextRequired = resolveRequiredMinutes(nextIds);
+
+    setSelectedIds(nextIds);
+    setEndTime(applyMinimumEndTime(startTime, endTime, nextRequired));
   };
 
   const handleStartTimeChange = (nextStart: string) => {
@@ -141,12 +204,19 @@ function LinkMakeupForm({
         startMin: MORNING_PERIOD_START,
         startMax: startMaxTime,
         endMax: AFTERNOON_PERIOD_END,
-        minDurationMinutes: minimumDuration,
+        minDurationMinutes: requiredMinutes,
       },
     );
 
     setStartTime(clampedStart);
-    setEndTime(nextEnd);
+    setEndTime(applyMinimumEndTime(clampedStart, nextEnd, requiredMinutes));
+  };
+
+  const handleEndTimeChange = (nextEnd: string) => {
+    const endMinTime = getEffectiveEndMinTime(startTime, {
+      minDurationMinutes: requiredMinutes,
+    });
+    setEndTime(clampTimeToBounds(nextEnd, endMinTime, AFTERNOON_PERIOD_END));
   };
 
   const handleConfirm = async () => {
@@ -201,13 +271,15 @@ function LinkMakeupForm({
       title="Vincular reposição"
       onClose={onClose}
       footer={
-        <Button
-          className="w-full"
-          disabled={saving || selectedIds.length === 0 || missingMinutes > 0}
-          onClick={() => void handleConfirm()}
-        >
-          Confirmar reposição
-        </Button>
+        selectableSessions.length > 0 ? (
+          <Button
+            className="w-full"
+            disabled={saving || selectedIds.length === 0 || missingMinutes > 0}
+            onClick={() => void handleConfirm()}
+          >
+            Confirmar reposição
+          </Button>
+        ) : undefined
       }
     >
       <div className="flex flex-col gap-4">
@@ -216,64 +288,50 @@ function LinkMakeupForm({
           <span className="font-semibold text-text-main">{studentName}</span>
         </p>
 
-        {absences.length === 0 ? (
+        {selectableSessions.length === 0 ? (
           <p className="rounded-md bg-bg-subtle p-4 text-sm text-text-muted">
             Não há faltas pendentes de reposição para este aluno.
           </p>
         ) : (
-          <div className="scroll-area max-h-56 space-y-3 pr-1">
-            {absences.map((absence) => {
-              const selected = selectedIds.includes(absence.id);
-              return (
-                <button
-                  key={absence.id}
-                  type="button"
-                  onClick={() => toggleAbsence(absence.id)}
-                  className={`relative flex w-full items-center gap-3 overflow-hidden rounded-md border p-3 text-left shadow-sm transition-colors ${
-                    selected
-                      ? 'border-primary bg-primary-fixed/20'
-                      : 'border-outline-variant/30 bg-white'
-                  }`}
-                >
-                  <div className="absolute bottom-0 left-0 top-0 w-1 bg-status-danger" />
-                  <div className="flex flex-1 flex-col gap-1 pl-2">
-                    <span className="font-medium text-text-main">
-                      {formatWorkdayLabel(new Date(`${absence.date}T12:00:00`))}
-                    </span>
-                    <span className="font-mono text-xs text-text-muted">
-                      {absence.startTime} - {absence.endTime}
-                    </span>
-                    <span className="text-xs text-text-muted">
-                      Pendente:{' '}
-                      {formatHoursLabel(
-                        absence.pendingMakeupMinutes ?? absence.durationMinutes,
-                      )}
-                    </span>
-                  </div>
-                  <Badge label="Não compareceu" variant="danger" />
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-3">
+            {!showMakeupPending ? (
+              <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                {getRecentClassesTitle(selectableSessions.length)}
+              </h3>
+            ) : null}
+            <div className="scroll-area max-h-56 space-y-3 pr-1">
+              {selectableSessions.map((session) => (
+                <MakeupSelectableClassCard
+                  key={session.id}
+                  session={session}
+                  selected={selectedIds.includes(session.id)}
+                  showMakeupPending={showMakeupPending}
+                  onToggle={() => toggleSelection(session.id)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-            Horário
-          </span>
-          <TimeRangeInput
-            startTime={startTime}
-            endTime={endTime}
-            startMinTime={MORNING_PERIOD_START}
-            startMaxTime={startMaxTime}
-            endMaxTime={AFTERNOON_PERIOD_END}
-            minDurationMinutes={minimumDuration}
-            onStartChange={handleStartTimeChange}
-            onEndChange={setEndTime}
-          />
-        </div>
+        {selectableSessions.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+              Horário
+            </span>
+            <TimeRangeInput
+              startTime={startTime}
+              endTime={endTime}
+              startMinTime={MORNING_PERIOD_START}
+              startMaxTime={startMaxTime}
+              endMaxTime={AFTERNOON_PERIOD_END}
+              minDurationMinutes={requiredMinutes}
+              onStartChange={handleStartTimeChange}
+              onEndChange={handleEndTimeChange}
+            />
+          </div>
+        ) : null}
 
-        {missingMinutes > 0 ? (
+        {selectableSessions.length > 0 && missingMinutes > 0 ? (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
             Necessário mais {formatHoursLabel(missingMinutes)} de aula.
           </p>

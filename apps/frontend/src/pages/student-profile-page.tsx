@@ -1,26 +1,39 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { StudentRecentClassesSection } from '@/components/classes/student-recent-classes-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useClassDetail } from '@/context/class-detail-context';
+import { listClassesByStudent } from '@/services/class-service';
 import { getStudentByIdService } from '@/services/student-service';
-import type { Student } from '@/types';
+import type { ClassSession, Student } from '@/types';
+import { calculateStudentPendingAmount } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
 import {
   formatRelativeNextClass,
   getStudentFinancialLabel,
 } from '@/utils/workday';
+import { subscribe } from '@/mocks';
 
 export function StudentProfilePage() {
   const { id } = useParams();
+  const { openClassDetail } = useClassDetail();
   const [student, setStudent] = useState<Student | null>(null);
+  const [studentClasses, setStudentClasses] = useState<ClassSession[]>([]);
 
   useEffect(() => {
     if (!id) {
       return;
     }
 
-    void getStudentByIdService(id).then(setStudent);
+    const loadProfile = () => {
+      void getStudentByIdService(id).then(setStudent);
+      void listClassesByStudent(id).then(setStudentClasses);
+    };
+
+    loadProfile();
+    return subscribe(loadProfile);
   }, [id]);
 
   if (!student) {
@@ -41,6 +54,8 @@ export function StudentProfilePage() {
       </section>
     );
   }
+
+  const pendingAmount = calculateStudentPendingAmount(studentClasses);
 
   return (
     <div className="flex flex-col gap-stack-md">
@@ -75,6 +90,17 @@ export function StudentProfilePage() {
         <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
           Financeiro
         </h3>
+        {pendingAmount > 0 ? (
+          <p className="mt-3 font-medium text-text-main">
+            Pendente: {formatCurrency(pendingAmount)}
+          </p>
+        ) : student.advanceBalance > 0 ? (
+          <p className="mt-3 font-medium text-text-main">
+            Adiantado: {formatCurrency(student.advanceBalance)}
+          </p>
+        ) : (
+          <p className="mt-3 font-medium text-text-main">Em dia</p>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <p className="text-xs text-text-muted">Valor/hora</p>
@@ -97,12 +123,14 @@ export function StudentProfilePage() {
         </Button>
       </section>
 
-      <section className="rounded-md border border-dashed border-outline-variant bg-bg-subtle p-card-padding">
-        <p className="text-sm text-text-muted">
-          Histórico de aulas, configurações e modal de pagamento serão
-          implementados na fase de alunos mockados.
-        </p>
-      </section>
+      {studentClasses.length > 0 ? (
+        <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+          <StudentRecentClassesSection
+            studentId={student.id}
+            onClassClick={openClassDetail}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }

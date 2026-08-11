@@ -15,19 +15,12 @@ export const mockPayments: Payment[] = [
     method: 'cash',
     paidAt: '2023-07-21T11:00:00',
   },
-  {
-    id: 'payment-3',
-    studentId: 'student-maria',
-    amount: 90,
-    method: 'cash',
-    paidAt: '2023-07-24T10:45:00',
-  },
 ];
 
 export const mockFinancialSummary: FinancialSummary = {
-  expected: 320,
-  realized: 165,
+  expected: 290,
+  realized: 75,
   realizedPix: 50,
-  realizedCash: 115,
+  realizedCash: 25,
   absenceImpact: 65,
 };

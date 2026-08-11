@@ -80,6 +80,38 @@ export async function getClassByIdService(
   return getClassById(id) ?? null;
 }
 
+function sortClassesByRecency(sessions: ClassSession[]): ClassSession[] {
+  return [...sessions].sort((left, right) => {
+    const dateCompare = right.date.localeCompare(left.date);
+    if (dateCompare !== 0) {
+      return dateCompare;
+    }
+
+    return right.startTime.localeCompare(left.startTime);
+  });
+}
+
+export async function listRecentClassesByStudent(
+  studentId: string,
+  limit = 2,
+): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
+
+  return sortClassesByRecency(
+    getClassesSnapshot().filter((session) => session.studentId === studentId),
+  ).slice(0, limit);
+}
+
+export async function listClassesByStudent(
+  studentId: string,
+): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
+
+  return sortClassesByRecency(
+    getClassesSnapshot().filter((session) => session.studentId === studentId),
+  );
+}
+
 export async function getAvailablePeriods(
   date: string,
   excludeClassId?: string,

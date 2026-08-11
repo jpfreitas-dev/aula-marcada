@@ -22,6 +22,22 @@ export function computeFinancialStatus(
   return 'pending';
 }
 
+export function calculateStudentPendingAmount(
+  sessions: Array<{
+    attendance: string;
+    expectedAmount: number;
+    paidAmount: number;
+  }>,
+): number {
+  return sessions
+    .filter((session) => session.attendance === 'attended')
+    .reduce(
+      (total, session) =>
+        total + Math.max(session.expectedAmount - session.paidAmount, 0),
+      0,
+    );
+}
+
 export function parseCurrencyInput(value: string): number {
   const normalized = value.replace(/[^\d,]/g, '').replace(',', '.');
   const parsed = Number(normalized);

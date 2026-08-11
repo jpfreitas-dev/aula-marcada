@@ -25,7 +25,6 @@ export const mockStudents: Student[] = [
     phone: '(11) 91234-5678',
     hourlyRate: 60,
     advanceBalance: 0,
-    nextClassAt: nextClassAt(0, '19:00'),
     financialStatus: 'pending',
   },
   {
