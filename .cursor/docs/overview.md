@@ -574,11 +574,14 @@ A tela de alunos possui:
 
 - busca por nome;
 - botão **Novo aluno**;
-- lista de alunos.
+- lista de alunos **ativos**;
+- acesso a **Ex-alunos** (alunos desativados).
 
 O botão **Novo aluno** é diferente do botão de adicionar aula.
 
 O botão de adicionar aula é o botão “+” central da navegação (e os slots da agenda).
+
+A lista principal e o seletor de aluno no agendamento mostram **somente alunos ativos**.
 
 ---
 
@@ -797,19 +800,36 @@ Representação visual proporcional: X / Y.
 
 ---
 
-# 28. Histórico de aulas
+# 28. Desativar aluno (Ex-alunos)
 
-Ao final do perfil deve existir o histórico de aulas, em ordem cronológica (**mais recentes primeiro**).
+No perfil, a ação de exclusão **não apaga** o aluno nem o histórico.
 
-A estrutura visual dos cards deve reaproveitar posteriormente a estrutura dos cards do modal de vinculação de reposição.
+Em vez disso, o aluno é **desativado** e passa a constar em **Ex-alunos**.
 
-Cada item do histórico deve permitir, no mínimo, identificar: data, horário, presença, situação financeira resumida.
+## Confirmação
 
-A definição visual detalhada desse histórico será feita posteriormente; funcionalmente, tocar em um item abre o mesmo modal de detalhes da aula (§7), respeitando bloqueios do §17.
+Exige digitar exatamente o nome do aluno antes de confirmar.
+
+## Efeitos da desativação
+
+- o aluno deixa de aparecer na lista padrão de alunos;
+- o aluno **não** pode ser selecionado ao criar/agendar aula;
+- as **aulas futuras** desse aluno são removidas da agenda (slots liberados);
+- as **aulas já ocorridas** (e respectivos pagamentos/registros) **permanecem** para consulta, financeiro e estatísticas;
+- recorrências do aluno deixam de ocupar a grade para novos agendamentos;
+- o perfil continua acessível a partir de **Ex-alunos**, como base de consulta.
+
+Alunos desativados ficam fora do fluxo operacional padrão, mas permanecem como base histórica.
 
 ---
 
-# 29. Tela Financeiro
+# 29. Histórico de aulas
+
+A definição visual detalhada do histórico completo no perfil será feita posteriormente. Funcionalmente, o histórico das aulas ocorridas permanece vinculado ao aluno (incluindo ex-alunos) para consulta e estatísticas.
+
+---
+
+# 30. Tela Financeiro
 
 Filtros de granularidade:
 
@@ -832,7 +852,7 @@ Todos os indicadores, o gráfico e a lista de pendências respeitam esses filtro
 
 ---
 
-# 30. Indicadores financeiros
+# 31. Indicadores financeiros
 
 ### Esperado
 
@@ -861,7 +881,7 @@ Faltas já totalmente repostas **continuam** contando no impacto da data da falt
 
 ---
 
-# 31. Regra para estatísticas de forma de pagamento
+# 32. Regra para estatísticas de forma de pagamento
 
 A forma de pagamento é contabilizada pelos **valores efetivamente recebidos** em cada forma.
 
@@ -871,7 +891,7 @@ Não classificar a aula inteira como “Pix” ou “Dinheiro” quando houver m
 
 ---
 
-# 32. Gráfico financeiro
+# 33. Gráfico financeiro
 
 Comparativo de barras verticais:
 
@@ -892,7 +912,7 @@ Eixo: janeiro a dezembro.
 
 ---
 
-# 33. Pagamentos pendentes
+# 34. Pagamentos pendentes
 
 Lista ao final da tela financeira.
 
@@ -911,7 +931,7 @@ Somente aulas **Compareceu** com valor em aberto entram nesta lista.
 
 ---
 
-# 34. Navegação inferior
+# 35. Navegação inferior
 
 Itens:
 
@@ -925,7 +945,7 @@ Itens:
 
 ---
 
-# 35. Regras globais importantes
+# 36. Regras globais importantes
 
 1. Uma aula possui três estados de presença: vazia; compareceu; não compareceu.
 2. Clicar novamente no estado selecionado desmarca e volta a vazia.
@@ -958,7 +978,7 @@ Itens:
 
 ---
 
-# 36. Funcionalidades futuras
+# 37. Funcionalidades futuras
 
 Não fazem parte deste fluxo neste momento:
 
@@ -974,26 +994,27 @@ Essas funcionalidades serão definidas posteriormente.
 
 ---
 
-# 37. Decisões preenchidas nesta revisão (antes incompletas)
+# 38. Decisões preenchidas nesta revisão (antes incompletas)
 
-| Tema                                 | Decisão adotada                                                               |
-| ------------------------------------ | ----------------------------------------------------------------------------- |
-| Badge do card                        | Hierarquia explícita (§2); Pago · Pix/Dinheiro quando quitada com forma única |
-| “+” central                          | Igual a adicionar aula                                                        |
-| Valor padrão                         | Por **hora**, base do cálculo automático                                      |
-| Marcar como reposição no agendamento | Exige vincular antes de salvar; aula exclusiva de reposição                   |
-| Seleção de faltas                    | Múltipla; soma de durações                                                    |
-| Confirmar com tempo insuficiente     | Bloqueado                                                                     |
-| Cobertura parcial de falta           | Permitida; “Aula reposta? Sim” só com pendência zero                          |
-| Pagamento misto na aula              | Registros sucessivos (uma forma por vez)                                      |
-| Excessso na aula vs saldo            | Excessso na aula = receita; antecipação só sem pendência (ou sobra no perfil) |
-| Consumo de saldo                     | Ao marcar Compareceu                                                          |
-| Geração de recorrência               | Horizonte de 4 semanas úteis (seg–sex)                                        |
-| Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído  |
-| Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                          |
-| Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                    |
-| Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                             |
-| Limite de texto                      | 500 caracteres em conteúdo e observações                                      |
-| Frequência                           | Y = aulas já ocorridas do período                                             |
-| Editar configurações no perfil       | Um único botão no card                                                        |
-| Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                 |
+| Tema                                 | Decisão adotada                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| Badge do card                        | Hierarquia explícita (§2); Pago · Pix/Dinheiro quando quitada com forma única   |
+| “+” central                          | Igual a adicionar aula                                                          |
+| Valor padrão                         | Por **hora**, base do cálculo automático                                        |
+| Marcar como reposição no agendamento | Exige vincular antes de salvar; aula exclusiva de reposição                     |
+| Seleção de faltas                    | Múltipla; soma de durações                                                      |
+| Confirmar com tempo insuficiente     | Bloqueado                                                                       |
+| Cobertura parcial de falta           | Permitida; “Aula reposta? Sim” só com pendência zero                            |
+| Pagamento misto na aula              | Registros sucessivos (uma forma por vez)                                        |
+| Excessso na aula vs saldo            | Excessso na aula = receita; antecipação só sem pendência (ou sobra no perfil)   |
+| Consumo de saldo                     | Ao marcar Compareceu                                                            |
+| Geração de recorrência               | Horizonte de 4 semanas úteis (seg–sex)                                          |
+| Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído    |
+| Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                            |
+| Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                      |
+| Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                               |
+| Limite de texto                      | 500 caracteres em conteúdo e observações                                        |
+| Frequência                           | Y = aulas já ocorridas do período                                               |
+| Editar configurações no perfil       | Um único botão no card                                                          |
+| Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                   |
+| Desativar aluno                      | Soft-delete; aulas futuras saem da agenda; histórico permanece; lista Ex-alunos |
