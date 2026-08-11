@@ -243,6 +243,11 @@ export function getTimeRangeBoundsForStartTime(
   };
 }
 
+export function getMaxDurationMinutesForStartTime(startTime: string): number {
+  const bounds = getTimeRangeBoundsForStartTime(startTime);
+  return minutesBetween(startTime, bounds.endMax);
+}
+
 export function formatHoursLabel(minutes: number): string {
   const hours = minutes / 60;
   return Number.isInteger(hours)

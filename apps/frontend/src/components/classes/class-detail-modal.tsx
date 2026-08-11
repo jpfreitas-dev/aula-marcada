@@ -11,6 +11,7 @@ import type { AttendanceStatus, ClassSession, PaymentMethod } from '@/types';
 import {
   deleteClass,
   getClassByIdService,
+  isLockedRepostaAbsence,
   isMakeupFullyCovered,
   saveClassDetail,
 } from '@/services/class-service';
@@ -100,13 +101,20 @@ export function ClassDetailModal({
   }
 
   const actionsBlocked = session.attendance !== 'empty';
+  const lockedReposta = isLockedRepostaAbsence(session);
   const makeupCovered =
     session.attendance === 'absent' && isMakeupFullyCovered(session);
   const paidAmount = parseCurrencyInput(paidAmountInput);
   const paymentRemaining = Math.max(session.expectedAmount - paidAmount, 0);
   const classEnded = isClassSessionEnded(session);
+  const attendanceLocked = lockedReposta;
+  const deleteBlocked = lockedReposta;
 
   const toggleAttendance = (next: Exclude<AttendanceStatus, 'empty'>) => {
+    if (attendanceLocked) {
+      return;
+    }
+
     setAttendance((current) => {
       if (current === next) {
         return classEnded ? current : 'empty';
@@ -117,6 +125,11 @@ export function ClassDetailModal({
   };
 
   const handleSave = async () => {
+    if (lockedReposta) {
+      onClose();
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -144,9 +157,20 @@ export function ClassDetailModal({
   };
 
   const handleDelete = async () => {
-    await deleteClass(session.id);
-    setDeleteOpen(false);
-    onClose();
+    setError(null);
+
+    try {
+      await deleteClass(session.id);
+      setDeleteOpen(false);
+      onClose();
+    } catch (deleteError) {
+      setDeleteOpen(false);
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Não foi possível excluir a aula.',
+      );
+    }
   };
 
   return (
@@ -157,13 +181,15 @@ export function ClassDetailModal({
         title={session.studentName}
         onClose={onClose}
         footer={
-          <Button
-            className="w-full"
-            disabled={saving}
-            onClick={() => void handleSave()}
-          >
-            Salvar alterações
-          </Button>
+          lockedReposta ? undefined : (
+            <Button
+              className="w-full"
+              disabled={saving}
+              onClick={() => void handleSave()}
+            >
+              Salvar alterações
+            </Button>
+          )
         }
       >
         <div className="flex flex-col gap-6">
@@ -192,19 +218,28 @@ export function ClassDetailModal({
               <IconButton
                 icon="delete"
                 danger
+                disabled={deleteBlocked}
                 onClick={() => setDeleteOpen(true)}
                 aria-label="Excluir aula"
               />
             </div>
           </div>
 
+          {lockedReposta ? (
+            <p className="rounded-md bg-bg-subtle px-3 py-2 text-sm text-text-muted">
+              Esta falta já foi reposta e permanece apenas como referência. Não
+              pode ser alterada nem excluída.
+            </p>
+          ) : null}
+
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium text-text-main">Presença</span>
             <div className="flex gap-1 rounded-md bg-surface-variant/50 p-1">
               <button
                 type="button"
+                disabled={attendanceLocked}
                 onClick={() => toggleAttendance('attended')}
-                className={`flex-1 rounded-md px-3 py-2 text-sm transition-all ${
+                className={`flex-1 rounded-md px-3 py-2 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                   attendance === 'attended'
                     ? 'bg-emerald-100 font-semibold text-emerald-800 shadow-sm'
                     : 'font-medium text-on-surface-variant'
@@ -214,8 +249,9 @@ export function ClassDetailModal({
               </button>
               <button
                 type="button"
+                disabled={attendanceLocked}
                 onClick={() => toggleAttendance('absent')}
-                className={`flex-1 rounded-md px-3 py-2 text-sm transition-all ${
+                className={`flex-1 rounded-md px-3 py-2 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                   attendance === 'absent'
                     ? 'bg-red-100 font-semibold text-red-800 shadow-sm'
                     : 'font-medium text-on-surface-variant'
@@ -331,7 +367,9 @@ export function ClassDetailModal({
                 Aula reposta? {makeupCovered ? 'Sim' : 'Não'}
               </p>
               <p className="mt-1 text-xs text-text-muted">
-                A reposição é vinculada pelo fluxo de vinculação.
+                {makeupCovered
+                  ? 'Registro mantido apenas como referência da falta reposta. Contagem e pagamento ficam na aula atual de reposição.'
+                  : 'A reposição é vinculada pelo fluxo de vinculação.'}
               </p>
             </div>
           ) : null}
@@ -376,6 +414,8 @@ export function ClassDetailModal({
         studentId={session.studentId}
         studentName={session.studentName}
         targetClass={session}
+        initialStartTime={session.startTime}
+        initialDurationMinutes={session.durationMinutes}
       />
 
       <RescheduleClassModal

@@ -72,12 +72,13 @@ Informações fixas do card:
 O badge deve comunicar **uma** situação principal, nesta ordem de prioridade:
 
 1. Se presença = **vazia** → **Aguardando preenchimento**
-2. Se presença = **Não compareceu** → **Não compareceu**  
-   (se a falta já tiver sido vinculada a uma reposição: manter **Não compareceu** no card; o detalhe “Aula reposta? Sim” aparece só no modal)
-3. Se presença = **Compareceu** e a aula é de reposição (tem falta vinculada) → **Aula reposta**
+2. Se presença = **Não compareceu** e a falta está totalmente coberta por reposição → **Reposta** (azul; registro de referência imutável)
+3. Se presença = **Não compareceu** (ainda com tempo pendente) → **Não compareceu**
 4. Se presença = **Compareceu** e situação financeira = **quitada** → **Pago**; quando houver uma única forma de pagamento registrada na aula, exibir também no badge: **Pago · Pix** ou **Pago · Dinheiro**
 5. Se presença = **Compareceu** e situação financeira = **parcial** → **Falta R$ X** (onde X é o valor ainda pendente daquela aula)
 6. Se presença = **Compareceu** e situação financeira = **pendente** (nada pago) → **Pendente**
+
+Aula criada/vinculada como reposição **comporta-se como aula normal** no badge (itens 1 e 4–6 / Não compareceu). O estado **Reposta** aplica-se às **faltas passadas cobertas**, não à aula atual.
 
 Quando a aula estiver quitada com pagamento misto (mais de uma forma), o badge permanece **Pago**, sem detalhar Pix ou Dinheiro no card.
 
@@ -193,7 +194,7 @@ Abaixo das informações principais deve existir uma área para selecionar as fa
 
 Regras:
 
-- lista apenas faltas do aluno do contexto com presença **Não compareceu** e tempo de reposição ainda pendente;
+- lista apenas faltas do aluno do contexto com presença **Não compareceu**, **já encerradas** (data/hora de término no passado) e tempo de reposição ainda pendente;
 - seleção **múltipla** permitida (uma aula de reposição pode cobrir mais de uma falta);
 - cada item mostra: data, horário original, duração pendente de reposição, badge “Não compareceu”.
 
@@ -319,7 +320,7 @@ O card da aula deve indicar:
 
 Ao selecionar **Compareceu**, devem aparecer os campos relacionados ao pagamento e à realização da aula.
 
-O card deve passar a indicar a situação conforme a hierarquia do §2 (Pago / Falta R$ X / Pendente / Aula reposta).
+O card deve passar a indicar a situação conforme a hierarquia do §2 (Pago / Falta R$ X / Pendente).
 
 ## Pagamento
 
@@ -479,11 +480,12 @@ A reposição é vinculada posteriormente pelo fluxo de vinculação (§5 / §15
 
 Quando o tempo de reposição pendente da falta chegar a zero:
 
-**Aula reposta? Sim**
+- no modal da falta: **Aula reposta? Sim**;
+- no card da falta: badge **Reposta** (azul);
+- a falta passa a ser um **registro de referência imutável**: não pode ter presença alterada, horário alterado, nova vinculação nem exclusão;
+- contagem de presença, pagamento e valor da aula passam a ser tratados na **aula atual** (a de reposição / destino da vinculação).
 
-O card deve indicar:
-
-**Não compareceu**
+O card deve continuar registrando presença **Não compareceu** no histórico (apenas como referência de falta reposta).
 
 Campos de pagamento, conteúdo e observações **não** aparecem nesse estado.
 
@@ -519,7 +521,9 @@ Se a aula já foi realizada ou possui preenchimento (Compareceu ou Não comparec
 - Pendências financeiras **somente daquela aula** deixam de existir.
 - Valores já recebidos e alocados a essa aula permanecem na receita realizada (não “somem” do histórico financeiro agregado); a alocação daquela aula é encerrada com a exclusão.  
   _Detalhe operacional:_ o valor já recebido não volta automaticamente como saldo do aluno, salvo decisão futura — neste fluxo, **não estorna para saldo**.
-- Se a aula excluída era reposição que cobria faltas, o tempo de reposição daquelas faltas **volta a ficar pendente**.
+- Se a aula excluída era reposição que cobria faltas, o tempo de reposição daquelas faltas **volta a ficar pendente** (badge **Não compareceu** de novo; voltam a entrar na frequência) e a falta deixa de estar no estado imutável **Reposta**.
+- A existência do estado **Reposta** depende da aula vinculadora: sem ela, as faltas cobertas voltam ao fluxo normal.
+- Faltas já totalmente repostas (**Reposta**) **não podem ser excluídas**.
 - Se a aula excluída era uma falta (Não compareceu) que já tinha reposição vinculada em outra aula, a exclusão da falta **não desfaz** automaticamente a aula de reposição futura — a aula futura permanece, mas o vínculo com a falta removida é desfeito.  
   _(Se isso deixar a aula futura só com tempo “extra” sem falta, o tempo permanece como duração normal da aula.)_
 
@@ -533,8 +537,10 @@ Diferenças em relação ao fluxo do agendamento:
 
 - a aula de destino **já existe**;
 - o aluno já está definido e **não pode ser alterado**;
+- o seletor de horário deve iniciar com o **horário já definido da aula** (respeitando o período dela);
 - a duração atual da aula entra na conta (duração atual + faltas);
-- após confirmar, duração e valor esperado da aula existente são atualizados na hora.
+- após confirmar, duração e valor esperado da aula existente são atualizados na hora;
+- o tempo usado para quitar faltas é apenas o **tempo adicional** (nova duração − duração original).
 
 Demais regras (lista com rolagem, ~3 itens visíveis, aviso de horas faltantes, bloqueio de confirmar com tempo insuficiente) são as mesmas do §5 e §6.
 
@@ -804,6 +810,10 @@ Apresentação:
 
 Regra adotada: Y = aulas do aluno no período com data/hora de início já ocorrida (passadas), independentemente de estarem preenchidas; aulas futuras não entram. Aulas passadas ainda vazias contam em Y mas não em X (baixam a frequência até serem preenchidas).
 
+Faltas totalmente repostas (**Reposta**) **não entram** em X nem em Y: ficam apenas como referência.
+
+A **aula atual que vincula** essas faltas (tem reposição vinculada) **entra na base** assim que é criada, no período da sua data — inclusive enquanto estiver “Aguardando preenchimento”. Ao marcar **Compareceu**, entra em X como qualquer aula normal.
+
 Representação visual proporcional: X / Y.
 
 ---
@@ -1022,7 +1032,7 @@ Essas funcionalidades serão definidas posteriormente.
 | Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                      |
 | Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                               |
 | Limite de texto                      | 500 caracteres em conteúdo e observações                                        |
-| Frequência                           | Y = aulas já ocorridas do período                                               |
+| Frequência                           | Y = aulas já ocorridas do período, excluindo faltas Reposta                     |
 | Editar configurações no perfil       | Um único botão no card                                                          |
 | Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                   |
 | Desativar aluno                      | Soft-delete; aulas futuras saem da agenda; histórico permanece; lista Ex-alunos |

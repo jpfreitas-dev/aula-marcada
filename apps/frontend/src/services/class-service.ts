@@ -18,15 +18,26 @@ import {
   calculateExpectedAmount,
   computeFinancialStatus,
 } from '@/utils/class-value';
-import { isClassSessionEnded } from '@/utils/class-session';
+import {
+  isClassSessionEnded,
+  isLockedRepostaAbsence,
+} from '@/utils/class-session';
+import { isSchedulePeriodOpen } from '@/utils/schedule-period';
 import {
   addMinutesToTime,
   defaultStartTimeForPeriod,
+  getMaxDurationMinutesForStartTime,
+  getTimeRangeBoundsForStartTime,
   minutesBetween,
   periodFromStartTime,
+  timeToMinutes,
 } from '@/utils/time';
-import { isSchedulePeriodOpen } from '@/utils/schedule-period';
 import { toDateKey, isWeekday } from '@/utils/workday';
+
+export {
+  isMakeupFullyCovered,
+  isLockedRepostaAbsence,
+} from '@/utils/class-session';
 
 function syncFinancialStatus(session: ClassSession): ClassSession {
   if (session.attendance !== 'attended') {
@@ -135,6 +146,56 @@ export async function getAvailablePeriods(
   );
 }
 
+function validateMakeupAbsences(absenceIds: string[]): void {
+  for (const id of absenceIds) {
+    const session = getClassById(id);
+
+    if (
+      !session ||
+      session.attendance !== 'absent' ||
+      !isClassSessionEnded(session)
+    ) {
+      throw new Error('Falta inválida para reposição.');
+    }
+
+    if ((session.pendingMakeupMinutes ?? session.durationMinutes) <= 0) {
+      throw new Error('Esta falta já foi totalmente reposta.');
+    }
+  }
+}
+
+function validateMakeupScheduleTime(
+  startTime: string,
+  durationMinutes: number,
+  requiredMinutes: number,
+): void {
+  const bounds = getTimeRangeBoundsForStartTime(startTime, {
+    minDurationMinutes: requiredMinutes,
+  });
+  const endTime = addMinutesToTime(startTime, durationMinutes);
+  const startTotal = timeToMinutes(startTime);
+  const endTotal = timeToMinutes(endTime);
+
+  if (
+    startTotal < timeToMinutes(bounds.startMin) ||
+    startTotal > timeToMinutes(bounds.startMax)
+  ) {
+    throw new Error('O horário de início está fora do período permitido.');
+  }
+
+  if (endTotal > timeToMinutes(bounds.endMax)) {
+    throw new Error('A duração excede o limite do período.');
+  }
+
+  if (durationMinutes < requiredMinutes) {
+    throw new Error('Duração insuficiente para a reposição vinculada.');
+  }
+
+  if (durationMinutes > getMaxDurationMinutesForStartTime(startTime)) {
+    throw new Error('A duração excede o limite do período.');
+  }
+}
+
 export async function createClass(
   input: CreateClassInput,
 ): Promise<ClassSession> {
@@ -156,6 +217,20 @@ export async function createClass(
 
   if (input.isMakeupOnly && input.linkedAbsenceIds.length === 0) {
     throw new Error('Aula de reposição exige faltas vinculadas.');
+  }
+
+  if (input.linkedAbsenceIds.length > 0) {
+    validateMakeupAbsences(input.linkedAbsenceIds);
+    const required = calculateRequiredMakeupMinutes(
+      null,
+      input.linkedAbsenceIds,
+      input.isMakeupOnly,
+    );
+    validateMakeupScheduleTime(
+      input.startTime,
+      input.durationMinutes,
+      required,
+    );
   }
 
   const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
@@ -237,6 +312,12 @@ export async function saveClassDetail(
 
   if (!existing) {
     throw new Error('Aula não encontrada.');
+  }
+
+  if (isLockedRepostaAbsence(existing)) {
+    throw new Error(
+      'Esta falta já foi reposta e não pode ser alterada. Ela permanece apenas como referência.',
+    );
   }
 
   let next: ClassSession = { ...existing };
@@ -321,6 +402,12 @@ export async function deleteClass(id: string): Promise<void> {
     return;
   }
 
+  if (isLockedRepostaAbsence(session)) {
+    throw new Error(
+      'Esta falta já foi reposta e não pode ser excluída. Ela permanece apenas como referência.',
+    );
+  }
+
   if (session.linkedAbsenceIds.length > 0) {
     setClasses((current) =>
       current.map((item) => {
@@ -330,8 +417,7 @@ export async function deleteClass(id: string): Promise<void> {
 
         return {
           ...item,
-          pendingMakeupMinutes:
-            (item.pendingMakeupMinutes ?? 0) + item.durationMinutes,
+          pendingMakeupMinutes: item.durationMinutes,
         };
       }),
     );
@@ -348,6 +434,7 @@ export async function getPendingAbsences(
     (session) =>
       session.studentId === studentId &&
       session.attendance === 'absent' &&
+      isClassSessionEnded(session) &&
       (session.pendingMakeupMinutes ?? session.durationMinutes) > 0,
   );
 }
@@ -389,6 +476,8 @@ export async function linkMakeup(
     throw new Error('Selecione pelo menos uma falta.');
   }
 
+  validateMakeupAbsences(input.absenceIds);
+
   if (input.targetClassId) {
     const target = getClassById(input.targetClassId);
 
@@ -408,9 +497,7 @@ export async function linkMakeup(
       false,
     );
 
-    if (durationMinutes < required) {
-      throw new Error('Duração insuficiente.');
-    }
+    validateMakeupScheduleTime(input.startTime, durationMinutes, required);
 
     const expectedAmount = target.hasManualAmountOverride
       ? Math.round(
@@ -435,7 +522,11 @@ export async function linkMakeup(
       current.map((session) => (session.id === updated.id ? updated : session)),
     );
 
-    applyMakeupCoverage(updated.id, input.absenceIds, durationMinutes);
+    applyMakeupCoverage(
+      updated.id,
+      input.absenceIds,
+      Math.max(durationMinutes - target.durationMinutes, 0),
+    );
 
     return updated;
   }
@@ -446,9 +537,7 @@ export async function linkMakeup(
 
   const required = calculateRequiredMakeupMinutes(null, input.absenceIds, true);
 
-  if (durationMinutes < required) {
-    throw new Error('Duração insuficiente.');
-  }
+  validateMakeupScheduleTime(input.startTime, durationMinutes, required);
 
   const expectedAmount = calculateExpectedAmount(
     durationMinutes,
@@ -529,10 +618,6 @@ export async function rescheduleClass(
   );
 
   return updated;
-}
-
-export function isMakeupFullyCovered(session: ClassSession): boolean {
-  return (session.pendingMakeupMinutes ?? session.durationMinutes) === 0;
 }
 
 export function getDefaultScheduleStart(period: ClassPeriod): string {

@@ -23,16 +23,16 @@ export function getClassBadge(session: ClassSession): ClassBadge {
   }
 
   if (session.attendance === 'absent') {
+    if ((session.pendingMakeupMinutes ?? session.durationMinutes) === 0) {
+      return {
+        label: 'Reposta',
+        variant: 'info',
+      };
+    }
+
     return {
       label: 'Não compareceu',
       variant: 'danger',
-    };
-  }
-
-  if (session.linkedAbsenceIds.length > 0) {
-    return {
-      label: 'Aula reposta',
-      variant: 'info',
     };
   }
 

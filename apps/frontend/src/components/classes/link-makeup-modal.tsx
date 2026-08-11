@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { MakeupSelectableClassCard } from '@/components/classes/makeup-selectable-class-card';
-import { getRecentClassesTitle } from '@/components/classes/student-recent-classes-section';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
@@ -10,7 +9,6 @@ import {
   calculateRequiredMakeupMinutes,
   getPendingAbsences,
   linkMakeup,
-  listRecentClassesByStudent,
 } from '@/services/class-service';
 import {
   addMinutesToTime,
@@ -18,6 +16,7 @@ import {
   clampTimeToBounds,
   formatHoursLabel,
   getEffectiveEndMinTime,
+  getMaxDurationMinutesForStartTime,
   getTimeRangeBoundsForStartTime,
   MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
@@ -74,16 +73,20 @@ export function LinkMakeupModal({
     return null;
   }
 
+  const resolvedStartTime = targetClass?.startTime ?? initialStartTime;
+  const resolvedDurationMinutes =
+    targetClass?.durationMinutes ?? initialDurationMinutes;
+
   return (
     <LinkMakeupForm
-      key={`${studentId}-${initialStartTime}-${initialDurationMinutes}`}
+      key={`${studentId}-${resolvedStartTime}-${resolvedDurationMinutes}-${targetClass?.id ?? 'new'}`}
       onClose={onClose}
       studentId={studentId}
       studentName={studentName}
       targetClass={targetClass}
       isMakeupOnly={isMakeupOnly}
-      initialStartTime={initialStartTime}
-      initialDurationMinutes={initialDurationMinutes}
+      initialStartTime={resolvedStartTime}
+      initialDurationMinutes={resolvedDurationMinutes}
       onConfirm={onConfirm}
     />
   );
@@ -102,7 +105,6 @@ function LinkMakeupForm({
   onConfirm,
 }: LinkMakeupFormProps) {
   const [absences, setAbsences] = useState<ClassSession[]>([]);
-  const [recentClasses, setRecentClasses] = useState<ClassSession[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(
@@ -120,19 +122,10 @@ function LinkMakeupForm({
       }
     });
 
-    void listRecentClassesByStudent(studentId, 2).then((sessions) => {
-      if (!cancelled) {
-        setRecentClasses(sessions);
-      }
-    });
-
     return () => {
       cancelled = true;
     };
   }, [studentId]);
-
-  const selectableSessions = absences.length > 0 ? absences : recentClasses;
-  const showMakeupPending = absences.length > 0;
 
   const resolveRequiredMinutes = (ids: string[]) =>
     resolveRequiredMakeupMinutes(
@@ -179,9 +172,16 @@ function LinkMakeupForm({
 
   const currentMinutes = minutesBetween(startTime, endTime);
   const missingMinutes = Math.max(requiredMinutes - currentMinutes, 0);
+  const maxPeriodMinutes = getMaxDurationMinutesForStartTime(startTime);
+  const exceedsPeriodCapacity = requiredMinutes > maxPeriodMinutes;
   const timeRangeBounds = getTimeRangeBoundsForStartTime(startTime, {
     minDurationMinutes: requiredMinutes,
   });
+  const canConfirm =
+    selectedIds.length > 0 &&
+    missingMinutes === 0 &&
+    !exceedsPeriodCapacity &&
+    !saving;
 
   const toggleSelection = (id: string) => {
     setError(null);
@@ -227,6 +227,13 @@ function LinkMakeupForm({
   const handleConfirm = async () => {
     if (selectedIds.length === 0) {
       setError('Selecione ao menos uma falta.');
+      return;
+    }
+
+    if (exceedsPeriodCapacity) {
+      setError(
+        `A reposição excede o limite do período (${formatHoursLabel(maxPeriodMinutes)}).`,
+      );
       return;
     }
 
@@ -276,10 +283,10 @@ function LinkMakeupForm({
       title="Vincular reposição"
       onClose={onClose}
       footer={
-        selectableSessions.length > 0 ? (
+        absences.length > 0 ? (
           <Button
             className="w-full"
-            disabled={saving || selectedIds.length === 0 || missingMinutes > 0}
+            disabled={!canConfirm}
             onClick={() => void handleConfirm()}
           >
             Confirmar reposição
@@ -293,24 +300,19 @@ function LinkMakeupForm({
           <span className="font-semibold text-text-main">{studentName}</span>
         </p>
 
-        {selectableSessions.length === 0 ? (
+        {absences.length === 0 ? (
           <p className="rounded-md bg-bg-subtle p-4 text-sm text-text-muted">
             Não há faltas pendentes de reposição para este aluno.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {!showMakeupPending ? (
-              <h3 className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                {getRecentClassesTitle(selectableSessions.length)}
-              </h3>
-            ) : null}
             <div className="scroll-area max-h-56 space-y-3 pr-1">
-              {selectableSessions.map((session) => (
+              {absences.map((session) => (
                 <MakeupSelectableClassCard
                   key={session.id}
                   session={session}
                   selected={selectedIds.includes(session.id)}
-                  showMakeupPending={showMakeupPending}
+                  showMakeupPending
                   onToggle={() => toggleSelection(session.id)}
                 />
               ))}
@@ -318,7 +320,7 @@ function LinkMakeupForm({
           </div>
         )}
 
-        {selectableSessions.length > 0 ? (
+        {absences.length > 0 ? (
           <div className="flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
               Horário
@@ -336,9 +338,25 @@ function LinkMakeupForm({
           </div>
         ) : null}
 
-        {selectableSessions.length > 0 && missingMinutes > 0 ? (
+        {absences.length > 0 && selectedIds.length > 0 ? (
+          <p className="text-xs text-text-muted">
+            Duração necessária: {formatHoursLabel(requiredMinutes)}
+            {!isMakeupOnly && targetClass
+              ? ` (aula ${formatHoursLabel(targetClass.durationMinutes)} + reposição ${formatHoursLabel(requiredMinutes - targetClass.durationMinutes)})`
+              : null}
+          </p>
+        ) : null}
+
+        {absences.length > 0 && missingMinutes > 0 ? (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
             Necessário mais {formatHoursLabel(missingMinutes)} de aula.
+          </p>
+        ) : null}
+
+        {absences.length > 0 && exceedsPeriodCapacity ? (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
+            A reposição excede o limite do período (
+            {formatHoursLabel(maxPeriodMinutes)}).
           </p>
         ) : null}
 

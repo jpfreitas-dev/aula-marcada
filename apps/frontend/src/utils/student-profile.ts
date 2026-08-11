@@ -1,4 +1,5 @@
 import type { ClassSession } from '@/types';
+import { isLockedRepostaAbsence } from '@/utils/class-session';
 import { addWorkdays, getWeekStart } from '@/utils/workday';
 
 export type AttendancePeriod = 'week' | 'month' | 'year' | 'all';
@@ -42,22 +43,39 @@ function isSessionPast(session: ClassSession, reference: Date): boolean {
   return getSessionStartDateTime(session) <= reference;
 }
 
+function countsTowardAttendanceBase(
+  session: ClassSession,
+  reference: Date,
+): boolean {
+  if (isLockedRepostaAbsence(session)) {
+    return false;
+  }
+
+  // Aula que vincula reposições entra na base assim que existe (substitui as faltas Reposta).
+  if (session.linkedAbsenceIds.length > 0) {
+    return true;
+  }
+
+  // Demais aulas: só após ocorrerem (ou se já tiverem presença preenchida).
+  return isSessionPast(session, reference) || session.attendance !== 'empty';
+}
+
 export function calculateAttendanceStats(
   sessions: ClassSession[],
   period: AttendancePeriod,
   reference = new Date(),
 ): { present: number; total: number } {
-  const pastSessionsInPeriod = sessions.filter(
+  const sessionsInBase = sessions.filter(
     (session) =>
       isSessionInPeriod(session, period, reference) &&
-      isSessionPast(session, reference),
+      countsTowardAttendanceBase(session, reference),
   );
 
   return {
-    present: pastSessionsInPeriod.filter(
+    present: sessionsInBase.filter(
       (session) => session.attendance === 'attended',
     ).length,
-    total: pastSessionsInPeriod.length,
+    total: sessionsInBase.length,
   };
 }
 
