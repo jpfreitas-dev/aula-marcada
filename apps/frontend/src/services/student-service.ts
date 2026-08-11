@@ -386,10 +386,16 @@ function getNextClassAt(classes: ClassSession[]): string | undefined {
   return upcoming[0];
 }
 
-export async function listStudents(): Promise<Student[]> {
+export type StudentListFilter = 'active' | 'inactive';
+
+export async function listStudents(
+  filter: StudentListFilter = 'active',
+): Promise<Student[]> {
   ensureMockStoreInitialized();
   return [...getStudentsSnapshot()]
-    .filter((student) => student.active)
+    .filter((student) =>
+      filter === 'active' ? student.active : !student.active,
+    )
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
@@ -616,6 +622,48 @@ export async function updateStudentSettings(
   ]);
 
   return updatedStudent;
+}
+
+export async function deactivateStudent(studentId: string): Promise<Student> {
+  ensureMockStoreInitialized();
+
+  const existing = getStudentById(studentId);
+  if (!existing) {
+    throw new Error('Aluno não encontrado.');
+  }
+
+  if (!existing.active) {
+    throw new Error('Este aluno já está desativado.');
+  }
+
+  const now = new Date();
+
+  setClasses((current) =>
+    current.filter((session) => {
+      if (session.studentId !== studentId) {
+        return true;
+      }
+
+      const [hours, minutes] = session.startTime.split(':').map(Number);
+      const start = new Date(`${session.date}T12:00:00`);
+      start.setHours(hours, minutes, 0, 0);
+      return start <= now;
+    }),
+  );
+
+  const deactivatedStudent: Student = {
+    ...existing,
+    active: false,
+    nextClassAt: undefined,
+  };
+
+  setStudents((current) =>
+    current.map((student) =>
+      student.id === studentId ? deactivatedStudent : student,
+    ),
+  );
+
+  return deactivatedStudent;
 }
 
 export async function listRecurrencesByStudent(
