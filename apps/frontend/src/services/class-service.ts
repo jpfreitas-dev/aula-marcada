@@ -112,6 +112,12 @@ export async function listClassesByStudent(
   );
 }
 
+export async function listClasses(): Promise<ClassSession[]> {
+  ensureMockStoreInitialized();
+
+  return getClassesSnapshot();
+}
+
 export async function getAvailablePeriods(
   date: string,
   excludeClassId?: string,

@@ -8,6 +8,7 @@ export type Student = {
   advanceBalance: number;
   nextClassAt?: string;
   financialStatus: StudentFinancialStatus;
+  active: boolean;
 };
 
 export type StudentFinancialStatus =
@@ -35,4 +36,15 @@ export type CreateStudentInput = {
   phone: string;
   hourlyRate: number;
   recurrences?: CreateStudentRecurrenceInput[];
+};
+
+export type UpdateStudentPersonalInput = {
+  name: string;
+  guardianName: string;
+  phone: string;
+};
+
+export type UpdateStudentSettingsInput = {
+  hourlyRate: number;
+  recurrences: CreateStudentRecurrenceInput[];
 };

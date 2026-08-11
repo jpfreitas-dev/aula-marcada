@@ -19,6 +19,7 @@ export const mockStudents: Student[] = [
     advanceBalance: 100,
     nextClassAt: nextClassAt(1, '08:00'),
     financialStatus: 'advance',
+    active: true,
   },
   {
     id: 'student-maria',
@@ -29,6 +30,7 @@ export const mockStudents: Student[] = [
     advanceBalance: 0,
     nextClassAt: nextClassAt(2, '14:00'),
     financialStatus: 'up_to_date',
+    active: true,
   },
   {
     id: 'student-pedro',
@@ -39,6 +41,7 @@ export const mockStudents: Student[] = [
     advanceBalance: 30,
     nextClassAt: nextClassAt(1, '10:00'),
     financialStatus: 'partial',
+    active: true,
   },
   {
     id: 'student-ana',
@@ -49,6 +52,7 @@ export const mockStudents: Student[] = [
     advanceBalance: 0,
     nextClassAt: nextClassAt(1, '14:00'),
     financialStatus: 'partial',
+    active: true,
   },
   {
     id: 'student-carlos',
@@ -59,5 +63,6 @@ export const mockStudents: Student[] = [
     advanceBalance: 0,
     nextClassAt: nextClassAt(0, '14:00'),
     financialStatus: 'pending',
+    active: true,
   },
 ];

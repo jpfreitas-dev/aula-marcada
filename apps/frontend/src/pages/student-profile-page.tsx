@@ -1,27 +1,33 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
-import { StudentRecentClassesSection } from '@/components/classes/student-recent-classes-section';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useClassDetail } from '@/context/class-detail-context';
+import { EditStudentPersonalModal } from '@/components/students/edit-student-personal-modal';
+import { EditStudentSettingsModal } from '@/components/students/edit-student-settings-modal';
+import { StudentAttendanceCard } from '@/components/students/student-attendance-card';
+import { StudentFinancialCard } from '@/components/students/student-financial-card';
+import { StudentSettingsCard } from '@/components/students/student-settings-card';
+import { IconButton } from '@/components/ui/icon-button';
+import { useProfilePageHeader } from '@/hooks/use-profile-page-header';
 import { listClassesByStudent } from '@/services/class-service';
-import { getStudentByIdService } from '@/services/student-service';
-import type { ClassSession, Student } from '@/types';
-import { calculateStudentPendingAmount } from '@/utils/class-value';
-import { formatCurrency } from '@/utils/currency';
 import {
-  formatRelativeNextClass,
-  getStudentFinancialBadgeVariant,
-  getStudentFinancialLabel,
-} from '@/utils/workday';
+  getStudentByIdService,
+  listRecurrencesByStudent,
+} from '@/services/student-service';
+import type { ClassSession, Student, StudentRecurrence } from '@/types';
 import { subscribe } from '@/mocks';
+import { calculateStudentPendingSummary } from '@/utils/class-value';
+import { getStudentFinancialCardContent } from '@/utils/student-financial';
 
 export function StudentProfilePage() {
   const { id } = useParams();
-  const { openClassDetail } = useClassDetail();
   const [student, setStudent] = useState<Student | null>(null);
   const [studentClasses, setStudentClasses] = useState<ClassSession[]>([]);
+  const [recurrences, setRecurrences] = useState<StudentRecurrence[]>([]);
+  const [loading, setLoading] = useState(() => Boolean(id));
+  const [personalModalOpen, setPersonalModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+
+  useProfilePageHeader('Perfil do Aluno');
 
   useEffect(() => {
     if (!id) {
@@ -29,107 +35,83 @@ export function StudentProfilePage() {
     }
 
     const loadProfile = () => {
-      void getStudentByIdService(id).then(setStudent);
-      void listClassesByStudent(id).then(setStudentClasses);
+      void Promise.all([
+        getStudentByIdService(id),
+        listClassesByStudent(id),
+        listRecurrencesByStudent(id),
+      ]).then(([loadedStudent, classes, loadedRecurrences]) => {
+        setStudent(loadedStudent ?? null);
+        setStudentClasses(classes);
+        setRecurrences(loadedRecurrences);
+        setLoading(false);
+      });
     };
 
     loadProfile();
     return subscribe(loadProfile);
   }, [id]);
 
-  if (!student) {
+  if (loading) {
     return (
-      <section className="rounded-md bg-white p-card-padding shadow-sm">
-        <h2 className="font-display text-headline-md font-semibold text-purple-900">
-          Perfil do aluno
-        </h2>
-        <p className="mt-2 text-sm text-text-muted">
-          {id ? 'Aluno não encontrado.' : 'Identificador inválido.'}
-        </p>
-        <Link
-          to="/students"
-          className="mt-4 inline-block text-sm font-medium text-primary"
-        >
-          Voltar para alunos
-        </Link>
-      </section>
+      <p className="text-sm text-text-muted">Carregando perfil do aluno...</p>
     );
   }
 
-  const pendingAmount = calculateStudentPendingAmount(studentClasses);
+  if (!student) {
+    return (
+      <p className="text-sm text-text-muted">
+        {id ? 'Aluno não encontrado.' : 'Identificador inválido.'}
+      </p>
+    );
+  }
+
+  const pending = calculateStudentPendingSummary(studentClasses);
+  const financialContent = getStudentFinancialCardContent(student, pending);
 
   return (
-    <div className="flex flex-col gap-stack-md">
-      <Link
-        to="/students"
-        className="inline-flex items-center gap-1 text-sm font-medium text-primary"
-      >
-        ← Voltar
-      </Link>
-
-      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+    <div className="flex flex-col gap-4">
+      <section className="border-b border-outline-variant/30 pb-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-headline-md font-semibold text-purple-900">
-              {student.name}
-            </h2>
-            <p className="mt-1 text-sm text-text-muted">{student.phone}</p>
-            {student.email ? (
-              <p className="text-sm text-text-muted">{student.email}</p>
-            ) : null}
-          </div>
-          <Badge
-            label={getStudentFinancialLabel(student)}
-            variant={getStudentFinancialBadgeVariant(student)}
+          <h2 className="font-display text-2xl font-bold text-text-main">
+            {student.name}
+          </h2>
+          <IconButton
+            icon="edit"
+            size="sm"
+            aria-label="Editar informações do aluno"
+            onClick={() => setPersonalModalOpen(true)}
           />
         </div>
-      </section>
-
-      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted">
-          Financeiro
-        </h3>
-        {pendingAmount > 0 ? (
-          <p className="mt-3 font-medium text-text-main">
-            Pendente: {formatCurrency(pendingAmount)}
-          </p>
-        ) : student.advanceBalance > 0 ? (
-          <p className="mt-3 font-medium text-text-main">
-            Adiantado: {formatCurrency(student.advanceBalance)}
-          </p>
-        ) : (
-          <p className="mt-3 font-medium text-text-main">Em dia</p>
-        )}
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-xs text-text-muted">Valor/hora</p>
-            <p className="font-mono text-sm font-medium">
-              {formatCurrency(student.hourlyRate)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-text-muted">Saldo adiantado</p>
-            <p className="font-mono text-sm font-medium">
-              {formatCurrency(student.advanceBalance)}
-            </p>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-text-muted">
-          Próxima aula: {formatRelativeNextClass(student.nextClassAt)}
+        <p className="mt-1 text-sm text-text-muted">
+          Responsável: {student.guardianName} | {student.phone}
         </p>
-        <Button type="button" className="mt-4 w-full">
-          Receber pagamento
-        </Button>
       </section>
 
-      {studentClasses.length > 0 ? (
-        <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
-          <StudentRecentClassesSection
-            studentId={student.id}
-            onClassClick={openClassDetail}
-          />
-        </section>
-      ) : null}
+      <StudentFinancialCard
+        label={financialContent.label}
+        tone={financialContent.tone}
+      />
+
+      <StudentSettingsCard
+        hourlyRate={student.hourlyRate}
+        recurrences={recurrences}
+        onEdit={() => setSettingsModalOpen(true)}
+      />
+
+      <StudentAttendanceCard sessions={studentClasses} />
+
+      <EditStudentPersonalModal
+        open={personalModalOpen}
+        student={student}
+        onClose={() => setPersonalModalOpen(false)}
+      />
+
+      <EditStudentSettingsModal
+        open={settingsModalOpen}
+        student={student}
+        recurrences={recurrences}
+        onClose={() => setSettingsModalOpen(false)}
+      />
     </div>
   );
 }

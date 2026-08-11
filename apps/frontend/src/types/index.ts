@@ -4,6 +4,8 @@ export type {
   CreateStudentRecurrenceInput,
   StudentRecurrence,
   StudentWeekday,
+  UpdateStudentPersonalInput,
+  UpdateStudentSettingsInput,
 } from './student';
 export type {
   AttendanceStatus,

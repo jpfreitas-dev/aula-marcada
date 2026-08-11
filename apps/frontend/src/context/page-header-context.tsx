@@ -8,19 +8,39 @@ import {
   type SetStateAction,
 } from 'react';
 
+export type PageHeaderVariant = 'default' | 'profile';
+
 type PageHeaderContextValue = {
   headerChildren: ReactNode | null;
   setHeaderChildren: Dispatch<SetStateAction<ReactNode | null>>;
+  variant: PageHeaderVariant;
+  setVariant: Dispatch<SetStateAction<PageHeaderVariant>>;
+  profileTitle: string;
+  setProfileTitle: Dispatch<SetStateAction<string>>;
+  profileBackTo: string;
+  setProfileBackTo: Dispatch<SetStateAction<string>>;
 };
 
 const PageHeaderContext = createContext<PageHeaderContextValue | null>(null);
 
 export function PageHeaderProvider({ children }: { children: ReactNode }) {
   const [headerChildren, setHeaderChildren] = useState<ReactNode | null>(null);
+  const [variant, setVariant] = useState<PageHeaderVariant>('default');
+  const [profileTitle, setProfileTitle] = useState('');
+  const [profileBackTo, setProfileBackTo] = useState('/students');
 
   const value = useMemo(
-    () => ({ headerChildren, setHeaderChildren }),
-    [headerChildren],
+    () => ({
+      headerChildren,
+      setHeaderChildren,
+      variant,
+      setVariant,
+      profileTitle,
+      setProfileTitle,
+      profileBackTo,
+      setProfileBackTo,
+    }),
+    [headerChildren, variant, profileTitle, profileBackTo],
   );
 
   return (

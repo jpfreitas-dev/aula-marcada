@@ -6,22 +6,46 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { useMockStore } from '@/hooks/use-mock-store';
+import { listClasses } from '@/services/class-service';
 import { listStudents } from '@/services/student-service';
 import type { Student } from '@/types';
 import {
-  formatRelativeNextClass,
-  getStudentFinancialBadgeVariant,
-  getStudentFinancialLabel,
-} from '@/utils/workday';
+  calculateStudentPendingSummary,
+  type StudentPendingSummary,
+} from '@/utils/class-value';
+import { getStudentFinancialBadge } from '@/utils/student-financial';
+import { formatRelativeNextClass } from '@/utils/workday';
+
+const EMPTY_PENDING: StudentPendingSummary = { amount: 0, lessonCount: 0 };
 
 export function StudentsPage() {
   const storeVersion = useMockStore();
   const [students, setStudents] = useState<Student[]>([]);
+  const [pendingByStudentId, setPendingByStudentId] = useState<
+    Record<string, StudentPendingSummary>
+  >({});
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
-    void listStudents().then(setStudents);
+    void Promise.all([listStudents(), listClasses()]).then(
+      ([loadedStudents, classes]) => {
+        setStudents(loadedStudents);
+
+        const pendingMap = loadedStudents.reduce<
+          Record<string, StudentPendingSummary>
+        >((accumulator, student) => {
+          const studentClasses = classes.filter(
+            (session) => session.studentId === student.id,
+          );
+          accumulator[student.id] =
+            calculateStudentPendingSummary(studentClasses);
+          return accumulator;
+        }, {});
+
+        setPendingByStudentId(pendingMap);
+      },
+    );
   }, [storeVersion]);
 
   const filteredStudents = useMemo(() => {
@@ -63,31 +87,36 @@ export function StudentsPage() {
       </div>
 
       <ul className="flex flex-col gap-3">
-        {filteredStudents.map((student) => (
-          <li key={student.id}>
-            <Link
-              to={`/students/${student.id}`}
-              className="block rounded-xl border border-outline-variant bg-white p-4 transition-transform active:scale-[0.99]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-display text-base font-bold text-text-main">
-                  {student.name}
-                </span>
-                <Badge
-                  label={getStudentFinancialLabel(student)}
-                  variant={getStudentFinancialBadgeVariant(student)}
-                  className="px-2.5 py-1"
-                />
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
-                <Icon name="calendar_month" className="text-base" />
-                <span>
-                  Próxima aula: {formatRelativeNextClass(student.nextClassAt)}
-                </span>
-              </div>
-            </Link>
-          </li>
-        ))}
+        {filteredStudents.map((student) => {
+          const pending = pendingByStudentId[student.id] ?? EMPTY_PENDING;
+          const financialBadge = getStudentFinancialBadge(student, pending);
+
+          return (
+            <li key={student.id}>
+              <Link
+                to={`/students/${student.id}`}
+                className="block rounded-xl border border-outline-variant bg-white p-4 transition-transform active:scale-[0.99]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-display text-base font-bold text-text-main">
+                    {student.name}
+                  </span>
+                  <Badge
+                    label={financialBadge.label}
+                    variant={financialBadge.variant}
+                    className="px-2.5 py-1"
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
+                  <Icon name="calendar_month" className="text-base" />
+                  <span>
+                    Próxima aula: {formatRelativeNextClass(student.nextClassAt)}
+                  </span>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
 
       <CreateStudentModal
