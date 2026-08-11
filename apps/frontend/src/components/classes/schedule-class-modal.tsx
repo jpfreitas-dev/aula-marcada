@@ -15,7 +15,6 @@ import {
   calculateRequiredMakeupMinutes,
   createClass,
   getAvailablePeriods,
-  getDefaultScheduleStart,
 } from '@/services/class-service';
 import { listStudents } from '@/services/student-service';
 import type { Student } from '@/types';
@@ -25,7 +24,13 @@ import {
   parseCurrencyInput,
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
-import { getEffectiveStartMinTime } from '@/utils/schedule-period';
+import {
+  getAggregatedScheduleTimeBounds,
+  getDefaultStartForPeriods,
+  isStartTimeAllowedForPeriods,
+  resolveBoundedPeriods,
+  resolveStartTimeChangeBounds,
+} from '@/utils/schedule-period';
 import {
   addMinutesToTime,
   applyStartTimeChange,
@@ -36,12 +41,12 @@ import {
   getTimeRangeBoundsForStartTime,
   minutesBetween,
   periodFromStartTime,
-  timeToMinutes,
 } from '@/utils/time';
 import {
   addWorkdays,
   formatWorkdayLabel,
   getDefaultAgendaDate,
+  isWeekday,
   toDateKey,
 } from '@/utils/workday';
 
@@ -62,6 +67,49 @@ type MakeupDraft = {
   endTime: string;
 };
 
+const OCCUPIED_LABEL = 'Ocupado';
+const WEEKEND_MESSAGE = 'Não é possível agendar aulas no fim de semana.';
+
+function resolveInitialDate(initialSlot?: ScheduleSlot): string {
+  return initialSlot?.date ?? toDateKey(getDefaultAgendaDate());
+}
+
+function resolveInitialSchedulePeriods(
+  initialSlot?: ScheduleSlot,
+): ClassPeriod[] {
+  return initialSlot ? [initialSlot.period] : ['morning', 'afternoon'];
+}
+
+function resolveInitialStartTime(date: string, periods: ClassPeriod[]): string {
+  return (
+    getDefaultStartForPeriods(date, periods) ??
+    defaultStartTimeForPeriod(periods[0] ?? 'morning')
+  );
+}
+
+function syncScheduleTimes(
+  date: string,
+  periods: ClassPeriod[],
+  currentStart: string,
+): { startTime: string; endTime: string } | null {
+  const nextStart =
+    getDefaultStartForPeriods(date, periods) ??
+    (isStartTimeAllowedForPeriods(currentStart, periods) ? currentStart : null);
+
+  if (!nextStart) {
+    return null;
+  }
+
+  const bounds = getTimeRangeBoundsForStartTime(nextStart);
+  const endTime = clampTimeToBounds(
+    addMinutesToTime(nextStart, DEFAULT_CLASS_DURATION_MINUTES),
+    getEffectiveEndMinTime(nextStart),
+    bounds.endMax,
+  );
+
+  return { startTime: nextStart, endTime };
+}
+
 export function ScheduleClassModal({
   open,
   onClose,
@@ -71,7 +119,7 @@ export function ScheduleClassModal({
     return null;
   }
 
-  const formKey = `${initialSlot?.date ?? 'default'}-${initialSlot?.period ?? 'morning'}`;
+  const formKey = `${initialSlot?.date ?? 'default'}-${initialSlot?.period ?? 'any'}`;
 
   return (
     <ScheduleClassForm
@@ -89,16 +137,19 @@ function ScheduleClassForm({
   onClose: () => void;
   initialSlot?: ScheduleSlot;
 }) {
-  const initialPeriod = initialSlot?.period ?? 'morning';
-  const initialStart = getDefaultScheduleStart(initialPeriod);
+  const initialDate = resolveInitialDate(initialSlot);
+  const initialSchedulePeriods = resolveInitialSchedulePeriods(initialSlot);
 
   const [students, setStudents] = useState<Student[]>([]);
-  const [date, setDate] = useState(
-    initialSlot?.date ?? toDateKey(getDefaultAgendaDate()),
+  const [date, setDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState(() =>
+    resolveInitialStartTime(initialDate, initialSchedulePeriods),
   );
-  const [startTime, setStartTime] = useState(initialStart);
-  const [endTime, setEndTime] = useState(
-    addMinutesToTime(initialStart, DEFAULT_CLASS_DURATION_MINUTES),
+  const [endTime, setEndTime] = useState(() =>
+    addMinutesToTime(
+      resolveInitialStartTime(initialDate, initialSchedulePeriods),
+      DEFAULT_CLASS_DURATION_MINUTES,
+    ),
   );
   const [studentId, setStudentId] = useState('');
   const [amountInput, setAmountInput] = useState('0,00');
@@ -109,6 +160,9 @@ function ScheduleClassForm({
     'morning',
     'afternoon',
   ]);
+  const [hasUserChangedDate, setHasUserChangedDate] = useState(false);
+  const [weekendBlocked, setWeekendBlocked] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -125,20 +179,41 @@ function ScheduleClassForm({
   const dateMin = workdayOptions[0]?.value;
   const dateMax = workdayOptions[workdayOptions.length - 1]?.value;
 
+  const boundedPeriods = useMemo(
+    () =>
+      resolveBoundedPeriods(availablePeriods, {
+        lockedPeriod: initialSlot?.period,
+        respectPeriodLock:
+          Boolean(initialSlot) && !hasUserChangedDate && date === initialDate,
+      }),
+    [availablePeriods, date, hasUserChangedDate, initialDate, initialSlot],
+  );
+
+  const aggregatedBounds = useMemo(
+    () => getAggregatedScheduleTimeBounds(date, boundedPeriods),
+    [boundedPeriods, date],
+  );
+
+  const currentTimeBounds = useMemo(
+    () => getTimeRangeBoundsForStartTime(startTime),
+    [startTime],
+  );
+
+  const hasScheduleAvailability = aggregatedBounds.hasAvailability;
+  const formBlocked = weekendBlocked;
   const selectedStudent = students.find((student) => student.id === studentId);
   const period = periodFromStartTime(startTime);
-  const timeRangeBounds = getTimeRangeBoundsForStartTime(startTime);
   const effectiveStartTime = makeupDraft?.startTime ?? startTime;
   const effectiveEndTime = makeupDraft?.endTime ?? endTime;
   const effectiveDuration = minutesBetween(
     effectiveStartTime,
     effectiveEndTime,
   );
-  const effectiveStartMinTime = getEffectiveStartMinTime(
-    date,
-    timeRangeBounds.startMin,
-  );
-  const timesLocked = Boolean(makeupDraft);
+  const timesLocked =
+    Boolean(makeupDraft) || !hasScheduleAvailability || formBlocked;
+
+  const startMinTime = aggregatedBounds.startMin;
+  const startMaxTime = aggregatedBounds.startMax;
 
   useEffect(() => {
     void listStudents().then(setStudents);
@@ -158,47 +233,33 @@ function ScheduleClassForm({
 
       setAvailablePeriods(periods);
 
-      if (periods.length === 0) {
-        return;
-      }
+      const nextBoundedPeriods = resolveBoundedPeriods(periods, {
+        lockedPeriod: initialSlot?.period,
+        respectPeriodLock:
+          Boolean(initialSlot) && !hasUserChangedDate && date === initialDate,
+      });
 
       setStartTime((currentStart) => {
-        const currentPeriod = periodFromStartTime(currentStart);
-        const activePeriod = periods.includes(currentPeriod)
-          ? currentPeriod
-          : periods[0];
-        const bounds = getTimeRangeBoundsForStartTime(
-          defaultStartTimeForPeriod(activePeriod),
+        const synced = syncScheduleTimes(
+          date,
+          nextBoundedPeriods,
+          currentStart,
         );
-        const minStart = getEffectiveStartMinTime(date, bounds.startMin);
-        const maxStart = bounds.startMax;
-
-        let nextStart = currentStart;
-        if (!periods.includes(currentPeriod)) {
+        if (!synced) {
           setMakeupDraft(null);
-          nextStart = defaultStartTimeForPeriod(periods[0]);
+          return currentStart;
         }
 
-        if (timeToMinutes(nextStart) < timeToMinutes(minStart)) {
-          nextStart = minStart;
-        }
-
-        nextStart = clampTimeToBounds(nextStart, minStart, maxStart);
-        const nextBounds = getTimeRangeBoundsForStartTime(nextStart);
-        const nextEnd = clampTimeToBounds(
-          addMinutesToTime(nextStart, DEFAULT_CLASS_DURATION_MINUTES),
-          getEffectiveEndMinTime(nextStart),
-          nextBounds.endMax,
-        );
-        setEndTime(nextEnd);
-        return nextStart;
+        setMakeupDraft(null);
+        setEndTime(synced.endTime);
+        return synced.startTime;
       });
     });
 
     return () => {
       cancelled = true;
     };
-  }, [date]);
+  }, [date, hasUserChangedDate, initialDate, initialSlot]);
 
   const updateSuggestedAmount = (minutes: number, student: Student) => {
     setAmountInput(
@@ -206,7 +267,27 @@ function ScheduleClassForm({
     );
   };
 
+  const handleDateChange = (nextDate: string) => {
+    setDateError(null);
+    setWeekendBlocked(false);
+    setError(null);
+    setDate(nextDate);
+    setHasUserChangedDate(nextDate !== initialDate);
+    setMakeupDraft(null);
+  };
+
+  const handleWeekendAttempt = () => {
+    setWeekendBlocked(true);
+    setDateError(WEEKEND_MESSAGE);
+    setError(null);
+    setMakeupDraft(null);
+  };
+
   const handleStudentChange = (nextStudentId: string) => {
+    if (formBlocked) {
+      return;
+    }
+
     setStudentId(nextStudentId);
     setMakeupDraft(null);
     const student = students.find((item) => item.id === nextStudentId);
@@ -216,21 +297,26 @@ function ScheduleClassForm({
   };
 
   const handleStartTimeChange = (nextStart: string) => {
-    const bounds = getTimeRangeBoundsForStartTime(nextStart);
-    const startMin =
-      timeToMinutes(effectiveStartMinTime) > timeToMinutes(bounds.startMin)
-        ? effectiveStartMinTime
-        : bounds.startMin;
+    if (!hasScheduleAvailability) {
+      return;
+    }
+
+    const changeBounds = resolveStartTimeChangeBounds(
+      date,
+      nextStart,
+      aggregatedBounds,
+    );
+
     const { startTime: clampedStart, endTime: nextEnd } = applyStartTimeChange(
       startTime,
       endTime,
       nextStart,
-      {
-        startMin,
-        startMax: bounds.startMax,
-        endMax: bounds.endMax,
-      },
+      changeBounds,
     );
+
+    if (!isStartTimeAllowedForPeriods(clampedStart, boundedPeriods)) {
+      return;
+    }
 
     setStartTime(clampedStart);
     setEndTime(nextEnd);
@@ -245,6 +331,10 @@ function ScheduleClassForm({
   };
 
   const handleEndTimeChange = (nextEnd: string) => {
+    if (!hasScheduleAvailability) {
+      return;
+    }
+
     const bounds = getTimeRangeBoundsForStartTime(startTime);
     const endMinTime = getEffectiveEndMinTime(startTime);
     const clampedEnd = clampTimeToBounds(nextEnd, endMinTime, bounds.endMax);
@@ -260,13 +350,23 @@ function ScheduleClassForm({
   };
 
   const handleSave = async () => {
+    if (formBlocked || !isWeekday(new Date(`${date}T12:00:00`))) {
+      setError(WEEKEND_MESSAGE);
+      return;
+    }
+
     if (!selectedStudent) {
       setError('Selecione um aluno.');
       return;
     }
 
-    if (availablePeriods.length === 0) {
-      setError('Não há períodos disponíveis nesta data.');
+    if (!hasScheduleAvailability) {
+      setError(OCCUPIED_LABEL);
+      return;
+    }
+
+    if (!boundedPeriods.includes(period)) {
+      setError('O horário selecionado não está disponível nesta data.');
       return;
     }
 
@@ -323,7 +423,7 @@ function ScheduleClassForm({
           <Button
             className="w-full"
             onClick={() => void handleSave()}
-            disabled={saving}
+            disabled={saving || !hasScheduleAvailability || formBlocked}
           >
             Salvar agendamento
           </Button>
@@ -337,125 +437,140 @@ function ScheduleClassForm({
                 value={date}
                 min={dateMin}
                 max={dateMax}
-                onChange={(nextDate) => {
-                  setDate(nextDate);
-                  setMakeupDraft(null);
-                }}
+                onChange={handleDateChange}
+                onWeekendAttempt={handleWeekendAttempt}
               />
+              {dateError ? (
+                <p className="text-xs text-status-danger">{dateError}</p>
+              ) : null}
             </label>
 
             <div className="flex min-w-0 flex-col gap-2">
               <span className={fieldLabelClassName}>Horário</span>
-              <TimeRangeInput
-                startTime={effectiveStartTime}
-                endTime={effectiveEndTime}
-                startMinTime={
-                  timeToMinutes(effectiveStartMinTime) >
-                  timeToMinutes(timeRangeBounds.startMin)
-                    ? effectiveStartMinTime
-                    : timeRangeBounds.startMin
-                }
-                startMaxTime={timeRangeBounds.startMax}
-                endMaxTime={timeRangeBounds.endMax}
-                disabled={timesLocked}
-                onStartChange={handleStartTimeChange}
-                onEndChange={handleEndTimeChange}
-              />
-            </div>
-          </div>
-
-          <label className="flex flex-col gap-2">
-            <span className={fieldLabelClassName}>Aluno</span>
-            <div className="relative">
-              <select
-                value={studentId}
-                onChange={(event) => handleStudentChange(event.target.value)}
-                className={`${fieldControlClassName} appearance-none px-3 pr-10`}
-              >
-                <option value="">Selecione...</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {student.name}
-                  </option>
-                ))}
-              </select>
-              <Icon
-                name="expand_more"
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-secondary"
-              />
-            </div>
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className={fieldLabelClassName}>Valor</span>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
-                R$
-              </span>
-              <input
-                value={amountInput}
-                onChange={(event) => setAmountInput(event.target.value)}
-                className={`${fieldControlClassName} pl-10 pr-3 font-mono`}
-              />
-            </div>
-            {selectedStudent ? (
-              <span className="text-xs text-text-muted">
-                Sugerido:{' '}
-                {formatCurrency(
-                  calculateExpectedAmount(
-                    effectiveDuration,
-                    selectedStudent.hourlyRate,
-                  ),
-                )}
-              </span>
-            ) : null}
-          </label>
-
-          <div className="flex items-center justify-between border-t border-surface-variant/50 pt-2">
-            <span className="font-medium text-text-main">
-              Marcar como reposição
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setIsMakeupOnly((current) => !current);
-                setMakeupDraft(null);
-              }}
-              className={`flex h-6 w-12 items-center rounded-full px-1 transition-colors ${
-                isMakeupOnly ? 'bg-primary-container' : 'bg-surface-variant'
-              }`}
-              aria-pressed={isMakeupOnly}
-            >
-              <span
-                className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                  isMakeupOnly ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          {isMakeupOnly ? (
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setLinkModalOpen(true)}
-                disabled={!selectedStudent}
-              >
-                Vincular reposição
-              </Button>
-              {makeupDraft ? (
-                <p className="text-sm text-text-muted">
-                  {makeupDraft.absenceIds.length} falta(s) vinculada(s). Duração
-                  necessária: {requiredMakeupMinutes} min.
-                </p>
+              {hasScheduleAvailability && !formBlocked ? (
+                <TimeRangeInput
+                  startTime={effectiveStartTime}
+                  endTime={effectiveEndTime}
+                  startMinTime={startMinTime}
+                  startMaxTime={startMaxTime}
+                  endMaxTime={currentTimeBounds.endMax}
+                  disabled={timesLocked}
+                  onStartChange={handleStartTimeChange}
+                  onEndChange={handleEndTimeChange}
+                />
               ) : (
-                <p className="text-sm text-status-danger">
-                  Vincule ao menos uma falta para continuar.
-                </p>
+                <div
+                  className={`${fieldControlClassName} flex h-12 items-center justify-center text-sm text-text-muted`}
+                >
+                  {formBlocked ? '—' : OCCUPIED_LABEL}
+                </div>
               )}
             </div>
-          ) : null}
+          </div>
+
+          <fieldset
+            disabled={formBlocked}
+            className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0 disabled:opacity-60"
+          >
+            <label className="flex flex-col gap-2">
+              <span className={fieldLabelClassName}>Aluno</span>
+              <div className="relative">
+                <select
+                  value={studentId}
+                  onChange={(event) => handleStudentChange(event.target.value)}
+                  className={`${fieldControlClassName} appearance-none px-3 pr-10`}
+                >
+                  <option value="">Selecione...</option>
+                  {students.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name}
+                    </option>
+                  ))}
+                </select>
+                <Icon
+                  name="expand_more"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-secondary"
+                />
+              </div>
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className={fieldLabelClassName}>Valor</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-text-muted">
+                  R$
+                </span>
+                <input
+                  value={amountInput}
+                  onChange={(event) => setAmountInput(event.target.value)}
+                  className={`${fieldControlClassName} pl-10 pr-3 font-mono`}
+                />
+              </div>
+              {selectedStudent ? (
+                <span className="text-xs text-text-muted">
+                  Sugerido:{' '}
+                  {formatCurrency(
+                    calculateExpectedAmount(
+                      effectiveDuration,
+                      selectedStudent.hourlyRate,
+                    ),
+                  )}
+                </span>
+              ) : null}
+            </label>
+
+            <div className="flex items-center justify-between border-t border-surface-variant/50 pt-2">
+              <span className="font-medium text-text-main">
+                Marcar como reposição
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (formBlocked) {
+                    return;
+                  }
+
+                  setIsMakeupOnly((current) => !current);
+                  setMakeupDraft(null);
+                }}
+                className={`flex h-6 w-12 items-center rounded-full px-1 transition-colors ${
+                  isMakeupOnly ? 'bg-primary-container' : 'bg-surface-variant'
+                }`}
+                aria-pressed={isMakeupOnly}
+              >
+                <span
+                  className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                    isMakeupOnly ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {isMakeupOnly ? (
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setLinkModalOpen(true)}
+                  disabled={
+                    !selectedStudent || !hasScheduleAvailability || formBlocked
+                  }
+                >
+                  Vincular reposição
+                </Button>
+                {makeupDraft ? (
+                  <p className="text-sm text-text-muted">
+                    {makeupDraft.absenceIds.length} falta(s) vinculada(s).
+                    Duração necessária: {requiredMakeupMinutes} min.
+                  </p>
+                ) : (
+                  <p className="text-sm text-status-danger">
+                    Vincule ao menos uma falta para continuar.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </fieldset>
 
           {error ? <p className="text-sm text-status-danger">{error}</p> : null}
         </div>

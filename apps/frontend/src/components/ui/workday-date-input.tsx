@@ -2,13 +2,14 @@ import { useRef } from 'react';
 
 import { Icon } from '@/components/ui/icon';
 import { fieldControlClassName } from '@/components/ui/field';
-import { getDefaultAgendaDate, isWeekday, toDateKey } from '@/utils/workday';
+import { isWeekday } from '@/utils/workday';
 
 type WorkdayDateInputProps = {
   value: string;
   min?: string;
   max?: string;
   onChange: (value: string) => void;
+  onWeekendAttempt?: () => void;
 };
 
 function formatDateInputLabel(dateKey: string): string {
@@ -21,6 +22,7 @@ export function WorkdayDateInput({
   min,
   max,
   onChange,
+  onWeekendAttempt,
 }: WorkdayDateInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,7 +37,7 @@ export function WorkdayDateInput({
 
     const selected = new Date(`${nextValue}T12:00:00`);
     if (!isWeekday(selected)) {
-      onChange(toDateKey(getDefaultAgendaDate(selected)));
+      onWeekendAttempt?.();
       return;
     }
 

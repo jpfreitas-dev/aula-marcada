@@ -26,7 +26,7 @@ import {
   periodFromStartTime,
 } from '@/utils/time';
 import { isSchedulePeriodOpen } from '@/utils/schedule-period';
-import { toDateKey } from '@/utils/workday';
+import { toDateKey, isWeekday } from '@/utils/workday';
 
 function syncFinancialStatus(session: ClassSession): ClassSession {
   if (session.attendance !== 'attended') {
@@ -143,6 +143,10 @@ export async function createClass(
 
   if (!student) {
     throw new Error('Aluno não encontrado.');
+  }
+
+  if (!isWeekday(new Date(`${input.date}T12:00:00`))) {
+    throw new Error('Não é possível agendar aulas no fim de semana.');
   }
 
   const available = await getAvailablePeriods(input.date);

@@ -116,7 +116,13 @@ O modal deve permitir:
 
 O seletor de dia deve permitir **apenas datas de segunda a sexta**.
 
-Sábado e domingo não aparecem como opção e não podem ser agendados.
+Sábado e domingo não aparecem como opção e não podem ser agendados. Se o professor tentar selecionar um fim de semana no calendário do modal, a data **não** deve ser alterada, deve aparecer a mensagem **“Não é possível agendar aulas no fim de semana.”** e os demais campos do modal devem permanecer bloqueados até que um dia útil seja selecionado.
+
+O modal aberto pelo botão **"+"** deve iniciar sempre com a **data de hoje** (ou o próximo dia útil, se hoje for fim de semana).
+
+O modal aberto pelo botão **Adicionar aula** de um período específico deve iniciar com aquela data e restringir o horário ao período clicado (manhã ou tarde/noite). Ao **alterar a data** no modal, o horário passa a considerar os períodos ainda disponíveis na nova data (manhã, tarde/noite ou ambos, conforme ocupação e horário atual).
+
+Se na data selecionada não houver nenhum horário disponível (períodos ocupados ou já passados), o campo de horário deve exibir **“Ocupado”** centralizado e o agendamento não pode ser salvo.
 
 O dia e os horários apresentados devem considerar apenas períodos disponíveis **em dias úteis**.
 
