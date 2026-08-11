@@ -1,5 +1,11 @@
 export type { Student, StudentFinancialStatus } from './student';
 export type {
+  CreateStudentInput,
+  CreateStudentRecurrenceInput,
+  StudentRecurrence,
+  StudentWeekday,
+} from './student';
+export type {
   AttendanceStatus,
   ClassBadge,
   ClassBadgeVariant,

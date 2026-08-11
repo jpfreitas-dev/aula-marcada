@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { CreateStudentModal } from '@/components/students/create-student-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { useMockStore } from '@/hooks/use-mock-store';
 import { listStudents } from '@/services/student-service';
 import type { Student } from '@/types';
 import {
@@ -13,12 +15,14 @@ import {
 } from '@/utils/workday';
 
 export function StudentsPage() {
+  const storeVersion = useMockStore();
   const [students, setStudents] = useState<Student[]>([]);
   const [query, setQuery] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     void listStudents().then(setStudents);
-  }, []);
+  }, [storeVersion]);
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -52,6 +56,7 @@ export function StudentsPage() {
           size="md"
           className="h-10 w-10 shrink-0 rounded-lg p-0"
           aria-label="Novo aluno"
+          onClick={() => setCreateOpen(true)}
         >
           <Icon name="person_add" className="text-xl" />
         </Button>
@@ -84,6 +89,11 @@ export function StudentsPage() {
           </li>
         ))}
       </ul>
+
+      <CreateStudentModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
     </div>
   );
 }

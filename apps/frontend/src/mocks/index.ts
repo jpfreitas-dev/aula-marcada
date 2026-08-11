@@ -1,4 +1,5 @@
 import { createInitialClasses } from './classes';
+import { createInitialRecurrences } from './recurrences';
 import { mockStudents } from './students';
 import { initializeStore } from './store';
 
@@ -9,7 +10,11 @@ export function ensureMockStoreInitialized(): void {
     return;
   }
 
-  initializeStore(createInitialClasses(), mockStudents);
+  initializeStore(
+    createInitialClasses(),
+    mockStudents,
+    createInitialRecurrences(),
+  );
   initialized = true;
 }
 
@@ -19,9 +24,11 @@ export { mockStudents } from './students';
 export {
   getClassById,
   getClassesSnapshot,
+  getRecurrencesSnapshot,
   getStudentById,
   getStudentsSnapshot,
   setClasses,
+  setRecurrences,
   setStudents,
   subscribe,
 } from './store';

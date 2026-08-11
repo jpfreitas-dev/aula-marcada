@@ -6,6 +6,18 @@ function mockDate(offsetWorkdays: number): string {
   return toDateKey(addWorkdays(base, offsetWorkdays));
 }
 
+function mockDateAfterRecurrenceHorizon(weekday: number): string {
+  const today = getDefaultAgendaDate();
+  const afterHorizon = addWorkdays(today, 21);
+  const date = new Date(afterHorizon);
+
+  while (date.getDay() !== weekday) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return toDateKey(date);
+}
+
 export function createInitialClasses(): ClassSession[] {
   return [
     {
@@ -115,6 +127,23 @@ export function createInitialClasses(): ClassSession[] {
       isMakeupOnly: false,
       linkedAbsenceIds: [],
       pendingMakeupMinutes: 90,
+    },
+    {
+      id: 'class-maria-sporadic-next-month',
+      studentId: 'student-maria',
+      studentName: 'Maria',
+      date: mockDateAfterRecurrenceHorizon(5),
+      period: 'afternoon',
+      startTime: '14:00',
+      endTime: '15:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      paidAmount: 0,
+      attendance: 'empty',
+      financialStatus: 'pending',
+      isMakeup: false,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
     },
   ];
 }

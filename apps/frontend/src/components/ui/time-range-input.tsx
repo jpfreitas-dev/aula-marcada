@@ -6,6 +6,9 @@ import { clampTimeToBounds, getEffectiveEndMinTime } from '@/utils/time';
 
 type ActiveField = 'start' | 'end' | null;
 
+export type TimeRangeInputVariant = 'default' | 'plain';
+export type TimeRangePickerPlacement = 'above' | 'below';
+
 type TimeRangeInputProps = {
   startTime: string;
   endTime: string;
@@ -15,8 +18,21 @@ type TimeRangeInputProps = {
   endFloorTime?: string;
   minDurationMinutes?: number;
   disabled?: boolean;
+  variant?: TimeRangeInputVariant;
+  pickerPlacement?: TimeRangePickerPlacement;
+  className?: string;
   onStartChange: (value: string) => void;
   onEndChange: (value: string) => void;
+};
+
+const pickerPlacementClasses: Record<TimeRangePickerPlacement, string> = {
+  below: 'top-[calc(100%+0.25rem)]',
+  above: 'bottom-[calc(100%+0.25rem)]',
+};
+
+const controlVariants: Record<TimeRangeInputVariant, string> = {
+  default: `${fieldControlClassName} flex items-center justify-center`,
+  plain: 'flex min-w-0 flex-1 items-center justify-center',
 };
 
 export function TimeRangeInput({
@@ -28,6 +44,9 @@ export function TimeRangeInput({
   endFloorTime,
   minDurationMinutes,
   disabled = false,
+  variant = 'default',
+  pickerPlacement = 'below',
+  className = '',
   onStartChange,
   onEndChange,
 }: TimeRangeInputProps) {
@@ -76,9 +95,9 @@ export function TimeRangeInput({
   }, [activeField]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className={`${fieldControlClassName} flex items-center justify-center ${
+        className={`${controlVariants[variant]} ${
           disabled ? 'opacity-70' : ''
         } ${disabled ? '' : 'cursor-pointer'}`}
       >
@@ -111,7 +130,7 @@ export function TimeRangeInput({
 
       {activeField === 'start' ? (
         <div
-          className="absolute left-0 right-0 top-[calc(100%+0.25rem)] z-30 min-w-0"
+          className={`absolute left-0 right-0 z-30 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
         >
@@ -126,7 +145,7 @@ export function TimeRangeInput({
 
       {activeField === 'end' ? (
         <div
-          className="absolute left-0 right-0 top-[calc(100%+0.25rem)] z-30 min-w-0"
+          className={`absolute left-0 right-0 z-30 min-w-0 ${pickerPlacementClasses[pickerPlacement]}`}
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
         >

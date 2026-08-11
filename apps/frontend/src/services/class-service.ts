@@ -133,16 +133,16 @@ export async function createClass(
   const student = getStudentById(input.studentId);
 
   if (!student) {
-    throw new Error('Student not found');
+    throw new Error('Aluno não encontrado.');
   }
 
   const available = await getAvailablePeriods(input.date);
   if (!available.includes(input.period)) {
-    throw new Error('Period unavailable');
+    throw new Error('Período indisponível.');
   }
 
   if (input.isMakeupOnly && input.linkedAbsenceIds.length === 0) {
-    throw new Error('Makeup class requires linked absences');
+    throw new Error('Aula de reposição exige faltas vinculadas.');
   }
 
   const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
@@ -223,7 +223,7 @@ export async function saveClassDetail(
   const existing = getClassById(id);
 
   if (!existing) {
-    throw new Error('Class not found');
+    throw new Error('Aula não encontrada.');
   }
 
   let next: ClassSession = { ...existing };
@@ -359,22 +359,24 @@ export async function linkMakeup(
   const student = getStudentById(input.studentId);
 
   if (!student) {
-    throw new Error('Student not found');
+    throw new Error('Aluno não encontrado.');
   }
 
   if (input.absenceIds.length === 0) {
-    throw new Error('Select at least one absence');
+    throw new Error('Selecione pelo menos uma falta.');
   }
 
   if (input.targetClassId) {
     const target = getClassById(input.targetClassId);
 
     if (!target) {
-      throw new Error('Class not found');
+      throw new Error('Aula não encontrada.');
     }
 
     if (target.attendance !== 'empty') {
-      throw new Error('Cannot link makeup to filled class');
+      throw new Error(
+        'Não é possível vincular reposição a uma aula já preenchida.',
+      );
     }
 
     const required = calculateRequiredMakeupMinutes(
@@ -384,7 +386,7 @@ export async function linkMakeup(
     );
 
     if (durationMinutes < required) {
-      throw new Error('Insufficient duration');
+      throw new Error('Duração insuficiente.');
     }
 
     const expectedAmount = target.hasManualAmountOverride
@@ -416,13 +418,13 @@ export async function linkMakeup(
   }
 
   if (!input.date || !input.period) {
-    throw new Error('Date and period are required for new makeup class');
+    throw new Error('Informe data e período para a nova aula de reposição.');
   }
 
   const required = calculateRequiredMakeupMinutes(null, input.absenceIds, true);
 
   if (durationMinutes < required) {
-    throw new Error('Insufficient duration');
+    throw new Error('Duração insuficiente.');
   }
 
   const expectedAmount = calculateExpectedAmount(
@@ -450,16 +452,16 @@ export async function rescheduleClass(
   const existing = getClassById(id);
 
   if (!existing) {
-    throw new Error('Class not found');
+    throw new Error('Aula não encontrada.');
   }
 
   if (existing.attendance !== 'empty') {
-    throw new Error('Cannot reschedule filled class');
+    throw new Error('Não é possível reagendar uma aula já preenchida.');
   }
 
   const available = await getAvailablePeriods(input.date, id);
   if (!available.includes(input.period)) {
-    throw new Error('Period unavailable');
+    throw new Error('Período indisponível.');
   }
 
   const student = getStudentById(existing.studentId);
@@ -478,7 +480,7 @@ export async function rescheduleClass(
     existing.linkedAbsenceIds.length > 0 &&
     input.durationMinutes < minimumDuration
   ) {
-    throw new Error('Insufficient duration for linked makeup');
+    throw new Error('Duração insuficiente para a reposição vinculada.');
   }
 
   const expectedAmount = existing.hasManualAmountOverride

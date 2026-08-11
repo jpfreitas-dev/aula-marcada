@@ -12,6 +12,7 @@ export const mockStudents: Student[] = [
   {
     id: 'student-joao',
     name: 'João',
+    guardianName: 'Carla Silva',
     phone: '(11) 98765-4321',
     email: 'joao@email.com',
     hourlyRate: 50,
@@ -22,6 +23,7 @@ export const mockStudents: Student[] = [
   {
     id: 'student-maria',
     name: 'Maria',
+    guardianName: 'Roberto Lima',
     phone: '(11) 91234-5678',
     hourlyRate: 60,
     advanceBalance: 0,
@@ -31,6 +33,7 @@ export const mockStudents: Student[] = [
   {
     id: 'student-pedro',
     name: 'Pedro',
+    guardianName: 'Fernanda Costa',
     phone: '(11) 99876-5432',
     hourlyRate: 55,
     advanceBalance: 30,
@@ -40,6 +43,7 @@ export const mockStudents: Student[] = [
   {
     id: 'student-ana',
     name: 'Ana',
+    guardianName: 'Paula Mendes',
     phone: '(11) 97654-3210',
     hourlyRate: 65,
     advanceBalance: 0,
@@ -49,6 +53,7 @@ export const mockStudents: Student[] = [
   {
     id: 'student-carlos',
     name: 'Carlos',
+    guardianName: 'Juliana Rocha',
     phone: '(11) 96543-2109',
     hourlyRate: 50,
     advanceBalance: 0,
