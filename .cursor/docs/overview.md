@@ -299,6 +299,7 @@ Ao desmarcar Compareceu ou Não compareceu (retorno ao vazio), quando permitido:
 
 - campos de pagamento, conteúdo, observações e bloco de reposição **somem da interface**;
 - dados eventualmente digitados naquela sessão **não são mantidos** se o professor salvar nesse estado vazio (a aula volta a “Aguardando preenchimento”);
+- se a aula havia consumido **saldo adiantado**, esse saldo **volta** para o aluno ao salvar o retorno ao vazio (mesma regra da exclusão);
 - vínculos de reposição **já confirmados anteriormente** não são desfeitos só por zerar a presença — ver §17 para o que fica bloqueado após preenchimento.
 
 ---
@@ -334,22 +335,7 @@ A aula fica registrada como **quitada** quando o valor devido for quitado (pelo 
 
 ### Valor maior
 
-Se o professor informar um valor maior que o valor esperado:
-
-- a diferença deve ser considerada um **valor adicional recebido na própria aula**;
-- deve ser tratada como **receita da aula**;
-- **não deve gerar saldo** de aulas para o aluno.
-
-Exemplo:
-
-- Aula = R$ 50
-- Pagamento = R$ 70
-
-Resultado:
-
-- R$ 50 correspondem à aula;
-- R$ 20 são valor adicional recebido;
-- não são contabilizados como duas aulas ou saldo futuro.
+No modal da aula, o input de pagamento **não permite** valor acima do que ainda falta para quitar a aula (após eventual abatimento de saldo). Valores extras / antecipação entram apenas pelo **Receber pagamento** no perfil do aluno (§25), virando saldo adiantado quando aplicável.
 
 ### Valor menor
 
@@ -389,12 +375,24 @@ A forma de pagamento **não** substitui o estado principal da aula. O badge cont
 
 ## Consumo de saldo adiantado
 
+O saldo adiantado preserva a forma de origem (**Pix** e/ou **Dinheiro**). Ao consumir, a aplicação abate primeiro o saldo Pix e depois o saldo Dinheiro, atribuindo esses valores à aula para análise financeira.
+
 Se o aluno possuir **saldo adiantado** no momento em que a aula for marcada como **Compareceu**:
 
 1. o sistema aloca automaticamente o saldo nas pendências daquela aula (até o valor esperado);
-2. se o saldo cobrir totalmente, a aula já nasce **quitada** e o campo de pagamento pode vir zerado ou apenas para eventual valor adicional;
-3. o saldo do aluno é reduzido na mesma proporção;
-4. isso é distinto do “valor adicional” pago acima do esperado na aula.
+2. se o saldo cobrir **totalmente** a aula:
+   - a aula já nasce **quitada**;
+   - **não** aparecem opções de Pix / Dinheiro / Não pago;
+   - o input de valor recebido agora fica em **R$ 0,00** (a mãe não pagou nada a mais neste momento);
+   - abaixo aparece informação de que a aula foi coberta pelo saldo e o **valor da aula**;
+3. se o saldo cobrir **parcialmente**:
+   - o input sugere automaticamente o valor **ainda devido** após o abatimento (ex.: aula R$ 150, saldo R$ 100 → input R$ 50) e **não permite** digitar acima desse máximo;
+   - abaixo aparece quanto já foi abatido do saldo e o **valor da aula** (valor cheio esperado);
+   - o professor escolhe **Pix** ou **Dinheiro** para o valor novo (padrão: **Pix**);
+   - **Não pago** não aparece neste caso — o valor novo, se informado, é Pix ou Dinheiro;
+   - se o input permanecer zero, a aula fica parcial (saldo aplicado + pendência);
+4. o saldo do aluno é reduzido na mesma proporção ao salvar (mantendo a referência Pix/Dinheiro);
+5. valores extras / antecipação **não** são registrados neste modal — apenas no perfil do aluno.
 
 ---
 
@@ -427,8 +425,8 @@ Se o professor realizar um pagamento pela tela do aluno:
 
 1. Se existirem pendências de aulas (Compareceu com valor em aberto), o valor quita as pendências **das mais antigas para as mais recentes**.
 2. Caso um único pagamento cubra várias pendências, a aplicação distribui o valor entre elas **sem perder o histórico da forma de pagamento** (o mesmo pagamento/forma é associado às alocações).
-3. Se sobrar valor após quitar todas as pendências, o restante vira **saldo adiantado** do aluno.
-4. Se não houver pendências, o valor inteiro vira **saldo adiantado**.
+3. Se sobrar valor após quitar todas as pendências, o restante vira **saldo adiantado** do aluno, na **mesma forma** do recebimento (Pix ou Dinheiro).
+4. Se não houver pendências, o valor inteiro vira **saldo adiantado** na forma escolhida.
 
 Exemplo:
 
@@ -517,10 +515,10 @@ Se a aula já foi realizada ou possui preenchimento (Compareceu ou Não comparec
 
 ## Efeitos ao excluir
 
-- A aula some da agenda.
+- Aula some da agenda.
 - Pendências financeiras **somente daquela aula** deixam de existir.
-- Valores já recebidos e alocados a essa aula permanecem na receita realizada (não “somem” do histórico financeiro agregado); a alocação daquela aula é encerrada com a exclusão.  
-  _Detalhe operacional:_ o valor já recebido não volta automaticamente como saldo do aluno, salvo decisão futura — neste fluxo, **não estorna para saldo**.
+- Se a aula havia **consumido saldo adiantado** do aluno, esse saldo **volta** para o aluno na mesma forma (Pix/Dinheiro) em que havia sido abatido.
+- Valores recebidos **na própria aula** (Pix/Dinheiro informados no Compareceu, além do saldo) **não** voltam como saldo do aluno ao excluir; permanecem apenas como receita daquela aula encerrada.
 - Se a aula excluída era reposição que cobria faltas, o tempo de reposição daquelas faltas **volta a ficar pendente** (badge **Não compareceu** de novo; voltam a entrar na frequência) e a falta deixa de estar no estado imutável **Reposta**.
 - A existência do estado **Reposta** depende da aula vinculadora: sem ela, as faltas cobertas voltam ao fluxo normal.
 - Faltas já totalmente repostas (**Reposta**) **não podem ser excluídas**.
@@ -646,8 +644,11 @@ Se já existir **qualquer** aula (de qualquer aluno) naquele dia da semana e per
 - As recorrências geram aulas automaticamente na agenda para as semanas futuras.
 - Horizonte de geração: **4 semanas úteis à frente** a partir da data corrente (incluindo a semana atual), considerando apenas **segunda a sexta**. Conforme o tempo passa, novas aulas vão sendo geradas para manter esse horizonte.
 - Aulas geradas por recorrência nascem com presença **vazia**.
-- Alterar recorrência **não altera** aulas passadas nem aulas futuras que já tenham sido preenchidas; altera a geração das próximas aulas ainda vazias conforme a nova regra.
-- Remover uma recorrência **não apaga** aulas já criadas; apenas para de gerar novas.
+- Alterar valor por hora **recalcula** o valor esperado das aulas **vazias** a partir de hoje (corte); aulas passadas e aulas já preenchidas **não** mudam.
+- Alterar recorrência **não altera** aulas passadas nem aulas futuras que já tenham sido preenchidas.
+- Aulas **vazias** a partir de hoje que pertenciam à recorrência antiga e **não** batem com a nova regra são **removidas**; o horizonte é regenerado conforme a nova recorrência.
+- Aulas avulsas vazias futuras (que nunca bateram com a recorrência) **permanecem**.
+- Remover uma recorrência **não apaga** aulas passadas nem preenchidas; remove apenas as **vazias futuras** ligadas àquela recorrência e para de gerar novas.
 
 ---
 
@@ -676,9 +677,10 @@ Se não houver próxima aula agendada: exibir **Sem aulas agendadas**.
 Uma das situações:
 
 - **Em dia** — sem pendências e sem saldo adiantado
-- **Pendente** — existe valor em aberto em aulas comparecidas
-- **Saldo — X aulas adiantadas** — existe saldo adiantado  
-  (X = saldo em reais ÷ valor padrão por hora, convertido para “aulas” de referência de 1h; arredondar para baixo na exibição, e mostrar também coerência com o perfil em R$)
+- **Pendente** — existe valor em aberto em aulas comparecidas  
+  (exibir equivalente em **horas** + valor em R$ quando fizer sentido)
+- **Saldo — X horas adiantadas** — existe saldo adiantado  
+  (X = saldo em reais ÷ valor padrão por hora; arredondar para baixo na exibição, e mostrar também o valor em R$)
 
 Se houver **pendência e saldo ao mesmo tempo** (caso raro/intermediário), priorizar **Pendente** no card até as pendências serem zeradas.
 
@@ -723,13 +725,13 @@ O perfil possui um card **Financeiro** com a situação atual:
 
 ### Saldo adiantado
 
-**Adiantado: 2 aulas (R$ 100,00)**  
-(exibir equivalente em aulas de referência + valor em R$)
+**Adiantado: 2 horas (R$ 100,00)**  
+(exibir equivalente em horas + valor em R$; horas = saldo ÷ valor padrão por hora)
 
 ### Saldo pendente
 
-**Pendente: R$ 50,00**  
-(soma do que falta nas aulas comparecidas em aberto)
+**Pendente: 1 hora (R$ 50,00)**  
+(ou apenas R$ quando a conversão em horas inteiras for zero; soma do que falta nas aulas comparecidas em aberto)
 
 ### Em dia
 
@@ -764,7 +766,7 @@ Conforme §10:
 
 Pagamento antecipado (saldo) é **diferente** de valor adicional pago em uma aula já realizada (§9).
 
-A forma de pagamento deve ser preservada para análise financeira.
+A forma de pagamento deve ser preservada para análise financeira (inclusive no saldo adiantado: Pix e Dinheiro ficam separados até serem consumidos nas aulas).
 
 Um pagamento misto Pix+Dinheiro no mesmo momento exige **dois recebimentos** sucessivos neste fluxo (um por forma).
 
@@ -834,7 +836,7 @@ Exige digitar exatamente o nome do aluno antes de confirmar.
 - o aluno **não** pode ser selecionado ao criar/agendar aula;
 - as **aulas futuras** desse aluno são removidas da agenda (slots liberados);
 - as **aulas já ocorridas** (e respectivos pagamentos/registros) **permanecem** para consulta, financeiro e estatísticas;
-- recorrências do aluno deixam de ocupar a grade para novos agendamentos;
+- as **recorrências** do aluno são removidas e deixam de ocupar a grade para novos agendamentos;
 - o perfil continua acessível a partir de **Ex-alunos**, como base de consulta.
 
 Alunos desativados ficam fora do fluxo operacional padrão, mas permanecem como base histórica.
@@ -1004,7 +1006,7 @@ Não fazem parte deste fluxo neste momento:
 - configurações gerais / conteúdo do botão **Mais**;
 - funcionalidades adicionais do botão “+” além de agendar aula;
 - edição visual detalhada do histórico de aulas;
-- estorno de pagamento para saldo do aluno;
+- converter pagamento recebido na própria aula em saldo do aluno ao excluir (o que volta é só o **saldo adiantado** que havia sido consumido);
 - agendamento em sábado ou domingo;
 - múltiplas formas de pagamento em um único formulário simultâneo.
 
