@@ -555,6 +555,9 @@ Essa ação:
 - mantém o mesmo aluno;
 - apenas altera o horário/duração;
 - deve respeitar os períodos disponíveis (não pode mover para um período que já tenha outra aula);
+- quando há mais de um período livre na data, o horário pode ser movido entre esses períodos; o card acompanha o período do horário de início;
+- início e fim devem permanecer no **mesmo** período (não pode começar de manhã e terminar à tarde/noite);
+- ao mudar a data, se o horário atual não couber nos períodos livres, o formulário ajusta para um horário válido;
 - pode aumentar ou reduzir a duração, desde que fim > início.
 
 Quando a duração for alterada, o valor esperado da aula deve ser recalculado automaticamente (mesma lógica de §3 / §6).

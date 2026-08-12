@@ -1,11 +1,14 @@
 import type { ClassPeriod } from '@/types';
 import {
+  addMinutesToTime,
   defaultStartTimeForPeriod,
   formatTime,
+  generateQuarterHourSlots,
   getMaxStartTimeForEndLimit,
   getPeriodTimeBounds,
   getTimeRangeBoundsForStartTime,
   MIN_CLASS_DURATION_MINUTES,
+  minutesBetween,
   periodFromStartTime,
   timeToMinutes,
 } from '@/utils/time';
@@ -195,6 +198,87 @@ export function isStartTimeAllowedForPeriods(
   );
 }
 
+/** Next valid start at/after candidate across available periods (skips period gaps). */
+export function findNextAllowedStartTime(
+  candidate: string,
+  date: string,
+  periods: ClassPeriod[],
+  aggregatedBounds: { startMin: string; startMax: string },
+  options?: { minDurationMinutes?: number; reference?: Date },
+): string | null {
+  if (periods.length === 0) {
+    return null;
+  }
+
+  const slots = generateQuarterHourSlots(
+    aggregatedBounds.startMin,
+    aggregatedBounds.startMax,
+  );
+  const candidateTotal = timeToMinutes(candidate);
+
+  for (const slot of slots) {
+    if (timeToMinutes(slot) < candidateTotal) {
+      continue;
+    }
+
+    const startMin = getEffectiveStartMinTime(
+      date,
+      getTimeRangeBoundsForStartTime(slot, options).startMin,
+      options?.reference,
+    );
+    if (timeToMinutes(slot) < timeToMinutes(startMin)) {
+      continue;
+    }
+
+    if (isStartTimeAllowedForPeriods(slot, periods, options)) {
+      return slot;
+    }
+  }
+
+  return null;
+}
+
+/** Previous valid start at/before candidate across available periods. */
+export function findPreviousAllowedStartTime(
+  candidate: string,
+  date: string,
+  periods: ClassPeriod[],
+  aggregatedBounds: { startMin: string; startMax: string },
+  options?: { minDurationMinutes?: number; reference?: Date },
+): string | null {
+  if (periods.length === 0) {
+    return null;
+  }
+
+  const slots = generateQuarterHourSlots(
+    aggregatedBounds.startMin,
+    aggregatedBounds.startMax,
+  );
+  const candidateTotal = timeToMinutes(candidate);
+
+  for (let index = slots.length - 1; index >= 0; index -= 1) {
+    const slot = slots[index];
+    if (timeToMinutes(slot) > candidateTotal) {
+      continue;
+    }
+
+    const startMin = getEffectiveStartMinTime(
+      date,
+      getTimeRangeBoundsForStartTime(slot, options).startMin,
+      options?.reference,
+    );
+    if (timeToMinutes(slot) < timeToMinutes(startMin)) {
+      continue;
+    }
+
+    if (isStartTimeAllowedForPeriods(slot, periods, options)) {
+      return slot;
+    }
+  }
+
+  return null;
+}
+
 export function getDefaultStartForPeriods(
   date: string,
   periods: ClassPeriod[],
@@ -259,4 +343,68 @@ export function resolveStartTimeChangeBounds(
     startMax: bounds.startMax,
     endMax: bounds.endMax,
   };
+}
+
+/**
+ * Keep the current start when it still fits an available period; otherwise
+ * move to the earliest valid default. End stays inside the start's period.
+ */
+export function syncTimesForAvailablePeriods(
+  date: string,
+  periods: ClassPeriod[],
+  currentStart: string,
+  currentEnd: string,
+  options?: {
+    minDurationMinutes?: number;
+    reference?: Date;
+  },
+): { startTime: string; endTime: string } | null {
+  const minDuration = options?.minDurationMinutes ?? MIN_CLASS_DURATION_MINUTES;
+  const boundOptions = { minDurationMinutes: minDuration };
+  const aggregated = getAggregatedScheduleTimeBounds(date, periods, options);
+
+  if (!aggregated.hasAvailability) {
+    return null;
+  }
+
+  let startTime = currentStart;
+
+  if (!isStartTimeAllowedForPeriods(startTime, periods, boundOptions)) {
+    startTime =
+      getDefaultStartForPeriods(date, periods, options) ?? aggregated.startMin;
+  } else {
+    const periodBounds = getTimeRangeBoundsForStartTime(
+      startTime,
+      boundOptions,
+    );
+    const startMin = getEffectiveStartMinTime(
+      date,
+      periodBounds.startMin,
+      options?.reference,
+    );
+
+    if (timeToMinutes(startTime) < timeToMinutes(startMin)) {
+      startTime = startMin;
+    }
+
+    if (timeToMinutes(startTime) > timeToMinutes(periodBounds.startMax)) {
+      startTime = periodBounds.startMax;
+    }
+  }
+
+  const bounds = getTimeRangeBoundsForStartTime(startTime, boundOptions);
+  const desiredDuration = Math.max(
+    minutesBetween(currentStart, currentEnd),
+    minDuration,
+  );
+  const endMinTime = addMinutesToTime(startTime, minDuration);
+  const preferredEnd = addMinutesToTime(startTime, desiredDuration);
+  const endTime =
+    timeToMinutes(preferredEnd) > timeToMinutes(bounds.endMax)
+      ? bounds.endMax
+      : timeToMinutes(preferredEnd) < timeToMinutes(endMinTime)
+        ? endMinTime
+        : preferredEnd;
+
+  return { startTime, endTime };
 }

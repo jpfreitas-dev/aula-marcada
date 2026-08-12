@@ -44,6 +44,28 @@ export function createInitialClasses(): ClassSession[] {
       content: 'Revisão de frações',
     },
     {
+      // Monday 2026-08-17 12:00–15:00 — reschedule duration reduction test
+      id: 'class-joao-monday-afternoon',
+      studentId: 'student-joao',
+      studentName: 'João',
+      date: '2026-08-17',
+      period: 'afternoon',
+      startTime: '12:00',
+      endTime: '15:00',
+      durationMinutes: 180,
+      expectedAmount: 150,
+      paidAmount: 0,
+      paidPix: 0,
+      paidCash: 0,
+      advanceAppliedPix: 0,
+      advanceAppliedCash: 0,
+      attendance: 'empty',
+      financialStatus: 'pending',
+      isMakeup: false,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    },
+    {
       // Thursday 08:00–11:00 — partial advance test (R$150 class, João has R$100 Pix)
       id: 'class-joao-thursday-morning',
       studentId: 'student-joao',

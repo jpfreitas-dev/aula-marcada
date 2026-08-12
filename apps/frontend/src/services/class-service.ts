@@ -36,6 +36,7 @@ import {
   defaultStartTimeForPeriod,
   getMaxDurationMinutesForStartTime,
   getTimeRangeBoundsForStartTime,
+  MIN_CLASS_DURATION_MINUTES,
   minutesBetween,
   periodFromStartTime,
   timeToMinutes,
@@ -255,8 +256,20 @@ function validateMakeupScheduleTime(
   durationMinutes: number,
   requiredMinutes: number,
 ): void {
+  validateClassTimeWithinPeriod(startTime, durationMinutes, requiredMinutes);
+
+  if (durationMinutes < requiredMinutes) {
+    throw new Error('Duração insuficiente para a reposição vinculada.');
+  }
+}
+
+function validateClassTimeWithinPeriod(
+  startTime: string,
+  durationMinutes: number,
+  minDurationMinutes = MIN_CLASS_DURATION_MINUTES,
+): void {
   const bounds = getTimeRangeBoundsForStartTime(startTime, {
-    minDurationMinutes: requiredMinutes,
+    minDurationMinutes,
   });
   const endTime = addMinutesToTime(startTime, durationMinutes);
   const startTotal = timeToMinutes(startTime);
@@ -269,12 +282,10 @@ function validateMakeupScheduleTime(
     throw new Error('O horário de início está fora do período permitido.');
   }
 
-  if (endTotal > timeToMinutes(bounds.endMax)) {
-    throw new Error('A duração excede o limite do período.');
-  }
-
-  if (durationMinutes < requiredMinutes) {
-    throw new Error('Duração insuficiente para a reposição vinculada.');
+  if (endTotal > timeToMinutes(bounds.endMax) || endTotal <= startTotal) {
+    throw new Error(
+      'O horário de início e término devem permanecer no mesmo período.',
+    );
   }
 
   if (durationMinutes > getMaxDurationMinutesForStartTime(startTime)) {
@@ -765,24 +776,36 @@ export async function rescheduleClass(
     throw new Error('Período indisponível.');
   }
 
+  if (periodFromStartTime(input.startTime) !== input.period) {
+    throw new Error(
+      'O período informado não corresponde ao horário de início.',
+    );
+  }
+
   const student = getStudentById(existing.studentId);
   const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
-  const linkedAbsences = getClassesSnapshot().filter((session) =>
-    existing.linkedAbsenceIds.includes(session.id),
-  );
-  const requiredMakeup = linkedAbsences.reduce(
-    (total, session) =>
-      total + (session.pendingMakeupMinutes ?? session.durationMinutes),
-    0,
-  );
-  const minimumDuration = existing.durationMinutes + requiredMakeup;
+  const minimumDuration =
+    existing.linkedAbsenceIds.length === 0
+      ? MIN_CLASS_DURATION_MINUTES
+      : calculateRequiredMakeupMinutes(
+          existing,
+          existing.linkedAbsenceIds,
+          existing.isMakeupOnly,
+        );
 
-  if (
-    existing.linkedAbsenceIds.length > 0 &&
-    input.durationMinutes < minimumDuration
-  ) {
-    throw new Error('Duração insuficiente para a reposição vinculada.');
+  if (input.durationMinutes < minimumDuration) {
+    throw new Error(
+      existing.linkedAbsenceIds.length > 0
+        ? 'Duração insuficiente para a reposição vinculada.'
+        : 'A duração informada é menor que o mínimo permitido.',
+    );
   }
+
+  validateClassTimeWithinPeriod(
+    input.startTime,
+    input.durationMinutes,
+    minimumDuration,
+  );
 
   const expectedAmount = existing.hasManualAmountOverride
     ? Math.round(
