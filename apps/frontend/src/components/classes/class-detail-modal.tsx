@@ -213,6 +213,11 @@ export function ClassDetailModal({
   const maxPaymentAmount = remainingDue;
   const settledWithoutMoreDue = isAlreadyAttended && remainingDue === 0;
 
+  const directPaymentNow =
+    paymentMethod && paidAmount > 0
+      ? Math.min(paidAmount, maxPaymentAmount)
+      : 0;
+
   const effectivePaidPreview = (() => {
     if (settledWithoutMoreDue) {
       return session.paidAmount;
@@ -221,15 +226,9 @@ export function ClassDetailModal({
       if (fullyCoveredByAdvance) {
         return advanceAllocation;
       }
-      return (
-        advanceAllocation +
-        (paymentMethod ? Math.min(paidAmount, maxPaymentAmount) : 0)
-      );
+      return advanceAllocation + directPaymentNow;
     }
-    return (
-      session.paidAmount +
-      (paymentMethod ? Math.min(paidAmount, maxPaymentAmount) : 0)
-    );
+    return session.paidAmount + directPaymentNow;
   })();
   const stillDuePreview = Math.max(
     session.expectedAmount - effectivePaidPreview,
@@ -312,22 +311,23 @@ export function ClassDetailModal({
     setError(null);
 
     try {
+      const parsedPayment = parseCurrencyInput(paidAmountInput);
       const newMoney =
-        attendance === 'attended' && !fullyCoveredByAdvance && paymentMethod
-          ? Math.min(parseCurrencyInput(paidAmountInput), maxPaymentAmount)
+        attendance === 'attended' && !fullyCoveredByAdvance
+          ? Math.min(Math.max(parsedPayment, 0), maxPaymentAmount)
           : 0;
+
+      if (attendance === 'attended' && newMoney > 0 && !paymentMethod) {
+        setError('Selecione Pix ou Dinheiro para o valor recebido agora.');
+        setSaving(false);
+        return;
+      }
 
       await saveClassDetail(session.id, {
         attendance,
         paidAmount: newMoney,
         paymentMethod:
-          attendance === 'attended' && newMoney > 0
-            ? paymentMethod
-            : attendance === 'attended' && fullyCoveredByAdvance
-              ? undefined
-              : attendance === 'attended'
-                ? paymentMethod
-                : undefined,
+          attendance === 'attended' && newMoney > 0 ? paymentMethod : undefined,
         content: attendance === 'attended' ? content : undefined,
         notes: attendance === 'attended' ? notes : undefined,
       });
