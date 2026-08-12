@@ -7,6 +7,7 @@ import { getRecurrenceOptions } from '@/services/students/get-recurrence-options
 import { listStudentRecurrences } from '@/services/students/list-student-recurrences';
 import { listStudents } from '@/services/students/list-students';
 import { reactivateStudent } from '@/services/students/reactivate-student';
+import { receiveStudentPayment } from '@/services/payments/receive-student-payment';
 import { showStudent } from '@/services/students/show-student';
 import { updateStudentPersonal } from '@/services/students/update-student-personal';
 import { updateStudentSettings } from '@/services/students/update-student-settings';
@@ -57,6 +58,11 @@ const listQuerySchema = z.object({
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
+});
+
+const receivePaymentSchema = z.object({
+  amount: z.coerce.number().positive(),
+  paymentMethod: z.union([z.literal('pix'), z.literal('cash')]),
 });
 
 class StudentController {
@@ -123,6 +129,18 @@ class StudentController {
     const options = await getRecurrenceOptions.execute(body);
 
     return response.status(200).json(options);
+  }
+
+  async receivePayment(request: Request, response: Response) {
+    const params = idParamsSchema.parse(request.params);
+    const body = receivePaymentSchema.parse(request.body);
+    const result = await receiveStudentPayment.execute({
+      studentId: params.id,
+      amount: body.amount,
+      paymentMethod: body.paymentMethod,
+    });
+
+    return response.status(200).json(result);
   }
 }
 

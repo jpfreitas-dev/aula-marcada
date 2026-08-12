@@ -66,6 +66,8 @@ const attendanceStatusSchema = z.union([
 
 const updateAttendanceSchema = z.object({
   attendance: attendanceStatusSchema,
+  paidAmount: z.coerce.number().min(0).optional(),
+  paymentMethod: z.union([z.literal('pix'), z.literal('cash')]).optional(),
   content: z.string().max(500).optional(),
   notes: z.string().max(500).optional(),
 });

@@ -12,6 +12,10 @@ studentsRoutes.post(
 );
 studentsRoutes.get('/:id', asyncHandler(studentController.show));
 studentsRoutes.post('/', asyncHandler(studentController.create));
+studentsRoutes.post(
+  '/:id/payments',
+  asyncHandler(studentController.receivePayment),
+);
 studentsRoutes.patch(
   '/:id/personal',
   asyncHandler(studentController.updatePersonal),

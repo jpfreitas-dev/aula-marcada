@@ -54,6 +54,8 @@ export type RescheduleClassInput = {
 
 export type UpdateClassAttendanceInput = {
   attendance: AttendanceStatus;
+  paidAmount?: number;
+  paymentMethod?: PaymentMethod;
   content?: string;
   notes?: string;
 };

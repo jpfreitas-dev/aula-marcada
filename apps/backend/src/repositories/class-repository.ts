@@ -92,6 +92,17 @@ class ClassRepository {
     });
   }
 
+  async findAttendedByStudentId(studentId: string, db?: DatabaseClient) {
+    return client(db).class.findMany({
+      where: {
+        studentId,
+        attendance: 'ATTENDED',
+      },
+      include: { student: true },
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
   async findSummaryByStudentId(studentId: string, db?: DatabaseClient) {
     return client(db).class.findMany({
       where: { studentId },

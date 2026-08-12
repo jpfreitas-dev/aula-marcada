@@ -82,6 +82,21 @@ class StudentRepository {
       },
     });
   }
+
+  async updateAdvanceBalances(
+    id: string,
+    advanceBalancePix: number,
+    advanceBalanceCash: number,
+    db?: DatabaseClient,
+  ): Promise<Student> {
+    return client(db).student.update({
+      where: { id },
+      data: {
+        advanceBalancePix,
+        advanceBalanceCash,
+      },
+    });
+  }
 }
 
 export const studentRepository = new StudentRepository();

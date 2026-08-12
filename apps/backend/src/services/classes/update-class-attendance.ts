@@ -1,14 +1,14 @@
 import { AttendanceStatus } from '../../../generated/prisma/client';
 import { AppError } from '@/lib/app-error';
 import { prisma } from '@/lib/prisma';
-import { classAllocationRepository } from '@/repositories/class-allocation-repository';
 import { classRepository } from '@/repositories/class-repository';
-import { studentRepository } from '@/repositories/student-repository';
 import { buildClassResponse } from '@/services/classes/build-class-response';
 import {
   isClassSessionEnded,
   isLockedRepostaAbsenceClass,
 } from '@/services/classes/class-session-helpers';
+import { applyAttendancePayment } from '@/services/payments/apply-attendance-payment';
+import { clearClassPaymentState } from '@/services/payments/clear-class-payment-state';
 import type { ClassResponse, UpdateClassAttendanceInput } from '@/types/class';
 
 class UpdateClassAttendance {
@@ -38,10 +38,13 @@ class UpdateClassAttendance {
       );
     }
 
+    const wasAlreadyAttended =
+      existing.attendance === AttendanceStatus.ATTENDED;
+
     await prisma.$transaction(async (tx) => {
       if (input.attendance === 'empty') {
         if (existing.attendance === AttendanceStatus.ATTENDED) {
-          await this.restoreAdvanceFromClass(id, existing.studentId, tx);
+          await clearClassPaymentState(id, existing.studentId, tx);
         }
 
         await classRepository.update(
@@ -58,7 +61,7 @@ class UpdateClassAttendance {
 
       if (input.attendance === 'absent') {
         if (existing.attendance === AttendanceStatus.ATTENDED) {
-          await this.restoreAdvanceFromClass(id, existing.studentId, tx);
+          await clearClassPaymentState(id, existing.studentId, tx);
         }
 
         const pendingMakeupMinutes =
@@ -89,6 +92,15 @@ class UpdateClassAttendance {
           },
           tx,
         );
+
+        await applyAttendancePayment(
+          existing,
+          existing.student,
+          input.paidAmount ?? 0,
+          input.paymentMethod,
+          wasAlreadyAttended,
+          tx,
+        );
       }
     });
 
@@ -99,26 +111,6 @@ class UpdateClassAttendance {
     }
 
     return buildClassResponse.execute(updated);
-  }
-
-  private async restoreAdvanceFromClass(
-    classId: string,
-    studentId: string,
-    db: import('@/repositories/types').DatabaseClient,
-  ): Promise<void> {
-    const { advancePix, advanceCash } =
-      await classAllocationRepository.sumAdvanceByClassId(classId, db);
-
-    if (advancePix > 0 || advanceCash > 0) {
-      await studentRepository.restoreAdvanceBalance(
-        studentId,
-        advancePix,
-        advanceCash,
-        db,
-      );
-    }
-
-    await classAllocationRepository.deleteByClassId(classId, db);
   }
 }
 

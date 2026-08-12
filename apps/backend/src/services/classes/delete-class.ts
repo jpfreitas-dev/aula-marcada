@@ -1,10 +1,9 @@
 import { AttendanceStatus } from '../../../generated/prisma/client';
 import { AppError } from '@/lib/app-error';
 import { prisma } from '@/lib/prisma';
-import { classAllocationRepository } from '@/repositories/class-allocation-repository';
 import { classRepository } from '@/repositories/class-repository';
 import { makeupLinkRepository } from '@/repositories/makeup-link-repository';
-import { studentRepository } from '@/repositories/student-repository';
+import { clearClassPaymentState } from '@/services/payments/clear-class-payment-state';
 import { isLockedRepostaAbsenceClass } from '@/services/classes/class-session-helpers';
 
 class DeleteClass {
@@ -23,17 +22,7 @@ class DeleteClass {
 
     await prisma.$transaction(async (tx) => {
       if (existing.attendance === AttendanceStatus.ATTENDED) {
-        const { advancePix, advanceCash } =
-          await classAllocationRepository.sumAdvanceByClassId(id, tx);
-
-        if (advancePix > 0 || advanceCash > 0) {
-          await studentRepository.restoreAdvanceBalance(
-            existing.studentId,
-            advancePix,
-            advanceCash,
-            tx,
-          );
-        }
+        await clearClassPaymentState(id, existing.studentId, tx);
       }
 
       const linkedAbsenceIds =

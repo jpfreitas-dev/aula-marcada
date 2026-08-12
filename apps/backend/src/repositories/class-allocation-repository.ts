@@ -114,7 +114,43 @@ class ClassAllocationRepository {
   }
 
   async deleteByClassId(classId: string, db?: DatabaseClient) {
+    const allocations = await client(db).classAllocation.findMany({
+      where: { classId },
+      select: { paymentId: true },
+    });
+
+    const paymentIds = [
+      ...new Set(
+        allocations
+          .map((item) => item.paymentId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
     await client(db).classAllocation.deleteMany({ where: { classId } });
+
+    return paymentIds;
+  }
+
+  async create(
+    data: {
+      classId: string;
+      amount: number;
+      method: import('../../generated/prisma/client').PaymentMethod;
+      source: AllocationSource;
+      paymentId?: string;
+    },
+    db?: DatabaseClient,
+  ) {
+    return client(db).classAllocation.create({
+      data: {
+        classId: data.classId,
+        amount: data.amount,
+        method: data.method,
+        source: data.source,
+        paymentId: data.paymentId,
+      },
+    });
   }
 }
 
