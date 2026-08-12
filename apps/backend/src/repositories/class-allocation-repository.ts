@@ -112,6 +112,10 @@ class ClassAllocationRepository {
 
     return { advancePix, advanceCash };
   }
+
+  async deleteByClassId(classId: string, db?: DatabaseClient) {
+    await client(db).classAllocation.deleteMany({ where: { classId } });
+  }
 }
 
 export const classAllocationRepository = new ClassAllocationRepository();

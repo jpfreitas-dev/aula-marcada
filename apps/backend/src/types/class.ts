@@ -51,3 +51,9 @@ export type RescheduleClassInput = {
   startTime: string;
   durationMinutes: number;
 };
+
+export type UpdateClassAttendanceInput = {
+  attendance: AttendanceStatus;
+  content?: string;
+  notes?: string;
+};

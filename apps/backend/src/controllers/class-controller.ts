@@ -6,8 +6,10 @@ import { deleteClass } from '@/services/classes/delete-class';
 import { getAvailablePeriods } from '@/services/classes/get-available-periods';
 import { listClassesByDate } from '@/services/classes/list-classes-by-date';
 import { listClassesByWeek } from '@/services/classes/list-classes-by-week';
+import { listPendingAbsences } from '@/services/classes/list-pending-absences';
 import { rescheduleClass } from '@/services/classes/reschedule-class';
 import { showClass } from '@/services/classes/show-class';
+import { updateClassAttendance } from '@/services/classes/update-class-attendance';
 
 const dateKeySchema = z
   .string()
@@ -53,6 +55,22 @@ const rescheduleClassSchema = z.object({
   period: classPeriodSchema,
   startTime: z.string().trim(),
   durationMinutes: z.coerce.number().int().positive(),
+});
+
+const attendanceStatusSchema = z.union([
+  z.literal('empty'),
+  z.literal('attended'),
+  z.literal('absent'),
+]);
+
+const updateAttendanceSchema = z.object({
+  attendance: attendanceStatusSchema,
+  content: z.string().max(500).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+const pendingAbsencesQuerySchema = z.object({
+  studentId: z.string().uuid(),
 });
 
 class ClassController {
@@ -107,6 +125,21 @@ class ClassController {
     await deleteClass.execute(params.id);
 
     return response.status(204).send();
+  }
+
+  async updateAttendance(request: Request, response: Response) {
+    const params = idParamsSchema.parse(request.params);
+    const body = updateAttendanceSchema.parse(request.body);
+    const classRecord = await updateClassAttendance.execute(params.id, body);
+
+    return response.status(200).json(classRecord);
+  }
+
+  async pendingAbsences(request: Request, response: Response) {
+    const query = pendingAbsencesQuerySchema.parse(request.query);
+    const absences = await listPendingAbsences.execute(query.studentId);
+
+    return response.status(200).json(absences);
   }
 }
 

@@ -80,6 +80,18 @@ class ClassRepository {
     return client(db).class.findMany({ where: { studentId } });
   }
 
+  async findPendingAbsencesByStudentId(studentId: string, db?: DatabaseClient) {
+    return client(db).class.findMany({
+      where: {
+        studentId,
+        attendance: 'ABSENT',
+        pendingMakeupMinutes: { gt: 0 },
+      },
+      include: { student: true },
+      orderBy: [{ date: 'desc' }, { startTime: 'desc' }],
+    });
+  }
+
   async findSummaryByStudentId(studentId: string, db?: DatabaseClient) {
     return client(db).class.findMany({
       where: { studentId },

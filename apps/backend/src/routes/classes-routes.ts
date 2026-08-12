@@ -9,10 +9,18 @@ classesRoutes.get(
   '/available-periods',
   asyncHandler(classController.availablePeriods),
 );
+classesRoutes.get(
+  '/pending-absences',
+  asyncHandler(classController.pendingAbsences),
+);
 classesRoutes.get('/week', asyncHandler(classController.listByWeek));
 classesRoutes.get('/', asyncHandler(classController.listByDate));
 classesRoutes.get('/:id', asyncHandler(classController.show));
 classesRoutes.post('/', asyncHandler(classController.create));
+classesRoutes.patch(
+  '/:id/attendance',
+  asyncHandler(classController.updateAttendance),
+);
 classesRoutes.patch(
   '/:id/reschedule',
   asyncHandler(classController.reschedule),
