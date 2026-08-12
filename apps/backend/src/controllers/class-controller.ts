@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClass } from '@/services/classes/create-class';
 import { deleteClass } from '@/services/classes/delete-class';
 import { getAvailablePeriods } from '@/services/classes/get-available-periods';
+import { linkMakeup } from '@/services/classes/link-makeup';
 import { listClassesByDate } from '@/services/classes/list-classes-by-date';
 import { listClassesByWeek } from '@/services/classes/list-classes-by-week';
 import { listPendingAbsences } from '@/services/classes/list-pending-absences';
@@ -73,6 +74,16 @@ const pendingAbsencesQuerySchema = z.object({
   studentId: z.string().uuid(),
 });
 
+const linkMakeupSchema = z.object({
+  targetClassId: z.string().uuid().optional(),
+  studentId: z.string().uuid(),
+  absenceIds: z.array(z.string().uuid()).min(1),
+  startTime: z.string().trim(),
+  endTime: z.string().trim(),
+  date: dateKeySchema.optional(),
+  period: classPeriodSchema.optional(),
+});
+
 class ClassController {
   async listByDate(request: Request, response: Response) {
     const query = listByDateQuerySchema.parse(request.query);
@@ -140,6 +151,13 @@ class ClassController {
     const absences = await listPendingAbsences.execute(query.studentId);
 
     return response.status(200).json(absences);
+  }
+
+  async linkMakeup(request: Request, response: Response) {
+    const body = linkMakeupSchema.parse(request.body);
+    const classRecord = await linkMakeup.execute(body);
+
+    return response.status(200).json(classRecord);
   }
 }
 

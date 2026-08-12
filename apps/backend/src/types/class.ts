@@ -57,3 +57,13 @@ export type UpdateClassAttendanceInput = {
   content?: string;
   notes?: string;
 };
+
+export type LinkMakeupInput = {
+  targetClassId?: string;
+  studentId: string;
+  absenceIds: string[];
+  startTime: string;
+  endTime: string;
+  date?: string;
+  period?: ClassPeriod;
+};

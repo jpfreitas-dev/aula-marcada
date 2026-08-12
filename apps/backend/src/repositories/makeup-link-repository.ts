@@ -29,6 +29,21 @@ class MakeupLinkRepository {
   async deleteByAbsenceClassId(absenceClassId: string, db?: DatabaseClient) {
     await client(db).makeupLink.deleteMany({ where: { absenceClassId } });
   }
+
+  async createMany(
+    data: Array<{
+      makeupClassId: string;
+      absenceClassId: string;
+      coveredMinutes: number;
+    }>,
+    db?: DatabaseClient,
+  ) {
+    if (data.length === 0) {
+      return;
+    }
+
+    await client(db).makeupLink.createMany({ data });
+  }
 }
 
 export const makeupLinkRepository = new MakeupLinkRepository();

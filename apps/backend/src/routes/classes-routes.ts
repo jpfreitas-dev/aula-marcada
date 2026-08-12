@@ -17,6 +17,7 @@ classesRoutes.get('/week', asyncHandler(classController.listByWeek));
 classesRoutes.get('/', asyncHandler(classController.listByDate));
 classesRoutes.get('/:id', asyncHandler(classController.show));
 classesRoutes.post('/', asyncHandler(classController.create));
+classesRoutes.post('/link-makeup', asyncHandler(classController.linkMakeup));
 classesRoutes.patch(
   '/:id/attendance',
   asyncHandler(classController.updateAttendance),
