@@ -10,7 +10,7 @@ import {
   WEEKDAY_LABELS,
 } from '@/services/students/recurrence-scheduler';
 import { minutesBetween, periodFromStartTime } from '@/utils/time';
-import { getWeekdayFromDateKey } from '@/utils/workday';
+import { getWeekdayFromDateKey, toDateKey } from '@/utils/workday';
 
 export type RecurrenceAvailabilityContext = {
   classes: Array<{
@@ -95,8 +95,7 @@ function isSlotBlocked(
 
   const hasExistingClass = context.classes.some(
     (session) =>
-      session.date.toISOString().slice(0, 10) === dateKey &&
-      session.period === prismaPeriod,
+      toDateKey(session.date) === dateKey && session.period === prismaPeriod,
   );
 
   if (hasExistingClass) {
@@ -204,7 +203,7 @@ function validateSporadicConflictsInNextMonth(
     const hasConflict = sporadicDates.some((dateKey) =>
       context.classes.some(
         (session) =>
-          session.date.toISOString().slice(0, 10) === dateKey &&
+          toDateKey(session.date) === dateKey &&
           session.period === prismaPeriod,
       ),
     );

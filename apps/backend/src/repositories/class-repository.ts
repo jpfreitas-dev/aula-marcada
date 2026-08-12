@@ -9,14 +9,10 @@ import {
   periodFromPrisma,
   periodToPrisma,
 } from '@/services/students/recurrence-scheduler';
-import { dateFromDateKey } from '@/utils/workday';
+import { dateFromDateKey, toDateKey } from '@/utils/workday';
 
 function client(db?: DatabaseClient): DatabaseClient {
   return db ?? prisma;
-}
-
-function dateKeyFromDatabase(date: Date): string {
-  return date.toISOString().slice(0, 10);
 }
 
 class ClassRepository {
@@ -141,7 +137,7 @@ class ClassRepository {
     return new Set(
       classes.map(
         (session) =>
-          `${dateKeyFromDatabase(session.date)}-${periodFromPrisma(session.period)}`,
+          `${toDateKey(session.date)}-${periodFromPrisma(session.period)}`,
       ),
     );
   }

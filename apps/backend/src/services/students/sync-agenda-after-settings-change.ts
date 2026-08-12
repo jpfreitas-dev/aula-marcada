@@ -6,10 +6,6 @@ import { sessionMatchesAnyRecurrence } from '@/services/students/recurrence-sche
 import { calculateExpectedAmount } from '@/utils/class-value';
 import { getDefaultAgendaDate, toDateKey } from '@/utils/workday';
 
-function dateKeyFromDatabase(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
 class SyncAgendaAfterSettingsChange {
   async execute(
     studentId: string,
@@ -27,7 +23,7 @@ class SyncAgendaAfterSettingsChange {
     const idsToUpdateExpected: string[] = [];
 
     for (const session of studentClasses) {
-      const dateKey = dateKeyFromDatabase(session.date);
+      const dateKey = toDateKey(session.date);
       const isPast = dateKey < cutoff;
       const isFilled = session.attendance !== AttendanceStatus.EMPTY;
 

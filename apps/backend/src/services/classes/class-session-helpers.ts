@@ -1,5 +1,6 @@
 import type { Class } from '../../../generated/prisma/client';
 import { AttendanceStatus } from '../../../generated/prisma/client';
+import { toDateKey } from '@/utils/workday';
 
 type ClassSessionTiming = {
   date: Date;
@@ -68,5 +69,5 @@ export function mapAttendanceToPrisma(
 }
 
 export function dateKeyFromClass(classRecord: Pick<Class, 'date'>): string {
-  return classRecord.date.toISOString().slice(0, 10);
+  return toDateKey(classRecord.date);
 }
