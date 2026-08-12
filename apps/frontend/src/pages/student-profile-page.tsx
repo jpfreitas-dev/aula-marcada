@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { DeactivateStudentModal } from '@/components/students/deactivate-student-modal';
 import { EditStudentPersonalModal } from '@/components/students/edit-student-personal-modal';
 import { EditStudentSettingsModal } from '@/components/students/edit-student-settings-modal';
+import { ReactivateStudentModal } from '@/components/students/reactivate-student-modal';
 import { ReceivePaymentModal } from '@/components/students/receive-payment-modal';
 import { StudentAttendanceCard } from '@/components/students/student-attendance-card';
 import { StudentFinancialCard } from '@/components/students/student-financial-card';
@@ -32,6 +33,7 @@ export function StudentProfilePage() {
   const [personalModalOpen, setPersonalModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [reactivateModalOpen, setReactivateModalOpen] = useState(false);
   const [receivePaymentOpen, setReceivePaymentOpen] = useState(false);
 
   const backTo =
@@ -130,9 +132,15 @@ export function StudentProfilePage() {
           Desativar aluno
         </Button>
       ) : (
-        <p className="text-center text-sm text-text-muted">
-          Aluno desativado. Disponível apenas para consulta e estatísticas.
-        </p>
+        <Button
+          type="button"
+          variant="primary"
+          className="w-full gap-2"
+          onClick={() => setReactivateModalOpen(true)}
+        >
+          <Icon name="person_add" className="text-xl" />
+          Ativar aluno
+        </Button>
       )}
 
       <EditStudentPersonalModal
@@ -152,6 +160,12 @@ export function StudentProfilePage() {
         open={deactivateModalOpen}
         student={student}
         onClose={() => setDeactivateModalOpen(false)}
+      />
+
+      <ReactivateStudentModal
+        open={reactivateModalOpen}
+        student={student}
+        onClose={() => setReactivateModalOpen(false)}
       />
 
       <ReceivePaymentModal

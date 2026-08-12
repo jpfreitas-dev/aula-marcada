@@ -808,6 +808,37 @@ export async function deactivateStudent(studentId: string): Promise<Student> {
   return deactivatedStudent;
 }
 
+export async function reactivateStudent(studentId: string): Promise<Student> {
+  ensureMockStoreInitialized();
+
+  const existing = getStudentById(studentId);
+  if (!existing) {
+    throw new Error('Aluno não encontrado.');
+  }
+
+  if (existing.active) {
+    throw new Error('Este aluno já está ativo.');
+  }
+
+  const studentClasses = getClassesSnapshot().filter(
+    (session) => session.studentId === studentId,
+  );
+
+  const reactivatedStudent: Student = {
+    ...existing,
+    active: true,
+    nextClassAt: getNextClassAt(studentClasses),
+  };
+
+  setStudents((current) =>
+    current.map((student) =>
+      student.id === studentId ? reactivatedStudent : student,
+    ),
+  );
+
+  return reactivatedStudent;
+}
+
 export type ReceiveStudentPaymentInput = {
   studentId: string;
   amount: number;

@@ -841,6 +841,19 @@ Exige digitar exatamente o nome do aluno antes de confirmar.
 
 Alunos desativados ficam fora do fluxo operacional padrão, mas permanecem como base histórica.
 
+## Reativar aluno
+
+No perfil de um **Ex-aluno**, o professor pode **Ativar aluno**.
+
+### Efeitos da reativação
+
+- o aluno volta a aparecer na lista padrão de alunos e pode ser selecionado ao agendar aula;
+- **histórico de aulas**, **financeiro** (pendências, adiantamentos) e **valor por hora** permanecem como estavam;
+- **não** há aulas recorrentes nem geração automática na agenda (as recorrências já haviam sido removidas na desativação);
+- o professor pode cadastrar novas recorrências ou agendar aulas avulsas depois da reativação.
+
+A reativação **não** restaura configurações de recorrência anteriores.
+
 ---
 
 # 29. Histórico de aulas
@@ -1016,25 +1029,26 @@ Essas funcionalidades serão definidas posteriormente.
 
 # 38. Decisões preenchidas nesta revisão (antes incompletas)
 
-| Tema                                 | Decisão adotada                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| Badge do card                        | Hierarquia explícita (§2); Pago · Pix/Dinheiro quando quitada com forma única   |
-| “+” central                          | Igual a adicionar aula                                                          |
-| Valor padrão                         | Por **hora**, base do cálculo automático                                        |
-| Marcar como reposição no agendamento | Exige vincular antes de salvar; aula exclusiva de reposição                     |
-| Seleção de faltas                    | Múltipla; soma de durações                                                      |
-| Confirmar com tempo insuficiente     | Bloqueado                                                                       |
-| Cobertura parcial de falta           | Permitida; “Aula reposta? Sim” só com pendência zero                            |
-| Pagamento misto na aula              | Registros sucessivos (uma forma por vez)                                        |
-| Excessso na aula vs saldo            | Excessso na aula = receita; antecipação só sem pendência (ou sobra no perfil)   |
-| Consumo de saldo                     | Ao marcar Compareceu                                                            |
-| Geração de recorrência               | Horizonte de 4 semanas úteis (seg–sex)                                          |
-| Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído    |
-| Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                            |
-| Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                      |
-| Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                               |
-| Limite de texto                      | 500 caracteres em conteúdo e observações                                        |
-| Frequência                           | Y = aulas já ocorridas do período, excluindo faltas Reposta                     |
-| Editar configurações no perfil       | Um único botão no card                                                          |
-| Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                   |
-| Desativar aluno                      | Soft-delete; aulas futuras saem da agenda; histórico permanece; lista Ex-alunos |
+| Tema                                 | Decisão adotada                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| Badge do card                        | Hierarquia explícita (§2); Pago · Pix/Dinheiro quando quitada com forma única    |
+| “+” central                          | Igual a adicionar aula                                                           |
+| Valor padrão                         | Por **hora**, base do cálculo automático                                         |
+| Marcar como reposição no agendamento | Exige vincular antes de salvar; aula exclusiva de reposição                      |
+| Seleção de faltas                    | Múltipla; soma de durações                                                       |
+| Confirmar com tempo insuficiente     | Bloqueado                                                                        |
+| Cobertura parcial de falta           | Permitida; “Aula reposta? Sim” só com pendência zero                             |
+| Pagamento misto na aula              | Registros sucessivos (uma forma por vez)                                         |
+| Excessso na aula vs saldo            | Excessso na aula = receita; antecipação só sem pendência (ou sobra no perfil)    |
+| Consumo de saldo                     | Ao marcar Compareceu                                                             |
+| Geração de recorrência               | Horizonte de 4 semanas úteis (seg–sex)                                           |
+| Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído     |
+| Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                             |
+| Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                       |
+| Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                                |
+| Limite de texto                      | 500 caracteres em conteúdo e observações                                         |
+| Frequência                           | Y = aulas já ocorridas do período, excluindo faltas Reposta                      |
+| Editar configurações no perfil       | Um único botão no card                                                           |
+| Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                    |
+| Desativar aluno                      | Soft-delete; aulas futuras saem da agenda; histórico permanece; lista Ex-alunos  |
+| Reativar aluno                       | Volta à lista ativa; mantém histórico, financeiro e valor/hora; sem recorrências |
