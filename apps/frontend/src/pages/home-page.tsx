@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
-import { Icon } from '@/components/ui/icon';
-import { iconButtonClassName } from '@/components/ui/icon-button';
+import { PeriodNavigator } from '@/components/ui/period-navigator';
+import { SegmentedToggle } from '@/components/ui/segmented-toggle';
 import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
 import { useMockStore } from '@/hooks/use-mock-store';
@@ -28,45 +28,15 @@ import {
 
 type AgendaView = 'day' | 'week';
 
+const agendaViewOptions: { value: AgendaView; label: string }[] = [
+  { value: 'day', label: 'Dia' },
+  { value: 'week', label: 'Semana' },
+];
+
 const periodLabels: Record<ClassPeriod, string> = {
   morning: 'MANHÃ',
   afternoon: 'TARDE/NOITE',
 };
-
-function DayWeekToggle({
-  view,
-  onChange,
-}: {
-  view: AgendaView;
-  onChange: (view: AgendaView) => void;
-}) {
-  return (
-    <div className="mx-auto flex w-48 rounded-full bg-purple-100 p-1">
-      <button
-        type="button"
-        onClick={() => onChange('day')}
-        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${
-          view === 'day'
-            ? 'bg-white text-purple-900 shadow-sm'
-            : 'font-medium text-purple-700/70'
-        }`}
-      >
-        Dia
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('week')}
-        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${
-          view === 'week'
-            ? 'bg-white text-purple-900 shadow-sm'
-            : 'font-medium text-purple-700/70'
-        }`}
-      >
-        Semana
-      </button>
-    </div>
-  );
-}
 
 function PeriodSection({
   label,
@@ -140,31 +110,21 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-stack-md">
-      <DayWeekToggle view={view} onChange={setView} />
+      <SegmentedToggle
+        value={view}
+        onChange={setView}
+        options={agendaViewOptions}
+      />
 
-      <div className="flex items-center justify-between rounded-md border border-outline-variant/30 bg-surface p-3 shadow-sm">
-        <button
-          type="button"
-          onClick={() => navigateDate(-1)}
-          className={`${iconButtonClassName} h-8 w-8 text-primary`}
-          aria-label="Período anterior"
-        >
-          <Icon name="chevron_left" />
-        </button>
-        <span className="text-center text-sm font-bold text-text-main">
-          {view === 'day'
+      <PeriodNavigator
+        label={
+          view === 'day'
             ? formatWorkdayLabel(selectedDate)
-            : formatWeekRange(weekStart)}
-        </span>
-        <button
-          type="button"
-          onClick={() => navigateDate(1)}
-          className={`${iconButtonClassName} h-8 w-8 text-primary`}
-          aria-label="Próximo período"
-        >
-          <Icon name="chevron_right" />
-        </button>
-      </div>
+            : formatWeekRange(weekStart)
+        }
+        onPrevious={() => navigateDate(-1)}
+        onNext={() => navigateDate(1)}
+      />
 
       {view === 'day' ? (
         <>
