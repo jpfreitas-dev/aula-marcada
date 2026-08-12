@@ -7,7 +7,10 @@ export const errorHandling: ErrorRequestHandler = (
   error,
   _request,
   response,
+  // Required 4-arg signature so Express treats this as error middleware.
+  _next,
 ) => {
+  void _next;
   if (error instanceof AppError) {
     response.status(error.statusCode).json({
       message: error.message,
