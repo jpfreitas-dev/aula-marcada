@@ -5,6 +5,21 @@ export function calculateExpectedAmount(
   return Math.round((durationMinutes / 60) * hourlyRate * 100) / 100;
 }
 
+export function computeFinancialStatus(
+  expectedAmount: number,
+  paidAmount: number,
+): 'pending' | 'partial' | 'settled' {
+  if (paidAmount >= expectedAmount) {
+    return 'settled';
+  }
+
+  if (paidAmount > 0) {
+    return 'partial';
+  }
+
+  return 'pending';
+}
+
 export type StudentPendingSummary = {
   amount: number;
   lessonCount: number;

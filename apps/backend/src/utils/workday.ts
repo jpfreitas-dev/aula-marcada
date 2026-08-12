@@ -46,3 +46,22 @@ export function dateFromDateKey(dateKey: string): Date {
 export function getWeekdayFromDateKey(dateKey: string): number {
   return dateFromDateKey(dateKey).getDay();
 }
+
+export function getWeekStart(date: Date): Date {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  while (start.getDay() !== 1) {
+    start.setDate(start.getDate() - 1);
+  }
+
+  return start;
+}
+
+export function getWorkdaysOfWeek(weekStart: Date): Date[] {
+  return Array.from({ length: 5 }, (_, index) => {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + index);
+    return day;
+  });
+}

@@ -12,6 +12,15 @@ class StudentRepository {
     return client(db).student.findUnique({ where: { id } });
   }
 
+  async findActiveById(
+    id: string,
+    db?: DatabaseClient,
+  ): Promise<Student | null> {
+    return client(db).student.findFirst({
+      where: { id, active: true },
+    });
+  }
+
   async findByIdOrThrow(id: string, db?: DatabaseClient): Promise<Student> {
     return client(db).student.findUniqueOrThrow({ where: { id } });
   }
@@ -53,6 +62,25 @@ class StudentRepository {
     db?: DatabaseClient,
   ): Promise<Student> {
     return client(db).student.update({ where: { id }, data });
+  }
+
+  async restoreAdvanceBalance(
+    id: string,
+    advancePix: number,
+    advanceCash: number,
+    db?: DatabaseClient,
+  ): Promise<Student> {
+    const student = await this.findByIdOrThrow(id, db);
+
+    return client(db).student.update({
+      where: { id },
+      data: {
+        advanceBalancePix:
+          Number(student.advanceBalancePix.toString()) + advancePix,
+        advanceBalanceCash:
+          Number(student.advanceBalanceCash.toString()) + advanceCash,
+      },
+    });
   }
 }
 

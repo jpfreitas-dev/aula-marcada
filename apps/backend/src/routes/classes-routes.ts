@@ -1,0 +1,22 @@
+import { Router } from 'express';
+
+import { classController } from '@/controllers/class-controller';
+import { asyncHandler } from '@/utils/async-handler';
+
+const classesRoutes = Router();
+
+classesRoutes.get(
+  '/available-periods',
+  asyncHandler(classController.availablePeriods),
+);
+classesRoutes.get('/week', asyncHandler(classController.listByWeek));
+classesRoutes.get('/', asyncHandler(classController.listByDate));
+classesRoutes.get('/:id', asyncHandler(classController.show));
+classesRoutes.post('/', asyncHandler(classController.create));
+classesRoutes.patch(
+  '/:id/reschedule',
+  asyncHandler(classController.reschedule),
+);
+classesRoutes.delete('/:id', asyncHandler(classController.delete));
+
+export { classesRoutes };
