@@ -16,7 +16,8 @@ HTTP Request
 → app.ts
 → Routes
 → Controller
-→ Service
+→ Service (use case)
+→ Repository
 → Prisma
 → PostgreSQL
 
@@ -34,26 +35,36 @@ Controllers:
 
 - know `Request` and `Response`;
 - validate external input;
-- call services;
+- call the appropriate use-case service (`execute`);
 - define HTTP status codes;
-- must not access Prisma directly;
+- must not access Prisma or repositories directly;
 - must not contain complex application/business logic.
 
-### Services
+### Services (use cases)
 
 Services:
 
-- represent application use cases;
+- live under `services/<domain>/` (e.g. `services/students/`);
+- represent **one** application use case per file;
+- expose a single `execute` method;
 - receive validated data;
-- contain application logic;
-- coordinate persistence and other application operations;
-- must not depend on Express `Request` or `Response`.
+- contain application logic and coordinate repositories;
+- must not depend on Express `Request` or `Response`;
+- must not access Prisma directly.
+
+### Repositories
+
+Repositories:
+
+- live under `repositories/`;
+- concentrate database access via Prisma;
+- may accept a transaction client for atomic operations;
+- must not contain complex business rules.
 
 ### Prisma
 
-- Use Prisma as the database access layer.
-- Keep the Prisma Client as a singleton.
-- Do not spread application logic across database queries.
+- Use Prisma only inside repositories.
+- Keep the Prisma Client as a singleton in `lib/prisma.ts`.
 - Database models and relationships must be derived from the functional requirements.
 - Use versioned migrations.
 - Prefer UUID identifiers and consistent timestamps as documented.
@@ -62,6 +73,8 @@ Services:
 
 Use Prisma transactions when a single application operation performs
 multiple database mutations that must succeed or fail together.
+
+Coordinate transactions in use-case services; pass the transaction client to repositories.
 
 Examples include:
 
@@ -105,7 +118,8 @@ Follow the conventions defined in `software-architecture.md`:
 
 - `<domain>-routes.ts`
 - `<domain>-controller.ts`
-- `<domain>-service.ts`
+- `services/<domain>/<use-case>.ts` — one use case per file, `execute` method
+- `<entity>-repository.ts`
 - kebab-case for middleware and utility files
 
 Use real domain names rather than placeholder entities.

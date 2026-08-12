@@ -1,7 +1,15 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 
-import { studentService } from '@/services/student-service';
+import { createStudent } from '@/services/students/create-student';
+import { deactivateStudent } from '@/services/students/deactivate-student';
+import { getRecurrenceOptions } from '@/services/students/get-recurrence-options';
+import { listStudentRecurrences } from '@/services/students/list-student-recurrences';
+import { listStudents } from '@/services/students/list-students';
+import { reactivateStudent } from '@/services/students/reactivate-student';
+import { showStudent } from '@/services/students/show-student';
+import { updateStudentPersonal } from '@/services/students/update-student-personal';
+import { updateStudentSettings } from '@/services/students/update-student-settings';
 
 const studentWeekdaySchema = z.union([
   z.literal(1),
@@ -54,21 +62,21 @@ const idParamsSchema = z.object({
 class StudentController {
   async list(request: Request, response: Response) {
     const query = listQuerySchema.parse(request.query);
-    const students = await studentService.list(query.filter, query.search);
+    const students = await listStudents.execute(query.filter, query.search);
 
     return response.status(200).json(students);
   }
 
   async show(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
-    const student = await studentService.show(params.id);
+    const student = await showStudent.execute(params.id);
 
     return response.status(200).json(student);
   }
 
   async create(request: Request, response: Response) {
     const body = createStudentSchema.parse(request.body);
-    const student = await studentService.create(body);
+    const student = await createStudent.execute(body);
 
     return response.status(201).json(student);
   }
@@ -76,7 +84,7 @@ class StudentController {
   async updatePersonal(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
     const body = updatePersonalSchema.parse(request.body);
-    const student = await studentService.updatePersonal(params.id, body);
+    const student = await updateStudentPersonal.execute(params.id, body);
 
     return response.status(200).json(student);
   }
@@ -84,35 +92,35 @@ class StudentController {
   async updateSettings(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
     const body = updateSettingsSchema.parse(request.body);
-    const student = await studentService.updateSettings(params.id, body);
+    const student = await updateStudentSettings.execute(params.id, body);
 
     return response.status(200).json(student);
   }
 
   async deactivate(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
-    const student = await studentService.deactivate(params.id);
+    const student = await deactivateStudent.execute(params.id);
 
     return response.status(200).json(student);
   }
 
   async reactivate(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
-    const student = await studentService.reactivate(params.id);
+    const student = await reactivateStudent.execute(params.id);
 
     return response.status(200).json(student);
   }
 
   async listRecurrences(request: Request, response: Response) {
     const params = idParamsSchema.parse(request.params);
-    const recurrences = await studentService.listRecurrences(params.id);
+    const recurrences = await listStudentRecurrences.execute(params.id);
 
     return response.status(200).json(recurrences);
   }
 
   async recurrenceOptions(request: Request, response: Response) {
     const body = recurrenceOptionsSchema.parse(request.body);
-    const options = await studentService.getRecurrenceOptions(body);
+    const options = await getRecurrenceOptions.execute(body);
 
     return response.status(200).json(options);
   }

@@ -3,7 +3,7 @@ import {
   ClassPeriod,
   type Class,
   type StudentRecurrence,
-} from '../../generated/prisma/client';
+} from '../../../generated/prisma/client';
 import type { CreateStudentRecurrenceInput } from '@/types/student';
 import { calculateExpectedAmount } from '@/utils/class-value';
 import { decimalToNumber } from '@/utils/money';
