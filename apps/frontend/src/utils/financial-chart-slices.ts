@@ -63,13 +63,15 @@ export function buildPaymentSlices(
   stats: FinancialStudentPaymentStat[],
 ): FinancialPieSlice[] {
   return sortByValueDesc(
-    stats.map((stat, index) => ({
-      id: stat.studentId,
-      label: stat.studentName,
-      value: stat.amount,
-      legendValue: formatCurrency(stat.amount),
-      color: getStudentColor(index),
-    })),
+    stats
+      .filter((stat) => stat.amount > 0)
+      .map((stat, index) => ({
+        id: stat.studentId,
+        label: stat.studentName,
+        value: stat.amount,
+        legendValue: formatCurrency(stat.amount),
+        color: getStudentColor(index),
+      })),
   );
 }
 
@@ -77,12 +79,14 @@ export function buildAbsenceValueSlices(
   stats: FinancialStudentAbsenceStat[],
 ): FinancialPieSlice[] {
   return sortByValueDesc(
-    stats.map((stat, index) => ({
-      id: stat.studentId,
-      label: stat.studentName,
-      value: stat.absenceValue,
-      legendValue: `- ${formatCurrency(stat.absenceValue)}`,
-      color: getStudentColor(index),
-    })),
+    stats
+      .filter((stat) => stat.absenceValue > 0)
+      .map((stat, index) => ({
+        id: stat.studentId,
+        label: stat.studentName,
+        value: stat.absenceValue,
+        legendValue: `- ${formatCurrency(stat.absenceValue)}`,
+        color: getStudentColor(index),
+      })),
   );
 }
