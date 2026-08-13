@@ -16,17 +16,34 @@ import { parseCurrencyInput } from '@/utils/class-value';
 type CreateStudentModalProps = {
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
 };
 
-export function CreateStudentModal({ open, onClose }: CreateStudentModalProps) {
+export function CreateStudentModal({
+  open,
+  onClose,
+  onSaved,
+}: CreateStudentModalProps) {
   if (!open) {
     return null;
   }
 
-  return <CreateStudentForm key="create-student" onClose={onClose} />;
+  return (
+    <CreateStudentForm
+      key="create-student"
+      onClose={onClose}
+      onSaved={onSaved}
+    />
+  );
 }
 
-function CreateStudentForm({ onClose }: { onClose: () => void }) {
+function CreateStudentForm({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved?: () => void;
+}) {
   const [personal, setPersonal] = useState<StudentPersonalFieldsValue>({
     name: '',
     guardianName: '',
@@ -47,6 +64,7 @@ function CreateStudentForm({ onClose }: { onClose: () => void }) {
         hourlyRate: parseCurrencyInput(hourlyRateInput),
         recurrences: toCreateRecurrenceInputs(recurrences),
       });
+      onSaved?.();
       onClose();
     } catch (saveError) {
       setError(

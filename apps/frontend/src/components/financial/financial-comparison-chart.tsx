@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
-import type { FinancialChartPoint } from '@/data/financial-demo-data';
+import type { FinancialChartPoint } from '@/types';
 
 const EXPECTED_COLOR = '#e8e0ee';
 const REALIZED_COLOR = '#6d28d9';
@@ -18,6 +19,14 @@ export function FinancialComparisonChart({
   const barSize = compact ? 6 : points.length > 5 ? 20 : 24;
   const chartMinWidth = compact ? points.length * 28 : undefined;
 
+  const maxValue = useMemo(() => {
+    const peak = points.reduce(
+      (max, point) => Math.max(max, point.expected, point.realized),
+      0,
+    );
+    return peak > 0 ? peak : 1;
+  }, [points]);
+
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm">
       <div className="mb-4 flex justify-center gap-4">
@@ -31,19 +40,19 @@ export function FinancialComparisonChart({
         </div>
       </div>
 
-      <div className={compact ? 'overflow-x-auto' : ''}>
+      <div className={compact ? 'scroll-x-area' : ''}>
         <div
-          className="h-32 w-full min-w-0"
+          className="chart-non-interactive h-32 w-full min-w-0"
           style={chartMinWidth ? { minWidth: chartMinWidth } : undefined}
         >
           <ResponsiveContainer width="100%" height={128} minWidth={0}>
             <BarChart
               data={points}
-              margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+              margin={{ top: 4, right: 12, left: 12, bottom: 0 }}
               barCategoryGap={compact ? '8%' : '20%'}
               barGap={compact ? 2 : 4}
             >
-              <YAxis hide domain={[0, 1]} />
+              <YAxis hide domain={[0, maxValue]} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
@@ -55,18 +64,22 @@ export function FinancialComparisonChart({
                 interval={0}
               />
               <Bar
-                dataKey="expectedRatio"
+                dataKey="expected"
                 fill={EXPECTED_COLOR}
                 radius={[2, 2, 0, 0]}
                 barSize={barSize}
                 isAnimationActive={false}
+                activeBar={false}
+                cursor="default"
               />
               <Bar
-                dataKey="realizedRatio"
+                dataKey="realized"
                 fill={REALIZED_COLOR}
                 radius={[2, 2, 0, 0]}
                 barSize={barSize}
                 isAnimationActive={false}
+                activeBar={false}
+                cursor="default"
               />
             </BarChart>
           </ResponsiveContainer>

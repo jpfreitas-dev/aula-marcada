@@ -7,34 +7,34 @@ import {
 } from '@/components/students/student-recurrence-config-fields';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { deactivateStudent } from '@/services/student-service';
+import { deleteStudent } from '@/services/student-service';
 import type { Student } from '@/types';
 
-type DeactivateStudentModalProps = {
+type DeleteStudentModalProps = {
   open: boolean;
   student: Student;
   onClose: () => void;
 };
 
-export function DeactivateStudentModal({
+export function DeleteStudentModal({
   open,
   student,
   onClose,
-}: DeactivateStudentModalProps) {
+}: DeleteStudentModalProps) {
   if (!open) {
     return null;
   }
 
   return (
-    <DeactivateStudentForm
-      key={`deactivate-${student.id}`}
+    <DeleteStudentForm
+      key={`delete-${student.id}`}
       student={student}
       onClose={onClose}
     />
   );
 }
 
-function DeactivateStudentForm({
+function DeleteStudentForm({
   student,
   onClose,
 }: {
@@ -46,13 +46,13 @@ function DeactivateStudentForm({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const canDeactivate = useMemo(
+  const canDelete = useMemo(
     () => confirmationName === student.name,
     [confirmationName, student.name],
   );
 
-  const handleDeactivate = async () => {
-    if (!canDeactivate) {
+  const handleDelete = async () => {
+    if (!canDelete) {
       setError('Digite exatamente o nome do aluno para confirmar.');
       return;
     }
@@ -61,14 +61,14 @@ function DeactivateStudentForm({
     setError(null);
 
     try {
-      await deactivateStudent(student.id);
+      await deleteStudent(student.id);
       onClose();
-      navigate('/students?view=former', { replace: true });
-    } catch (deactivateError) {
+      navigate('/students', { replace: true });
+    } catch (deleteError) {
       setError(
-        deactivateError instanceof Error
-          ? deactivateError.message
-          : 'Não foi possível desativar o aluno.',
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Não foi possível excluir o aluno.',
       );
       setSaving(false);
     }
@@ -77,16 +77,16 @@ function DeactivateStudentForm({
   return (
     <Modal
       open
-      title="Desativar aluno"
+      title="Excluir aluno"
       onClose={onClose}
-      onSubmit={() => void handleDeactivate()}
-      submitDisabled={!canDeactivate || saving}
+      onSubmit={() => void handleDelete()}
+      submitDisabled={!canDelete || saving}
     >
       <p className="text-sm text-text-muted">
-        O aluno passará para <span className="font-semibold">Ex-alunos</span>.
-        Aulas futuras saem da agenda; o histórico permanece para consulta. Para
-        confirmar, digite exatamente o nome{' '}
-        <span className="font-semibold text-text-main">{student.name}</span>.
+        Esta ação é <span className="font-semibold">permanente</span>. Todas as
+        aulas, pagamentos, recorrências e histórico de{' '}
+        <span className="font-semibold text-text-main">{student.name}</span>{' '}
+        serão apagados. Para confirmar, digite exatamente o nome do aluno.
       </p>
 
       <label className="mt-4 flex flex-col">
@@ -121,9 +121,9 @@ function DeactivateStudentForm({
           type="submit"
           variant="danger"
           className="flex-1"
-          disabled={!canDeactivate || saving}
+          disabled={!canDelete || saving}
         >
-          Desativar
+          Excluir
         </Button>
       </div>
     </Modal>

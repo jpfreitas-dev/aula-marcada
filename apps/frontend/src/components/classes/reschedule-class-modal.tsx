@@ -3,14 +3,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { fieldLabelClassName } from '@/components/ui/field';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
 import { WorkdayDateInput } from '@/components/ui/workday-date-input';
 import type { ClassPeriod, ClassSession } from '@/types';
 import {
-  calculateRequiredMakeupMinutes,
   getAvailablePeriods,
+  getClassByIdService,
   rescheduleClass,
 } from '@/services/class-service';
+import { calculateRequiredMakeupMinutes } from '@/utils/makeup';
 import {
   getAggregatedScheduleTimeBounds,
   findNextAllowedStartTime,
@@ -58,12 +60,14 @@ type RescheduleClassFormProps = {
 };
 
 function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
+  const { refresh: refreshAgenda } = useAgendaRefresh();
   const [date, setDate] = useState(session.date);
   const [startTime, setStartTime] = useState(session.startTime);
   const [endTime, setEndTime] = useState(session.endTime);
   const [availablePeriods, setAvailablePeriods] = useState<ClassPeriod[]>([
     session.period,
   ]);
+  const [linkedAbsences, setLinkedAbsences] = useState<ClassSession[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const timesRef = useRef({ startTime, endTime });
@@ -72,12 +76,37 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
     timesRef.current = { startTime, endTime };
   }, [startTime, endTime]);
 
+  useEffect(() => {
+    if (session.linkedAbsenceIds.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void Promise.all(
+      session.linkedAbsenceIds.map((id) => getClassByIdService(id)),
+    ).then((loaded) => {
+      if (!cancelled) {
+        setLinkedAbsences(
+          loaded.filter((item): item is ClassSession => item !== null),
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session.linkedAbsenceIds]);
+
   const workdayDates = Array.from({ length: 20 }, (_, index) =>
     toDateKey(addWorkdays(getDefaultAgendaDate(), index)),
   );
   const dateMin = workdayDates[0];
   const dateMax = workdayDates[workdayDates.length - 1];
   const durationMinutes = minutesBetween(startTime, endTime);
+  const resolvedLinkedAbsences =
+    session.linkedAbsenceIds.length === 0 ? [] : linkedAbsences;
+
   const minimumDuration = useMemo(() => {
     if (session.linkedAbsenceIds.length === 0) {
       return MIN_CLASS_DURATION_MINUTES;
@@ -87,8 +116,9 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
       session,
       session.linkedAbsenceIds,
       session.isMakeupOnly,
+      resolvedLinkedAbsences,
     );
-  }, [session]);
+  }, [resolvedLinkedAbsences, session]);
   const boundOptions = useMemo(
     () => ({ minDurationMinutes: minimumDuration }),
     [minimumDuration],
@@ -221,6 +251,7 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
         startTime,
         durationMinutes,
       });
+      refreshAgenda();
       onClose();
     } catch (saveError) {
       setError(
@@ -239,11 +270,13 @@ function RescheduleClassForm({ session, onClose }: RescheduleClassFormProps) {
       tall
       title="Alterar horário"
       onClose={onClose}
+      onSubmit={() => void handleSave()}
+      submitDisabled={saving || !hasScheduleAvailability}
       footer={
         <Button
+          type="submit"
           className="w-full"
           disabled={saving || !hasScheduleAvailability}
-          onClick={() => void handleSave()}
         >
           Salvar horário
         </Button>

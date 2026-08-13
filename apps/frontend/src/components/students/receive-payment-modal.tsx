@@ -23,6 +23,7 @@ type ReceivePaymentModalProps = {
   student: Student;
   pending: StudentPendingSummary;
   onClose: () => void;
+  onSaved?: () => void;
 };
 
 export function ReceivePaymentModal({
@@ -30,6 +31,7 @@ export function ReceivePaymentModal({
   student,
   pending,
   onClose,
+  onSaved,
 }: ReceivePaymentModalProps) {
   if (!open) {
     return null;
@@ -41,6 +43,7 @@ export function ReceivePaymentModal({
       student={student}
       pending={pending}
       onClose={onClose}
+      onSaved={onSaved}
     />
   );
 }
@@ -49,10 +52,12 @@ function ReceivePaymentForm({
   student,
   pending,
   onClose,
+  onSaved,
 }: {
   student: Student;
   pending: StudentPendingSummary;
   onClose: () => void;
+  onSaved?: () => void;
 }) {
   const suggestedAmount = pending.amount > 0 ? pending.amount : 0;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
@@ -85,6 +90,7 @@ function ReceivePaymentForm({
         amount,
         paymentMethod,
       });
+      onSaved?.();
       onClose();
     } catch (saveError) {
       setError(
@@ -98,7 +104,13 @@ function ReceivePaymentForm({
   };
 
   return (
-    <Modal open title="Receber pagamento" onClose={onClose}>
+    <Modal
+      open
+      title="Receber pagamento"
+      onClose={onClose}
+      onSubmit={() => void handleConfirm()}
+      submitDisabled={saving || amount <= 0}
+    >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-text-muted">
           Aluno:{' '}
@@ -187,6 +199,7 @@ function ReceivePaymentForm({
 
         <div className="mt-2 flex gap-2">
           <Button
+            type="button"
             variant="secondary"
             className="flex-1"
             disabled={saving}
@@ -195,9 +208,9 @@ function ReceivePaymentForm({
             Cancelar
           </Button>
           <Button
+            type="submit"
             className="flex-1"
             disabled={saving || amount <= 0}
-            onClick={() => void handleConfirm()}
           >
             Confirmar
           </Button>

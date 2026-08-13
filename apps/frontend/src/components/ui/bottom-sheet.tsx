@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
 import { IconButton } from '@/components/ui/icon-button';
 
@@ -6,6 +6,8 @@ type BottomSheetProps = {
   open: boolean;
   title: string;
   onClose: () => void;
+  onSubmit?: () => void;
+  submitDisabled?: boolean;
   children: ReactNode;
   footer?: ReactNode;
   tall?: boolean;
@@ -15,6 +17,8 @@ export function BottomSheet({
   open,
   title,
   onClose,
+  onSubmit,
+  submitDisabled = false,
   children,
   footer,
   tall = false,
@@ -22,6 +26,14 @@ export function BottomSheet({
   if (!open) {
     return null;
   }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!submitDisabled && onSubmit) {
+      onSubmit();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -31,7 +43,8 @@ export function BottomSheet({
         aria-label="Fechar painel"
         onClick={onClose}
       />
-      <div
+      <form
+        onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
@@ -58,7 +71,7 @@ export function BottomSheet({
             />
           </div>
         </div>
-        <div className="scrollbar-hidden relative z-10 min-h-0 flex-1 overflow-x-visible px-margin-main py-4">
+        <div className="scroll-area relative z-10 min-h-0 flex-1 overflow-x-visible px-margin-main py-4">
           {children}
         </div>
         {footer ? (
@@ -66,7 +79,7 @@ export function BottomSheet({
             {footer}
           </div>
         ) : null}
-      </div>
+      </form>
     </div>
   );
 }

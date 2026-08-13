@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LinkMakeupModal } from '@/components/classes/link-makeup-modal';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import {
   fieldControlClassName,
   fieldLabelClassName,
@@ -11,12 +12,14 @@ import { Icon } from '@/components/ui/icon';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
 import { WorkdayDateInput } from '@/components/ui/workday-date-input';
 import type { ClassPeriod } from '@/types';
+import type { ClassSession } from '@/types';
 import {
-  calculateRequiredMakeupMinutes,
   createClass,
   getAvailablePeriods,
+  getPendingAbsences,
 } from '@/services/class-service';
 import { listStudents } from '@/services/student-service';
+import { calculateRequiredMakeupMinutes } from '@/utils/makeup';
 import type { Student } from '@/types';
 import {
   calculateExpectedAmount,
@@ -165,6 +168,8 @@ function ScheduleClassForm({
   const [dateError, setDateError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [pendingAbsences, setPendingAbsences] = useState<ClassSession[]>([]);
+  const { refresh: refreshAgenda } = useAgendaRefresh();
 
   const workdayOptions = useMemo(() => {
     const base = getDefaultAgendaDate();
@@ -218,6 +223,24 @@ function ScheduleClassForm({
   useEffect(() => {
     void listStudents().then(setStudents);
   }, []);
+
+  useEffect(() => {
+    if (!selectedStudent) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getPendingAbsences(selectedStudent.id).then((loaded) => {
+      if (!cancelled) {
+        setPendingAbsences(loaded);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStudent]);
 
   useEffect(() => {
     if (!date) {
@@ -395,6 +418,7 @@ function ScheduleClassForm({
             selectedStudent.hourlyRate,
           ),
       });
+      refreshAgenda();
       onClose();
     } catch (saveError) {
       setError(
@@ -409,7 +433,12 @@ function ScheduleClassForm({
 
   const requiredMakeupMinutes =
     selectedStudent && isMakeupOnly && makeupDraft
-      ? calculateRequiredMakeupMinutes(null, makeupDraft.absenceIds, true)
+      ? calculateRequiredMakeupMinutes(
+          null,
+          makeupDraft.absenceIds,
+          true,
+          pendingAbsences,
+        )
       : 0;
 
   return (
@@ -419,10 +448,12 @@ function ScheduleClassForm({
         tall
         title="Agendar Aula"
         onClose={onClose}
+        onSubmit={() => void handleSave()}
+        submitDisabled={saving || !hasScheduleAvailability || formBlocked}
         footer={
           <Button
+            type="submit"
             className="w-full"
-            onClick={() => void handleSave()}
             disabled={saving || !hasScheduleAvailability || formBlocked}
           >
             Salvar agendamento

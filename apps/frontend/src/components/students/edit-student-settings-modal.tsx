@@ -15,6 +15,7 @@ type EditStudentSettingsModalProps = {
   student: Student;
   recurrences: StudentRecurrence[];
   onClose: () => void;
+  onSaved?: () => void;
 };
 
 function toDraftRows(recurrences: StudentRecurrence[]): RecurrenceRowValue[] {
@@ -31,6 +32,7 @@ export function EditStudentSettingsModal({
   student,
   recurrences,
   onClose,
+  onSaved,
 }: EditStudentSettingsModalProps) {
   if (!open) {
     return null;
@@ -42,6 +44,7 @@ export function EditStudentSettingsModal({
       student={student}
       recurrences={recurrences}
       onClose={onClose}
+      onSaved={onSaved}
     />
   );
 }
@@ -50,10 +53,12 @@ function EditStudentSettingsForm({
   student,
   recurrences,
   onClose,
+  onSaved,
 }: {
   student: Student;
   recurrences: StudentRecurrence[];
   onClose: () => void;
+  onSaved?: () => void;
 }) {
   const [hourlyRateInput, setHourlyRateInput] = useState(
     formatCurrencyInput(student.hourlyRate),
@@ -73,6 +78,7 @@ function EditStudentSettingsForm({
         hourlyRate: parseCurrencyInput(hourlyRateInput),
         recurrences: toCreateRecurrenceInputs(draftRecurrences),
       });
+      onSaved?.();
       onClose();
     } catch (saveError) {
       setError(

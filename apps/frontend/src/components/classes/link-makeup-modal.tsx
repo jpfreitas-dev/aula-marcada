@@ -3,13 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { MakeupSelectableClassCard } from '@/components/classes/makeup-selectable-class-card';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { TimeRangeInput } from '@/components/ui/time-range-input';
 import type { ClassSession } from '@/types';
-import {
-  calculateRequiredMakeupMinutes,
-  getPendingAbsences,
-  linkMakeup,
-} from '@/services/class-service';
+import { getPendingAbsences, linkMakeup } from '@/services/class-service';
+import { calculateRequiredMakeupMinutes } from '@/utils/makeup';
 import {
   addMinutesToTime,
   applyStartTimeChange,
@@ -26,6 +24,7 @@ function resolveRequiredMakeupMinutes(
   targetClass: ClassSession | null | undefined,
   selectedIds: string[],
   isMakeupOnly: boolean,
+  absences: ClassSession[],
   initialDurationMinutes: number,
 ): number {
   if (selectedIds.length === 0) {
@@ -37,6 +36,7 @@ function resolveRequiredMakeupMinutes(
       targetClass ?? null,
       selectedIds,
       isMakeupOnly,
+      absences,
     ),
     MIN_CLASS_DURATION_MINUTES,
   );
@@ -112,6 +112,7 @@ function LinkMakeupForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { refresh: refreshAgenda } = useAgendaRefresh();
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +133,7 @@ function LinkMakeupForm({
       targetClass,
       ids,
       isMakeupOnly,
+      absences,
       initialDurationMinutes,
     );
 
@@ -165,9 +167,10 @@ function LinkMakeupForm({
         targetClass,
         selectedIds,
         isMakeupOnly,
+        absences,
         initialDurationMinutes,
       ),
-    [targetClass, selectedIds, isMakeupOnly, initialDurationMinutes],
+    [absences, targetClass, selectedIds, isMakeupOnly, initialDurationMinutes],
   );
 
   const currentMinutes = minutesBetween(startTime, endTime);
@@ -264,6 +267,7 @@ function LinkMakeupForm({
         startTime,
         endTime,
       });
+      refreshAgenda();
       onClose();
     } catch (confirmError) {
       setError(
@@ -282,13 +286,11 @@ function LinkMakeupForm({
       tall
       title="Vincular reposição"
       onClose={onClose}
+      onSubmit={() => void handleConfirm()}
+      submitDisabled={!canConfirm}
       footer={
         absences.length > 0 ? (
-          <Button
-            className="w-full"
-            disabled={!canConfirm}
-            onClick={() => void handleConfirm()}
-          >
+          <Button type="submit" className="w-full" disabled={!canConfirm}>
             Confirmar reposição
           </Button>
         ) : undefined

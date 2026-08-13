@@ -51,3 +51,39 @@ export type UpdateStudentSettingsInput = {
   hourlyRate: number;
   recurrences: CreateStudentRecurrenceInput[];
 };
+
+export type RecurrenceOptionsInput = {
+  studentId?: string;
+  draftRecurrences: CreateStudentRecurrenceInput[];
+  currentWeekday?: StudentWeekday;
+};
+
+export type WeekdayOption = {
+  value: StudentWeekday;
+  label: string;
+};
+
+export type RecurrenceOptionsResponse = {
+  allWeekdays: WeekdayOption[];
+  weekdayOptions: WeekdayOption[];
+  defaultRow: Pick<
+    CreateStudentRecurrenceInput,
+    'weekday' | 'startTime' | 'endTime'
+  > | null;
+  hasAvailableWeekdays: boolean;
+};
+
+export type StudentListFilter = 'active' | 'inactive';
+
+export type ReceiveStudentPaymentInput = {
+  studentId: string;
+  amount: number;
+  paymentMethod: 'pix' | 'cash';
+};
+
+export type ReceiveStudentPaymentResult = {
+  student: Student;
+  allocatedAmount: number;
+  advanceAmount: number;
+  settledClassIds: string[];
+};

@@ -5,6 +5,7 @@ import { LinkMakeupModal } from '@/components/classes/link-makeup-modal';
 import { RescheduleClassModal } from '@/components/classes/reschedule-class-modal';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { IconButton } from '@/components/ui/icon-button';
 import { Modal } from '@/components/ui/modal';
 import type {
@@ -64,6 +65,7 @@ export function ClassDetailModal({
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { refresh: refreshAgenda } = useAgendaRefresh();
 
   const applySession = (
     loaded: ClassSession,
@@ -331,6 +333,7 @@ export function ClassDetailModal({
         content: attendance === 'attended' ? content : undefined,
         notes: attendance === 'attended' ? notes : undefined,
       });
+      refreshAgenda();
       onClose();
     } catch (saveError) {
       setError(
@@ -349,6 +352,7 @@ export function ClassDetailModal({
     try {
       await deleteClass(session.id);
       setDeleteOpen(false);
+      refreshAgenda();
       onClose();
     } catch (deleteError) {
       setDeleteOpen(false);
@@ -367,13 +371,11 @@ export function ClassDetailModal({
         tall
         title={session.studentName}
         onClose={onClose}
+        onSubmit={() => void handleSave()}
+        submitDisabled={saving || lockedReposta}
         footer={
           lockedReposta ? undefined : (
-            <Button
-              className="w-full"
-              disabled={saving}
-              onClick={() => void handleSave()}
-            >
+            <Button type="submit" className="w-full" disabled={saving}>
               Salvar alterações
             </Button>
           )
@@ -593,6 +595,7 @@ export function ClassDetailModal({
         open={deleteOpen}
         title="Excluir aula"
         onClose={() => setDeleteOpen(false)}
+        onSubmit={() => void handleDelete()}
       >
         <p className="text-sm text-text-muted">
           {session.attendance === 'empty'
@@ -601,6 +604,7 @@ export function ClassDetailModal({
         </p>
         <div className="mt-4 flex gap-2">
           <Button
+            type="button"
             variant="secondary"
             className="flex-1"
             onClick={() => setDeleteOpen(false)}
@@ -608,8 +612,8 @@ export function ClassDetailModal({
             Cancelar
           </Button>
           <Button
+            type="submit"
             className="flex-1 bg-status-danger hover:bg-status-danger"
-            onClick={() => void handleDelete()}
           >
             Excluir
           </Button>

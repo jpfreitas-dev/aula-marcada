@@ -5,59 +5,31 @@ import { CreateStudentModal } from '@/components/students/create-student-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
-import { useMockStore } from '@/hooks/use-mock-store';
-import { listClasses } from '@/services/class-service';
 import {
   listStudents,
   type StudentListFilter,
 } from '@/services/student-service';
 import type { Student } from '@/types';
-import {
-  calculateStudentPendingSummary,
-  type StudentPendingSummary,
-} from '@/utils/class-value';
-import { getStudentFinancialBadge } from '@/utils/student-financial';
+import { getStudentListFinancialBadge } from '@/utils/student-financial';
 import { formatRelativeNextClass } from '@/utils/workday';
-
-const EMPTY_PENDING: StudentPendingSummary = { amount: 0, lessonCount: 0 };
 
 function resolveListFilter(view: string | null): StudentListFilter {
   return view === 'former' ? 'inactive' : 'active';
 }
 
 export function StudentsPage() {
-  const storeVersion = useMockStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const listFilter = resolveListFilter(searchParams.get('view'));
   const showingFormer = listFilter === 'inactive';
 
   const [students, setStudents] = useState<Student[]>([]);
-  const [pendingByStudentId, setPendingByStudentId] = useState<
-    Record<string, StudentPendingSummary>
-  >({});
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    void Promise.all([listStudents(listFilter), listClasses()]).then(
-      ([loadedStudents, classes]) => {
-        setStudents(loadedStudents);
-
-        const pendingMap = loadedStudents.reduce<
-          Record<string, StudentPendingSummary>
-        >((accumulator, student) => {
-          const studentClasses = classes.filter(
-            (session) => session.studentId === student.id,
-          );
-          accumulator[student.id] =
-            calculateStudentPendingSummary(studentClasses);
-          return accumulator;
-        }, {});
-
-        setPendingByStudentId(pendingMap);
-      },
-    );
-  }, [listFilter, storeVersion]);
+    void listStudents(listFilter).then(setStudents);
+  }, [listFilter, refreshKey]);
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -143,8 +115,7 @@ export function StudentsPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {filteredStudents.map((student) => {
-            const pending = pendingByStudentId[student.id] ?? EMPTY_PENDING;
-            const financialBadge = getStudentFinancialBadge(student, pending);
+            const financialBadge = getStudentListFinancialBadge(student);
 
             return (
               <li key={student.id}>
@@ -193,6 +164,7 @@ export function StudentsPage() {
       <CreateStudentModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+        onSaved={() => setRefreshKey((current) => current + 1)}
       />
     </div>
   );

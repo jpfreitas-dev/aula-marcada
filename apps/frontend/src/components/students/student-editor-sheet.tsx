@@ -33,8 +33,10 @@ export function StudentEditorSheet({
       tall={tall}
       title={title}
       onClose={onClose}
+      onSubmit={onConfirm}
+      submitDisabled={saving}
       footer={
-        <Button className="w-full gap-2" disabled={saving} onClick={onConfirm}>
+        <Button type="submit" className="w-full gap-2" disabled={saving}>
           <Icon name="check" className="text-xl" />
           {confirmLabel}
         </Button>

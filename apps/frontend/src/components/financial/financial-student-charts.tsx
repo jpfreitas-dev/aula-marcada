@@ -6,7 +6,7 @@ import {
 import type {
   FinancialStudentAbsenceStat,
   FinancialStudentPaymentStat,
-} from '@/data/financial-demo-data';
+} from '@/types';
 import { formatCurrency } from '@/utils/currency';
 import {
   aggregateSlicesForPie,
@@ -37,7 +37,7 @@ function ChartSection({
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm">
       <h3 className="font-display text-sm font-bold text-text-main">{title}</h3>
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex w-full flex-col items-center gap-4 overflow-visible">
         <FinancialPieChart slices={chartSlices} />
         <FinancialPieLegend
           slices={chartSlices}

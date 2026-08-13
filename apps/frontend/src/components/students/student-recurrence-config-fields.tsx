@@ -1,15 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
 import {
   StudentRecurrenceRow,
   type RecurrenceRowValue,
 } from '@/components/students/student-recurrence-row';
 import { Icon } from '@/components/ui/icon';
-import {
-  createDefaultRecurrenceRow,
-  getWeekdayOptionsForRow,
-  hasAvailableRecurrenceWeekdays,
-} from '@/services/student-service';
+import { useRecurrenceOptions } from '@/hooks/use-recurrence-options';
+import { toRecurrenceInputs } from '@/services/student-service';
 import { formatCurrencyInputFromRaw } from '@/utils/class-value';
 import {
   applyStartTimeChange,
@@ -29,22 +26,17 @@ export const studentConfigFieldClassName =
 export const studentConfigRowClassName =
   'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm';
 
-function toRecurrenceInput(row: RecurrenceRowValue) {
-  return {
-    weekday: row.weekday,
-    startTime: row.startTime,
-    endTime: row.endTime,
-  };
-}
-
-export function createRecurrenceRow(
-  existingRows: RecurrenceRowValue[] = [],
-  excludeStudentId?: string,
+function createRecurrenceRow(
+  defaultRow: Pick<
+    RecurrenceRowValue,
+    'weekday' | 'startTime' | 'endTime'
+  > | null,
 ): RecurrenceRowValue {
-  const defaults = createDefaultRecurrenceRow(
-    existingRows.map(toRecurrenceInput),
-    excludeStudentId,
-  );
+  const defaults = defaultRow ?? {
+    weekday: 1,
+    startTime: '14:00',
+    endTime: '15:00',
+  };
 
   return {
     id: crypto.randomUUID(),
@@ -52,19 +44,15 @@ export function createRecurrenceRow(
   };
 }
 
-export function normalizeRecurrenceWeekdays(
+function normalizeRecurrenceWeekdays(
   rows: RecurrenceRowValue[],
-  excludeStudentId?: string,
+  optionsByRowId: Record<
+    string,
+    Array<{ value: RecurrenceRowValue['weekday']; label: string }>
+  >,
 ): RecurrenceRowValue[] {
   return rows.map((row) => {
-    const otherRows = rows
-      .filter((item) => item.id !== row.id)
-      .map(toRecurrenceInput);
-    const options = getWeekdayOptionsForRow(
-      otherRows,
-      row.weekday,
-      excludeStudentId,
-    );
+    const options = optionsByRowId[row.id] ?? [];
     const isCurrentWeekdayAvailable = options.some(
       (option) => option.value === row.weekday,
     );
@@ -81,7 +69,7 @@ export function normalizeRecurrenceWeekdays(
 }
 
 export function toCreateRecurrenceInputs(rows: RecurrenceRowValue[]) {
-  return rows.map(toRecurrenceInput);
+  return toRecurrenceInputs(rows);
 }
 
 type StudentRecurrenceConfigFieldsProps = {
@@ -99,21 +87,28 @@ export function StudentRecurrenceConfigFields({
   onRecurrencesChange,
   excludeStudentId,
 }: StudentRecurrenceConfigFieldsProps) {
-  const canAddRecurrence = useMemo(
-    () =>
-      hasAvailableRecurrenceWeekdays(
-        recurrences.map(toRecurrenceInput),
-        excludeStudentId,
-      ),
-    [excludeStudentId, recurrences],
-  );
+  const { optionsByRowId, hasAvailableWeekdays, defaultRow, loading } =
+    useRecurrenceOptions(recurrences, excludeStudentId);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const normalized = normalizeRecurrenceWeekdays(recurrences, optionsByRowId);
+    const hasChanges = normalized.some(
+      (row, index) => row.weekday !== recurrences[index]?.weekday,
+    );
+
+    if (hasChanges) {
+      onRecurrencesChange(normalized);
+    }
+  }, [loading, optionsByRowId, onRecurrencesChange, recurrences]);
 
   const updateRecurrences = (
     updater: (current: RecurrenceRowValue[]) => RecurrenceRowValue[],
   ) => {
-    onRecurrencesChange(
-      normalizeRecurrenceWeekdays(updater(recurrences), excludeStudentId),
-    );
+    onRecurrencesChange(updater(recurrences));
   };
 
   const updateRecurrence = (
@@ -157,48 +152,38 @@ export function StudentRecurrenceConfigFields({
 
         {recurrences.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {recurrences.map((row) => {
-              const otherRows = recurrences
-                .filter((item) => item.id !== row.id)
-                .map(toRecurrenceInput);
-
-              return (
-                <StudentRecurrenceRow
-                  key={row.id}
-                  row={row}
-                  weekdayOptions={getWeekdayOptionsForRow(
-                    otherRows,
-                    row.weekday,
-                    excludeStudentId,
-                  )}
-                  fieldClassName={studentConfigRowClassName}
-                  onWeekdayChange={(weekday) =>
-                    updateRecurrence(row.id, { weekday })
-                  }
-                  onStartChange={(value) =>
-                    handleRecurrenceStartChange(row.id, value)
-                  }
-                  onEndChange={(value) =>
-                    updateRecurrence(row.id, { endTime: value })
-                  }
-                  onRemove={() =>
-                    updateRecurrences((current) =>
-                      current.filter((item) => item.id !== row.id),
-                    )
-                  }
-                />
-              );
-            })}
+            {recurrences.map((row) => (
+              <StudentRecurrenceRow
+                key={row.id}
+                row={row}
+                weekdayOptions={optionsByRowId[row.id] ?? []}
+                fieldClassName={studentConfigRowClassName}
+                onWeekdayChange={(weekday) =>
+                  updateRecurrence(row.id, { weekday })
+                }
+                onStartChange={(value) =>
+                  handleRecurrenceStartChange(row.id, value)
+                }
+                onEndChange={(value) =>
+                  updateRecurrence(row.id, { endTime: value })
+                }
+                onRemove={() =>
+                  updateRecurrences((current) =>
+                    current.filter((item) => item.id !== row.id),
+                  )
+                }
+              />
+            ))}
           </div>
         ) : null}
 
-        {canAddRecurrence ? (
+        {hasAvailableWeekdays ? (
           <button
             type="button"
             onClick={() =>
               updateRecurrences((current) => [
                 ...current,
-                createRecurrenceRow(current, excludeStudentId),
+                createRecurrenceRow(defaultRow),
               ])
             }
             className="ml-1 flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-purple-900"

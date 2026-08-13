@@ -141,6 +141,32 @@ export function getStudentFinancialBadge(
   return { label: 'Em dia', variant: display.badgeVariant };
 }
 
+export function getStudentListFinancialBadge(
+  student: StudentBalanceInput & Pick<Student, 'financialStatus'>,
+): { label: string; variant: ClassBadgeVariant } {
+  if (
+    student.financialStatus === 'pending' ||
+    student.financialStatus === 'partial'
+  ) {
+    return { label: 'Pendente', variant: 'warning' };
+  }
+
+  if (student.financialStatus === 'advance') {
+    const hours = resolveAdvanceHours(student);
+
+    if (hours > 0) {
+      return {
+        label: `Saldo: ${formatHourCount(hours)}`,
+        variant: 'success',
+      };
+    }
+
+    return { label: 'Saldo adiantado', variant: 'success' };
+  }
+
+  return { label: 'Em dia', variant: 'info' };
+}
+
 export function getStudentFinancialCardContent(
   student: StudentBalanceInput,
   pending: StudentPendingSummary,

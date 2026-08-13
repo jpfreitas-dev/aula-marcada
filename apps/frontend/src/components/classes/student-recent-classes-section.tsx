@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import { StudentRecentClassCard } from '@/components/classes/student-recent-class-card';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { listRecentClassesByStudent } from '@/services/class-service';
 import type { ClassSession } from '@/types';
-import { subscribe } from '@/mocks';
 
 export function getRecentClassesTitle(count: number): string {
   return count === 1 ? 'Aula mais recente' : 'Aulas mais recentes';
@@ -21,26 +21,21 @@ export function StudentRecentClassesSection({
   onClassClick,
 }: StudentRecentClassesSectionProps) {
   const [recentClasses, setRecentClasses] = useState<ClassSession[]>([]);
+  const { version: agendaVersion } = useAgendaRefresh();
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadRecentClasses = () => {
-      void listRecentClassesByStudent(studentId, limit).then((sessions) => {
-        if (!cancelled) {
-          setRecentClasses(sessions);
-        }
-      });
-    };
-
-    loadRecentClasses();
-    const unsubscribe = subscribe(loadRecentClasses);
+    void listRecentClassesByStudent(studentId, limit).then((sessions) => {
+      if (!cancelled) {
+        setRecentClasses(sessions);
+      }
+    });
 
     return () => {
       cancelled = true;
-      unsubscribe();
     };
-  }, [studentId, limit]);
+  }, [agendaVersion, limit, studentId]);
 
   if (recentClasses.length === 0) {
     return null;

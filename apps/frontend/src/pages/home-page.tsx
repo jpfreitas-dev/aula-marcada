@@ -4,9 +4,9 @@ import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
 import { PeriodNavigator } from '@/components/ui/period-navigator';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
-import { useMockStore } from '@/hooks/use-mock-store';
 import {
   getSessionForPeriod,
   listClassesByDate,
@@ -73,7 +73,7 @@ function PeriodSection({
 }
 
 export function HomePage() {
-  const storeVersion = useMockStore();
+  const { version: agendaVersion } = useAgendaRefresh();
   const [view, setView] = useState<AgendaView>('day');
   const [selectedDate, setSelectedDate] = useState(() =>
     getDefaultAgendaDate(),
@@ -93,7 +93,7 @@ export function HomePage() {
     }
 
     void loadSessions();
-  }, [selectedDate, view, storeVersion]);
+  }, [selectedDate, view, agendaVersion]);
 
   const navigateDate = (direction: -1 | 1) => {
     if (view === 'day') {

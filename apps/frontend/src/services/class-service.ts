@@ -1,11 +1,6 @@
-import {
-  ensureMockStoreInitialized,
-  getClassById,
-  getClassesSnapshot,
-  getStudentById,
-  setClasses,
-  setStudents,
-} from '@/mocks';
+import axios from 'axios';
+
+import { api } from '@/services/api';
 import type {
   ClassDetailInput,
   ClassPeriod,
@@ -14,156 +9,37 @@ import type {
   LinkMakeupInput,
   RescheduleClassInput,
 } from '@/types';
-import {
-  allocateMethodPayment,
-  consumeAdvanceBalance,
-  resolvePaymentMethodFromParts,
-  roundMoney,
-} from '@/utils/advance-balance';
-import {
-  calculateExpectedAmount,
-  calculateStudentPendingSummary,
-  computeFinancialStatus,
-} from '@/utils/class-value';
-import {
-  isClassSessionEnded,
-  isLockedRepostaAbsence,
-} from '@/utils/class-session';
-import { isSchedulePeriodOpen } from '@/utils/schedule-period';
-import { resolveStudentFinancialView } from '@/utils/student-financial';
-import {
-  addMinutesToTime,
-  defaultStartTimeForPeriod,
-  getMaxDurationMinutesForStartTime,
-  getTimeRangeBoundsForStartTime,
-  MIN_CLASS_DURATION_MINUTES,
-  minutesBetween,
-  periodFromStartTime,
-  timeToMinutes,
-} from '@/utils/time';
-import { toDateKey, isWeekday } from '@/utils/workday';
+import { toApiRequestError } from '@/utils/api-error';
+import { defaultStartTimeForPeriod } from '@/utils/time';
+import { toDateKey } from '@/utils/workday';
 
 export {
   isMakeupFullyCovered,
   isLockedRepostaAbsence,
 } from '@/utils/class-session';
 
-function syncFinancialStatus(session: ClassSession): ClassSession {
-  if (session.attendance !== 'attended') {
-    return {
-      ...session,
-      financialStatus: 'pending',
-    };
-  }
-
-  return {
-    ...session,
-    financialStatus: computeFinancialStatus(
-      session.expectedAmount,
-      session.paidAmount,
-    ),
-  };
-}
-
-function restoreAdvanceFromSession(
-  session: ClassSession,
-  options?: { excludeClassId?: string },
-): void {
-  const advancePix = session.advanceAppliedPix ?? 0;
-  const advanceCash = session.advanceAppliedCash ?? 0;
-  if (advancePix <= 0 && advanceCash <= 0) {
-    return;
-  }
-
-  const student = getStudentById(session.studentId);
-  if (!student) {
-    return;
-  }
-
-  const nextBuckets = {
-    advanceBalancePix: roundMoney(student.advanceBalancePix + advancePix),
-    advanceBalanceCash: roundMoney(student.advanceBalanceCash + advanceCash),
-  };
-
-  const studentClasses = getClassesSnapshot().filter(
-    (item) =>
-      item.studentId === student.id &&
-      item.id !== (options?.excludeClassId ?? session.id),
-  );
-  const pending = calculateStudentPendingSummary(studentClasses);
-  const financialView = resolveStudentFinancialView(
-    { ...student, ...nextBuckets },
-    pending,
-  );
-
-  setStudents((current) =>
-    current.map((item) =>
-      item.id === student.id
-        ? {
-            ...item,
-            ...nextBuckets,
-            financialStatus:
-              financialView === 'pending'
-                ? 'pending'
-                : financialView === 'advance'
-                  ? 'advance'
-                  : 'up_to_date',
-          }
-        : item,
-    ),
-  );
-}
-
-function refreshStudentFinancialStatus(studentId: string): void {
-  const student = getStudentById(studentId);
-  if (!student) {
-    return;
-  }
-
-  const studentClasses = getClassesSnapshot().filter(
-    (session) => session.studentId === studentId,
-  );
-  const pending = calculateStudentPendingSummary(studentClasses);
-  const financialView = resolveStudentFinancialView(student, pending);
-
-  setStudents((current) =>
-    current.map((item) =>
-      item.id === studentId
-        ? {
-            ...item,
-            financialStatus:
-              financialView === 'pending'
-                ? 'pending'
-                : financialView === 'advance'
-                  ? 'advance'
-                  : 'up_to_date',
-          }
-        : item,
-    ),
-  );
-}
-
-function createId(prefix: string): string {
-  return `${prefix}-${crypto.randomUUID()}`;
-}
-
 export async function listClassesByDate(date: Date): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-  const dateKey = toDateKey(date);
-  return getClassesSnapshot().filter((session) => session.date === dateKey);
+  try {
+    const response = await api.get<ClassSession[]>('/classes', {
+      params: { date: toDateKey(date) },
+    });
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
+  }
 }
 
 export async function listClassesByWeek(
   weekStart: Date,
 ): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-  const dates = Array.from({ length: 5 }, (_, index) => {
-    const day = new Date(weekStart);
-    day.setDate(weekStart.getDate() + index);
-    return toDateKey(day);
-  });
-
-  return getClassesSnapshot().filter((session) => dates.includes(session.date));
+  try {
+    const response = await api.get<ClassSession[]>('/classes/week', {
+      params: { start: toDateKey(weekStart) },
+    });
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
+  }
 }
 
 export function getSessionForPeriod(
@@ -176,660 +52,149 @@ export function getSessionForPeriod(
 export async function getClassByIdService(
   id: string,
 ): Promise<ClassSession | null> {
-  ensureMockStoreInitialized();
-  return getClassById(id) ?? null;
-}
-
-function sortClassesByRecency(sessions: ClassSession[]): ClassSession[] {
-  return [...sessions].sort((left, right) => {
-    const dateCompare = right.date.localeCompare(left.date);
-    if (dateCompare !== 0) {
-      return dateCompare;
+  try {
+    const response = await api.get<ClassSession>(`/classes/${id}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null;
     }
 
-    return right.startTime.localeCompare(left.startTime);
-  });
+    throw toApiRequestError(error, 'Não foi possível carregar a aula.');
+  }
 }
 
 export async function listRecentClassesByStudent(
   studentId: string,
   limit = 2,
 ): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-
-  return sortClassesByRecency(
-    getClassesSnapshot().filter((session) => session.studentId === studentId),
-  ).slice(0, limit);
+  try {
+    const response = await api.get<ClassSession[]>(
+      `/classes/by-student/${studentId}`,
+      { params: { limit } },
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
+  }
 }
 
 export async function listClassesByStudent(
   studentId: string,
 ): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-
-  return sortClassesByRecency(
-    getClassesSnapshot().filter((session) => session.studentId === studentId),
-  );
-}
-
-export async function listClasses(): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-
-  return getClassesSnapshot();
+  try {
+    const response = await api.get<ClassSession[]>(
+      `/classes/by-student/${studentId}`,
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
+  }
 }
 
 export async function getAvailablePeriods(
   date: string,
   excludeClassId?: string,
 ): Promise<ClassPeriod[]> {
-  ensureMockStoreInitialized();
-  const occupied = getClassesSnapshot()
-    .filter((session) => session.date === date && session.id !== excludeClassId)
-    .map((session) => session.period);
-
-  return (['morning', 'afternoon'] as ClassPeriod[]).filter(
-    (period) =>
-      !occupied.includes(period) && isSchedulePeriodOpen(date, period),
-  );
-}
-
-function validateMakeupAbsences(absenceIds: string[]): void {
-  for (const id of absenceIds) {
-    const session = getClassById(id);
-
-    if (
-      !session ||
-      session.attendance !== 'absent' ||
-      !isClassSessionEnded(session)
-    ) {
-      throw new Error('Falta inválida para reposição.');
-    }
-
-    if ((session.pendingMakeupMinutes ?? session.durationMinutes) <= 0) {
-      throw new Error('Esta falta já foi totalmente reposta.');
-    }
-  }
-}
-
-function validateMakeupScheduleTime(
-  startTime: string,
-  durationMinutes: number,
-  requiredMinutes: number,
-): void {
-  validateClassTimeWithinPeriod(startTime, durationMinutes, requiredMinutes);
-
-  if (durationMinutes < requiredMinutes) {
-    throw new Error('Duração insuficiente para a reposição vinculada.');
-  }
-}
-
-function validateClassTimeWithinPeriod(
-  startTime: string,
-  durationMinutes: number,
-  minDurationMinutes = MIN_CLASS_DURATION_MINUTES,
-): void {
-  const bounds = getTimeRangeBoundsForStartTime(startTime, {
-    minDurationMinutes,
-  });
-  const endTime = addMinutesToTime(startTime, durationMinutes);
-  const startTotal = timeToMinutes(startTime);
-  const endTotal = timeToMinutes(endTime);
-
-  if (
-    startTotal < timeToMinutes(bounds.startMin) ||
-    startTotal > timeToMinutes(bounds.startMax)
-  ) {
-    throw new Error('O horário de início está fora do período permitido.');
-  }
-
-  if (endTotal > timeToMinutes(bounds.endMax) || endTotal <= startTotal) {
-    throw new Error(
-      'O horário de início e término devem permanecer no mesmo período.',
+  try {
+    const response = await api.get<ClassPeriod[]>(
+      '/classes/available-periods',
+      {
+        params: { date, excludeClassId },
+      },
     );
-  }
-
-  if (durationMinutes > getMaxDurationMinutesForStartTime(startTime)) {
-    throw new Error('A duração excede o limite do período.');
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(
+      error,
+      'Não foi possível carregar os períodos disponíveis.',
+    );
   }
 }
 
 export async function createClass(
   input: CreateClassInput,
 ): Promise<ClassSession> {
-  ensureMockStoreInitialized();
-  const student = getStudentById(input.studentId);
-
-  if (!student) {
-    throw new Error('Aluno não encontrado.');
+  try {
+    const response = await api.post<ClassSession>('/classes', input);
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível agendar a aula.');
   }
-
-  if (!isWeekday(new Date(`${input.date}T12:00:00`))) {
-    throw new Error('Não é possível agendar aulas no fim de semana.');
-  }
-
-  const available = await getAvailablePeriods(input.date);
-  if (!available.includes(input.period)) {
-    throw new Error('Período indisponível.');
-  }
-
-  if (input.isMakeupOnly && input.linkedAbsenceIds.length === 0) {
-    throw new Error('Aula de reposição exige faltas vinculadas.');
-  }
-
-  if (input.linkedAbsenceIds.length > 0) {
-    validateMakeupAbsences(input.linkedAbsenceIds);
-    const required = calculateRequiredMakeupMinutes(
-      null,
-      input.linkedAbsenceIds,
-      input.isMakeupOnly,
-    );
-    validateMakeupScheduleTime(
-      input.startTime,
-      input.durationMinutes,
-      required,
-    );
-  }
-
-  const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
-  const session: ClassSession = syncFinancialStatus({
-    id: createId('class'),
-    studentId: student.id,
-    studentName: student.name,
-    date: input.date,
-    period: input.period,
-    startTime: input.startTime,
-    endTime,
-    durationMinutes: input.durationMinutes,
-    expectedAmount: input.expectedAmount,
-    paidAmount: 0,
-    paidPix: 0,
-    paidCash: 0,
-    advanceAppliedPix: 0,
-    advanceAppliedCash: 0,
-    attendance: 'empty',
-    financialStatus: 'pending',
-    isMakeup: input.linkedAbsenceIds.length > 0,
-    isMakeupOnly: input.isMakeupOnly,
-    linkedAbsenceIds: input.linkedAbsenceIds,
-    hasManualAmountOverride: input.hasManualAmountOverride,
-  });
-
-  setClasses((current) => [...current, session]);
-
-  if (input.linkedAbsenceIds.length > 0) {
-    applyMakeupCoverage(
-      session.id,
-      input.linkedAbsenceIds,
-      session.durationMinutes,
-    );
-  }
-
-  return session;
-}
-
-function applyMakeupCoverage(
-  targetClassId: string,
-  absenceIds: string[],
-  availableMinutes: number,
-): void {
-  let remaining = availableMinutes;
-
-  setClasses((current) =>
-    current.map((session) => {
-      if (!absenceIds.includes(session.id)) {
-        return session;
-      }
-
-      const pending = session.pendingMakeupMinutes ?? session.durationMinutes;
-      const covered = Math.min(pending, remaining);
-      remaining -= covered;
-
-      return {
-        ...session,
-        pendingMakeupMinutes: pending - covered,
-      };
-    }),
-  );
-
-  setClasses((current) =>
-    current.map((session) =>
-      session.id === targetClassId
-        ? {
-            ...session,
-            linkedAbsenceIds: absenceIds,
-            isMakeup: true,
-          }
-        : session,
-    ),
-  );
 }
 
 export async function saveClassDetail(
   id: string,
   input: ClassDetailInput,
 ): Promise<ClassSession> {
-  ensureMockStoreInitialized();
-  const existing = getClassById(id);
-
-  if (!existing) {
-    throw new Error('Aula não encontrada.');
-  }
-
-  if (isLockedRepostaAbsence(existing)) {
-    throw new Error(
-      'Esta falta já foi reposta e não pode ser alterada. Ela permanece apenas como referência.',
+  try {
+    const response = await api.patch<ClassSession>(
+      `/classes/${id}/attendance`,
+      {
+        attendance: input.attendance,
+        paidAmount: input.paidAmount,
+        paymentMethod: input.paymentMethod,
+        content: input.content,
+        notes: input.notes,
+      },
     );
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível salvar a aula.');
   }
-
-  let next: ClassSession = { ...existing };
-
-  if (
-    input.attendance === 'empty' &&
-    existing.attendance !== 'empty' &&
-    isClassSessionEnded(existing)
-  ) {
-    throw new Error(
-      'Não é possível desmarcar a presença de uma aula que já terminou.',
-    );
-  }
-
-  if (input.attendance === 'empty') {
-    if (existing.attendance === 'attended') {
-      restoreAdvanceFromSession(existing);
-    }
-    next = {
-      ...next,
-      attendance: 'empty',
-      paidAmount: 0,
-      paidPix: 0,
-      paidCash: 0,
-      advanceAppliedPix: 0,
-      advanceAppliedCash: 0,
-      paymentMethod: undefined,
-      content: undefined,
-      notes: undefined,
-      financialStatus: 'pending',
-    };
-  }
-
-  if (input.attendance === 'absent') {
-    if (existing.attendance === 'attended') {
-      restoreAdvanceFromSession(existing);
-    }
-    next = {
-      ...next,
-      attendance: 'absent',
-      paidAmount: 0,
-      paidPix: 0,
-      paidCash: 0,
-      advanceAppliedPix: 0,
-      advanceAppliedCash: 0,
-      paymentMethod: undefined,
-      content: undefined,
-      notes: undefined,
-      financialStatus: 'pending',
-      pendingMakeupMinutes: next.pendingMakeupMinutes ?? next.durationMinutes,
-    };
-  }
-
-  if (input.attendance === 'attended') {
-    const student = getStudentById(next.studentId);
-    const wasAlreadyAttended = existing.attendance === 'attended';
-    let methodPaid = roundMoney(Math.max(input.paidAmount, 0));
-
-    if (methodPaid > 0 && !input.paymentMethod) {
-      throw new Error('Selecione Pix ou Dinheiro para o valor recebido agora.');
-    }
-
-    let paidPix = existing.paidPix ?? 0;
-    let paidCash = existing.paidCash ?? 0;
-    let advanceAppliedPix = existing.advanceAppliedPix ?? 0;
-    let advanceAppliedCash = existing.advanceAppliedCash ?? 0;
-    let nextAdvancePix = student?.advanceBalancePix ?? 0;
-    let nextAdvanceCash = student?.advanceBalanceCash ?? 0;
-
-    if (!wasAlreadyAttended) {
-      const consumption = consumeAdvanceBalance(
-        {
-          advanceBalancePix: nextAdvancePix,
-          advanceBalanceCash: nextAdvanceCash,
-        },
-        next.expectedAmount,
-      );
-      nextAdvancePix = consumption.remainingPix;
-      nextAdvanceCash = consumption.remainingCash;
-      advanceAppliedPix = consumption.usedPix;
-      advanceAppliedCash = consumption.usedCash;
-      paidPix = consumption.usedPix;
-      paidCash = consumption.usedCash;
-
-      const maxNewMoney = roundMoney(
-        Math.max(next.expectedAmount - consumption.usedTotal, 0),
-      );
-      methodPaid = Math.min(methodPaid, maxNewMoney);
-
-      const newPayment = allocateMethodPayment(methodPaid, input.paymentMethod);
-      paidPix = roundMoney(paidPix + newPayment.paidPix);
-      paidCash = roundMoney(paidCash + newPayment.paidCash);
-    } else if (methodPaid > 0) {
-      const maxNewMoney = roundMoney(
-        Math.max(next.expectedAmount - (existing.paidAmount ?? 0), 0),
-      );
-      methodPaid = Math.min(methodPaid, maxNewMoney);
-
-      const newPayment = allocateMethodPayment(methodPaid, input.paymentMethod);
-      paidPix = roundMoney(paidPix + newPayment.paidPix);
-      paidCash = roundMoney(paidCash + newPayment.paidCash);
-    }
-
-    const paidAmount = roundMoney(paidPix + paidCash);
-    const paymentMethod = resolvePaymentMethodFromParts(paidPix, paidCash);
-
-    if (student) {
-      const studentClasses = getClassesSnapshot()
-        .filter((session) => session.studentId === student.id)
-        .map((session) =>
-          session.id === id
-            ? {
-                ...session,
-                attendance: 'attended' as const,
-                paidAmount,
-                paidPix,
-                paidCash,
-                advanceAppliedPix,
-                advanceAppliedCash,
-              }
-            : session,
-        );
-      const pending = calculateStudentPendingSummary(studentClasses);
-      const nextStudent = {
-        ...student,
-        advanceBalancePix: nextAdvancePix,
-        advanceBalanceCash: nextAdvanceCash,
-      };
-      const financialView = resolveStudentFinancialView(nextStudent, pending);
-
-      setStudents((current) =>
-        current.map((item) =>
-          item.id === student.id
-            ? {
-                ...item,
-                advanceBalancePix: nextAdvancePix,
-                advanceBalanceCash: nextAdvanceCash,
-                financialStatus:
-                  financialView === 'pending'
-                    ? 'pending'
-                    : financialView === 'advance'
-                      ? 'advance'
-                      : 'up_to_date',
-              }
-            : item,
-        ),
-      );
-    }
-
-    next = syncFinancialStatus({
-      ...next,
-      attendance: 'attended',
-      paidAmount,
-      paidPix,
-      paidCash,
-      advanceAppliedPix,
-      advanceAppliedCash,
-      paymentMethod,
-      content: input.content,
-      notes: input.notes,
-    });
-  }
-
-  setClasses((current) =>
-    current.map((session) => (session.id === id ? next : session)),
-  );
-
-  return next;
 }
 
 export async function deleteClass(id: string): Promise<void> {
-  ensureMockStoreInitialized();
-  const session = getClassById(id);
-
-  if (!session) {
-    return;
+  try {
+    await api.delete(`/classes/${id}`);
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível excluir a aula.');
   }
-
-  if (isLockedRepostaAbsence(session)) {
-    throw new Error(
-      'Esta falta já foi reposta e não pode ser excluída. Ela permanece apenas como referência.',
-    );
-  }
-
-  if (session.attendance === 'attended') {
-    restoreAdvanceFromSession(session, { excludeClassId: session.id });
-  }
-
-  if (session.linkedAbsenceIds.length > 0) {
-    setClasses((current) =>
-      current.map((item) => {
-        if (!session.linkedAbsenceIds.includes(item.id)) {
-          return item;
-        }
-
-        return {
-          ...item,
-          pendingMakeupMinutes: item.durationMinutes,
-        };
-      }),
-    );
-  }
-
-  setClasses((current) => current.filter((item) => item.id !== id));
-  refreshStudentFinancialStatus(session.studentId);
 }
 
 export async function getPendingAbsences(
   studentId: string,
 ): Promise<ClassSession[]> {
-  ensureMockStoreInitialized();
-  return getClassesSnapshot().filter(
-    (session) =>
-      session.studentId === studentId &&
-      session.attendance === 'absent' &&
-      isClassSessionEnded(session) &&
-      (session.pendingMakeupMinutes ?? session.durationMinutes) > 0,
-  );
-}
-
-export function calculateRequiredMakeupMinutes(
-  targetClass: ClassSession | null,
-  absenceIds: string[],
-  isMakeupOnly: boolean,
-): number {
-  const absences = absenceIds
-    .map((id) => getClassById(id))
-    .filter((session): session is ClassSession => Boolean(session));
-
-  const absenceMinutes = absences.reduce(
-    (total, session) =>
-      total + (session.pendingMakeupMinutes ?? session.durationMinutes),
-    0,
-  );
-
-  if (isMakeupOnly || !targetClass) {
-    return absenceMinutes;
+  try {
+    const response = await api.get<ClassSession[]>(
+      '/classes/pending-absences',
+      {
+        params: { studentId },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível carregar as faltas.');
   }
-
-  return targetClass.durationMinutes + absenceMinutes;
 }
 
 export async function linkMakeup(
   input: LinkMakeupInput,
 ): Promise<ClassSession> {
-  ensureMockStoreInitialized();
-  const durationMinutes = minutesBetween(input.startTime, input.endTime);
-  const student = getStudentById(input.studentId);
-
-  if (!student) {
-    throw new Error('Aluno não encontrado.');
-  }
-
-  if (input.absenceIds.length === 0) {
-    throw new Error('Selecione pelo menos uma falta.');
-  }
-
-  validateMakeupAbsences(input.absenceIds);
-
-  if (input.targetClassId) {
-    const target = getClassById(input.targetClassId);
-
-    if (!target) {
-      throw new Error('Aula não encontrada.');
-    }
-
-    if (target.attendance !== 'empty') {
-      throw new Error(
-        'Não é possível vincular reposição a uma aula já preenchida.',
-      );
-    }
-
-    const required = calculateRequiredMakeupMinutes(
-      target,
-      input.absenceIds,
-      false,
+  try {
+    const response = await api.post<ClassSession>(
+      '/classes/link-makeup',
+      input,
     );
-
-    validateMakeupScheduleTime(input.startTime, durationMinutes, required);
-
-    const expectedAmount = target.hasManualAmountOverride
-      ? Math.round(
-          (durationMinutes / target.durationMinutes) *
-            target.expectedAmount *
-            100,
-        ) / 100
-      : calculateExpectedAmount(durationMinutes, student.hourlyRate);
-
-    const updated: ClassSession = {
-      ...target,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      durationMinutes,
-      expectedAmount,
-      period: periodFromStartTime(input.startTime),
-      linkedAbsenceIds: input.absenceIds,
-      isMakeup: true,
-    };
-
-    setClasses((current) =>
-      current.map((session) => (session.id === updated.id ? updated : session)),
-    );
-
-    applyMakeupCoverage(
-      updated.id,
-      input.absenceIds,
-      Math.max(durationMinutes - target.durationMinutes, 0),
-    );
-
-    return updated;
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível vincular a reposição.');
   }
-
-  if (!input.date || !input.period) {
-    throw new Error('Informe data e período para a nova aula de reposição.');
-  }
-
-  const required = calculateRequiredMakeupMinutes(null, input.absenceIds, true);
-
-  validateMakeupScheduleTime(input.startTime, durationMinutes, required);
-
-  const expectedAmount = calculateExpectedAmount(
-    durationMinutes,
-    student.hourlyRate,
-  );
-
-  return createClass({
-    studentId: student.id,
-    date: input.date,
-    period: input.period,
-    startTime: input.startTime,
-    durationMinutes,
-    expectedAmount,
-    isMakeupOnly: true,
-    linkedAbsenceIds: input.absenceIds,
-  });
 }
 
 export async function rescheduleClass(
   id: string,
   input: RescheduleClassInput,
 ): Promise<ClassSession> {
-  ensureMockStoreInitialized();
-  const existing = getClassById(id);
-
-  if (!existing) {
-    throw new Error('Aula não encontrada.');
-  }
-
-  if (existing.attendance !== 'empty') {
-    throw new Error('Não é possível reagendar uma aula já preenchida.');
-  }
-
-  const available = await getAvailablePeriods(input.date, id);
-  if (!available.includes(input.period)) {
-    throw new Error('Período indisponível.');
-  }
-
-  if (periodFromStartTime(input.startTime) !== input.period) {
-    throw new Error(
-      'O período informado não corresponde ao horário de início.',
+  try {
+    const response = await api.patch<ClassSession>(
+      `/classes/${id}/reschedule`,
+      input,
     );
+    return response.data;
+  } catch (error) {
+    throw toApiRequestError(error, 'Não foi possível reagendar a aula.');
   }
-
-  const student = getStudentById(existing.studentId);
-  const endTime = addMinutesToTime(input.startTime, input.durationMinutes);
-  const minimumDuration =
-    existing.linkedAbsenceIds.length === 0
-      ? MIN_CLASS_DURATION_MINUTES
-      : calculateRequiredMakeupMinutes(
-          existing,
-          existing.linkedAbsenceIds,
-          existing.isMakeupOnly,
-        );
-
-  if (input.durationMinutes < minimumDuration) {
-    throw new Error(
-      existing.linkedAbsenceIds.length > 0
-        ? 'Duração insuficiente para a reposição vinculada.'
-        : 'A duração informada é menor que o mínimo permitido.',
-    );
-  }
-
-  validateClassTimeWithinPeriod(
-    input.startTime,
-    input.durationMinutes,
-    minimumDuration,
-  );
-
-  const expectedAmount = existing.hasManualAmountOverride
-    ? Math.round(
-        (input.durationMinutes / existing.durationMinutes) *
-          existing.expectedAmount *
-          100,
-      ) / 100
-    : calculateExpectedAmount(input.durationMinutes, student?.hourlyRate ?? 0);
-
-  const updated: ClassSession = {
-    ...existing,
-    date: input.date,
-    period: input.period,
-    startTime: input.startTime,
-    endTime,
-    durationMinutes: input.durationMinutes,
-    expectedAmount,
-  };
-
-  setClasses((current) =>
-    current.map((session) => (session.id === id ? updated : session)),
-  );
-
-  return updated;
 }
 
 export function getDefaultScheduleStart(period: ClassPeriod): string {

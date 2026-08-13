@@ -1,16 +1,33 @@
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 
 type ModalProps = {
   open: boolean;
   title: string;
   onClose: () => void;
+  onSubmit?: () => void;
+  submitDisabled?: boolean;
   children: ReactNode;
 };
 
-export function Modal({ open, title, onClose, children }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  onClose,
+  onSubmit,
+  submitDisabled = false,
+  children,
+}: ModalProps) {
   if (!open) {
     return null;
   }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!submitDisabled && onSubmit) {
+      onSubmit();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -20,7 +37,8 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
         aria-label="Fechar modal"
         onClick={onClose}
       />
-      <div
+      <form
+        onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -33,7 +51,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
           {title}
         </h2>
         <div className="mt-4">{children}</div>
-      </div>
+      </form>
     </div>
   );
 }

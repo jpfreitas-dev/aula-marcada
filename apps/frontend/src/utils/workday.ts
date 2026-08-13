@@ -97,16 +97,17 @@ export function formatWeekRange(weekStart: Date): string {
   return `${formatShortDate(firstDay)} - ${formatShortDate(lastDay)}`;
 }
 
-export function formatRelativeNextClass(dateIso?: string): string {
-  if (!dateIso) {
+export function formatRelativeNextClass(dateTimeLocal?: string): string {
+  if (!dateTimeLocal) {
     return 'Sem aulas agendadas';
   }
 
-  const date = new Date(dateIso);
-  const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  const [dateKey, timePart = '00:00'] = dateTimeLocal.split('T');
+  const time = timePart.slice(0, 5);
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const classDay = new Date(year, month - 1, day);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const classDay = new Date(date);
   classDay.setHours(0, 0, 0, 0);
 
   const diffDays = Math.round(

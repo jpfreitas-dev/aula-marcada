@@ -12,12 +12,14 @@ type EditStudentPersonalModalProps = {
   open: boolean;
   student: Student;
   onClose: () => void;
+  onSaved?: () => void;
 };
 
 export function EditStudentPersonalModal({
   open,
   student,
   onClose,
+  onSaved,
 }: EditStudentPersonalModalProps) {
   if (!open) {
     return null;
@@ -28,6 +30,7 @@ export function EditStudentPersonalModal({
       key={`edit-personal-${student.id}`}
       student={student}
       onClose={onClose}
+      onSaved={onSaved}
     />
   );
 }
@@ -35,9 +38,11 @@ export function EditStudentPersonalModal({
 function EditStudentPersonalForm({
   student,
   onClose,
+  onSaved,
 }: {
   student: Student;
   onClose: () => void;
+  onSaved?: () => void;
 }) {
   const [personal, setPersonal] = useState<StudentPersonalFieldsValue>({
     name: student.name,
@@ -53,6 +58,7 @@ function EditStudentPersonalForm({
 
     try {
       await updateStudentPersonalInfo(student.id, personal);
+      onSaved?.();
       onClose();
     } catch (saveError) {
       setError(

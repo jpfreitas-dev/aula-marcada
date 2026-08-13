@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { FinancialComparisonChart } from '@/components/financial/financial-comparison-chart';
 import { FinancialStudentCharts } from '@/components/financial/financial-student-charts';
@@ -6,12 +6,16 @@ import { FinancialSummaryGrid } from '@/components/financial/financial-summary-g
 import { Icon } from '@/components/ui/icon';
 import { PeriodNavigator } from '@/components/ui/period-navigator';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
+import { useAgendaRefresh } from '@/context/agenda-refresh-context';
+import { getFinancialDashboard } from '@/services/financial-service';
+import { listStudents } from '@/services/student-service';
+import type { FinancialDashboard, FinancialGranularity } from '@/types';
 import {
-  FINANCIAL_STUDENT_OPTIONS,
-  getFinancialDemoView,
-  type FinancialGranularity,
-} from '@/data/financial-demo-data';
-import { formatWeekRange, getWeekStart } from '@/utils/workday';
+  formatWeekRange,
+  getDefaultAgendaDate,
+  getWeekStart,
+  toDateKey,
+} from '@/utils/workday';
 
 const granularityOptions: { value: FinancialGranularity; label: string }[] = [
   { value: 'week', label: 'Semana' },
@@ -59,47 +63,95 @@ function shiftReferenceDate(
   return next;
 }
 
-function scaleAmount(amount: number, factor: number): number {
-  return Math.round(amount * factor * 100) / 100;
-}
-
 export function FinancialPage() {
+  const { version: agendaVersion } = useAgendaRefresh();
   const [granularity, setGranularity] = useState<FinancialGranularity>('month');
-  const [referenceDate, setReferenceDate] = useState(
-    () => new Date(2026, 6, 1),
+  const [referenceDate, setReferenceDate] = useState(() =>
+    getDefaultAgendaDate(),
   );
   const [studentFilter, setStudentFilter] = useState('all');
+  const [studentOptions, setStudentOptions] = useState<
+    Array<{ id: string; label: string }>
+  >([{ id: 'all', label: 'Todos os alunos' }]);
+  const [dashboard, setDashboard] = useState<FinancialDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const demoView = getFinancialDemoView(granularity);
-  const studentFactor = studentFilter === 'all' ? 1 : 0.45;
+  const referenceDateKey = toDateKey(referenceDate);
+  const selectedStudentId = studentFilter === 'all' ? undefined : studentFilter;
   const showStudentCharts = studentFilter === 'all';
 
-  const summary = useMemo(
-    () => ({
-      expected: scaleAmount(demoView.expected, studentFactor),
-      realized: scaleAmount(demoView.realized, studentFactor),
-      realizedPix: scaleAmount(demoView.realizedPix, studentFactor),
-      realizedCash: scaleAmount(demoView.realizedCash, studentFactor),
-      absenceImpact: scaleAmount(demoView.absenceImpact, studentFactor),
-      chart: demoView.chart,
-      studentPayments: demoView.studentPayments.map((item) => ({
-        ...item,
-        amount: scaleAmount(item.amount, studentFactor),
-      })),
-      studentAbsences: demoView.studentAbsences.map((item) => ({
-        ...item,
-        absenceValue: scaleAmount(item.absenceValue, studentFactor),
-      })),
-    }),
-    [demoView, studentFactor],
-  );
+  useEffect(() => {
+    void listStudents('active').then((students) => {
+      setStudentOptions([
+        { id: 'all', label: 'Todos os alunos' },
+        ...students.map((student) => ({
+          id: student.id,
+          label: student.name,
+        })),
+      ]);
+    });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Loading state is reset when filters change before fetching dashboard data.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch lifecycle
+    setLoading(true);
+    setError(null);
+
+    void getFinancialDashboard({
+      granularity,
+      referenceDate: referenceDateKey,
+      studentId: selectedStudentId,
+    })
+      .then((loaded) => {
+        if (!cancelled) {
+          setDashboard(loaded);
+          setLoading(false);
+        }
+      })
+      .catch((loadError) => {
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar o financeiro.',
+          );
+          setDashboard(null);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [agendaVersion, granularity, referenceDateKey, selectedStudentId]);
+
+  const summary = useMemo(() => dashboard, [dashboard]);
 
   const realizedPixPercent =
-    summary.realized > 0
+    summary && summary.realized > 0
       ? Math.round((summary.realizedPix / summary.realized) * 100)
       : 0;
   const realizedCashPercent = 100 - realizedPixPercent;
   const periodLabel = formatPeriodLabel(granularity, referenceDate);
+
+  if (loading && !summary) {
+    return (
+      <p className="text-sm text-text-muted">
+        Carregando informações financeiras...
+      </p>
+    );
+  }
+
+  if (error && !summary) {
+    return <p className="text-sm text-status-danger">{error}</p>;
+  }
+
+  if (!summary) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-stack-md">
@@ -131,7 +183,7 @@ export function FinancialPage() {
             onChange={(event) => setStudentFilter(event.target.value)}
             className="min-h-12 w-full cursor-pointer appearance-none truncate rounded-md border border-outline-variant/30 bg-surface py-2 pl-3 pr-10 text-sm font-medium text-text-main shadow-sm focus:ring-0"
           >
-            {FINANCIAL_STUDENT_OPTIONS.map((option) => (
+            {studentOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>

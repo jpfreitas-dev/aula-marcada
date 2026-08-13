@@ -44,7 +44,13 @@ export function ReactivateStudentModal({
   };
 
   return (
-    <Modal open title="Ativar aluno" onClose={onClose}>
+    <Modal
+      open
+      title="Ativar aluno"
+      onClose={onClose}
+      onSubmit={() => void handleReactivate()}
+      submitDisabled={saving}
+    >
       <p className="text-sm text-text-muted">
         <span className="font-semibold text-text-main">{student.name}</span>{' '}
         voltará para a lista de alunos e poderá ser agendado novamente.
@@ -58,6 +64,7 @@ export function ReactivateStudentModal({
 
       <div className="mt-4 flex gap-2">
         <Button
+          type="button"
           variant="secondary"
           className="flex-1"
           disabled={saving}
@@ -66,10 +73,10 @@ export function ReactivateStudentModal({
           Cancelar
         </Button>
         <Button
+          type="submit"
           variant="primary"
           className="flex-1"
           disabled={saving}
-          onClick={() => void handleReactivate()}
         >
           Ativar
         </Button>

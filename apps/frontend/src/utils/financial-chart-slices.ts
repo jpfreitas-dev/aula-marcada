@@ -2,34 +2,25 @@ import type { FinancialPieSlice } from '@/components/financial/financial-pie-cha
 import type {
   FinancialStudentAbsenceStat,
   FinancialStudentPaymentStat,
-} from '@/data/financial-demo-data';
+} from '@/types';
 import { formatCurrency } from '@/utils/currency';
 
 export const MAX_PIE_SLICES = 8;
 const OTHERS_COLOR = '#94a3b8';
 
-const STUDENT_COLORS: Record<string, string> = {
-  'student-joao': '#6d28d9',
-  'student-ana': '#10b981',
-  'student-pedro': '#f59e0b',
-  'student-maria': '#f43f5e',
-};
-
 const FALLBACK_COLORS = [
+  '#6d28d9',
+  '#10b981',
+  '#f59e0b',
+  '#f43f5e',
   '#6366f1',
   '#14b8a6',
   '#f97316',
   '#ec4899',
-  '#8b5cf6',
-  '#06b6d4',
-  '#eab308',
-  '#ef4444',
 ];
 
-function getStudentColor(studentId: string, index: number): string {
-  return (
-    STUDENT_COLORS[studentId] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-  );
+function getStudentColor(index: number): string {
+  return FALLBACK_COLORS[index % FALLBACK_COLORS.length];
 }
 
 function sortByValueDesc<T extends { value: number }>(items: T[]): T[] {
@@ -77,7 +68,7 @@ export function buildPaymentSlices(
       label: stat.studentName,
       value: stat.amount,
       legendValue: formatCurrency(stat.amount),
-      color: getStudentColor(stat.studentId, index),
+      color: getStudentColor(index),
     })),
   );
 }
@@ -91,7 +82,7 @@ export function buildAbsenceValueSlices(
       label: stat.studentName,
       value: stat.absenceValue,
       legendValue: `- ${formatCurrency(stat.absenceValue)}`,
-      color: getStudentColor(stat.studentId, index),
+      color: getStudentColor(index),
     })),
   );
 }

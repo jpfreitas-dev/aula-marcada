@@ -5,8 +5,7 @@ export function MorePage() {
         Mais
       </h2>
       <p className="mt-2 text-sm text-text-muted">
-        Configurações gerais e itens secundários do menu serão definidos em uma
-        fase futura (overview §36).
+        Página ainda não implementada.
       </p>
     </section>
   );

@@ -1,7 +1,7 @@
 import { IconButton } from '@/components/ui/icon-button';
 import type { StudentRecurrence } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { formatStudentRecurrenceLabel } from '@/services/student-service';
+import { formatStudentRecurrenceLabel } from '@/utils/student-recurrence';
 
 type StudentSettingsCardProps = {
   hourlyRate: number;
