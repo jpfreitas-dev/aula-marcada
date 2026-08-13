@@ -6,6 +6,7 @@ import { deleteClass } from '@/services/classes/delete-class';
 import { getAvailablePeriods } from '@/services/classes/get-available-periods';
 import { linkMakeup } from '@/services/classes/link-makeup';
 import { listClassesByDate } from '@/services/classes/list-classes-by-date';
+import { listClassesByStudent } from '@/services/classes/list-classes-by-student';
 import { listClassesByWeek } from '@/services/classes/list-classes-by-week';
 import { listPendingAbsences } from '@/services/classes/list-pending-absences';
 import { rescheduleClass } from '@/services/classes/reschedule-class';
@@ -24,6 +25,14 @@ const classPeriodSchema = z.union([
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
+});
+
+const studentIdParamsSchema = z.object({
+  studentId: z.string().uuid(),
+});
+
+const listByStudentQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().optional(),
 });
 
 const listByDateQuerySchema = z.object({
@@ -97,6 +106,17 @@ class ClassController {
   async listByWeek(request: Request, response: Response) {
     const query = listByWeekQuerySchema.parse(request.query);
     const classes = await listClassesByWeek.execute(query.start);
+
+    return response.status(200).json(classes);
+  }
+
+  async listByStudent(request: Request, response: Response) {
+    const params = studentIdParamsSchema.parse(request.params);
+    const query = listByStudentQuerySchema.parse(request.query);
+    const classes = await listClassesByStudent.execute(
+      params.studentId,
+      query.limit,
+    );
 
     return response.status(200).json(classes);
   }

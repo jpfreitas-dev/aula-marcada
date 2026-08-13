@@ -8,8 +8,9 @@ import type { CreateStudentRecurrenceInput } from '@/types/student';
 import { calculateExpectedAmount } from '@/utils/class-value';
 import { decimalToNumber } from '@/utils/money';
 import {
-  addWorkdays,
   dateFromDateKey,
+  formatClassDateTime,
+  getClassStartTimestampFromKey,
   getDefaultAgendaDate,
   getWeekdayFromDateKey,
   toDateKey,
@@ -22,7 +23,7 @@ import {
   periodFromStartTime,
 } from '@/utils/time';
 
-export const RECURRENCE_GENERATION_WORKDAYS = 20;
+export const RECURRENCE_GENERATION_MONTHS = 3;
 
 export const WEEKDAY_LABELS: Record<number, string> = {
   1: 'Segunda',
@@ -46,35 +47,26 @@ export function periodFromPrisma(period: ClassPeriod): 'morning' | 'afternoon' {
   return period === ClassPeriod.MORNING ? 'morning' : 'afternoon';
 }
 
-export function getRecurrenceDates(weekday: number): string[] {
-  const base = getDefaultAgendaDate();
-  const dates: string[] = [];
-
-  for (let index = 0; index < RECURRENCE_GENERATION_WORKDAYS; index += 1) {
-    const date = addWorkdays(base, index);
-    if (date.getDay() === weekday) {
-      dates.push(toDateKey(date));
-    }
-  }
-
-  return dates;
+export function getRecurrenceHorizonEnd(reference = new Date()): Date {
+  const end = getDefaultAgendaDate(reference);
+  end.setMonth(end.getMonth() + RECURRENCE_GENERATION_MONTHS);
+  return end;
 }
 
-export function getNextMonthSporadicCheckDates(weekday: number): string[] {
-  const today = getDefaultAgendaDate();
-  const horizonDates = new Set(getRecurrenceDates(weekday));
-  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+export function getRecurrenceDates(
+  weekday: number,
+  reference = new Date(),
+): string[] {
+  const base = getDefaultAgendaDate(reference);
+  const end = getRecurrenceHorizonEnd(reference);
   const dates: string[] = [];
-  const cursor = new Date(nextMonthStart);
+  const cursor = new Date(base);
 
-  while (cursor <= nextMonthEnd) {
-    if (cursor.getDay() === weekday) {
-      const dateKey = toDateKey(cursor);
+  while (cursor <= end) {
+    const dateKey = toDateKey(cursor);
 
-      if (!horizonDates.has(dateKey)) {
-        dates.push(dateKey);
-      }
+    if (getWeekdayFromDateKey(dateKey) === weekday) {
+      dates.push(dateKey);
     }
 
     cursor.setDate(cursor.getDate() + 1);
@@ -121,10 +113,7 @@ export function sessionMatchesAnyRecurrence(
 }
 
 export function getClassStartTimestamp(date: Date, startTime: string): number {
-  const [hours, minutes] = startTime.split(':').map(Number);
-  const start = new Date(date);
-  start.setHours(hours, minutes, 0, 0);
-  return start.getTime();
+  return getClassStartTimestampFromKey(toDateKey(date), startTime);
 }
 
 export function buildGeneratedClassData(
@@ -192,8 +181,15 @@ export function getNextClassAt(
   const now = Date.now();
   const upcoming = classes
     .map((session) => {
-      const timestamp = getClassStartTimestamp(session.date, session.startTime);
-      return timestamp >= now ? new Date(timestamp).toISOString() : null;
+      const dateKey = toDateKey(session.date);
+      const timestamp = getClassStartTimestampFromKey(
+        dateKey,
+        session.startTime,
+      );
+
+      return timestamp >= now
+        ? formatClassDateTime(dateKey, session.startTime)
+        : null;
     })
     .filter((value): value is string => Boolean(value))
     .sort();

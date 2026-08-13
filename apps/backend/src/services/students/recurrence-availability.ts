@@ -4,11 +4,15 @@ import type { CreateStudentRecurrenceInput } from '@/types/student';
 import {
   ALL_PERIODS,
   ALL_WEEKDAYS,
-  getNextMonthSporadicCheckDates,
   getRecurrenceDates,
   periodToPrisma,
   WEEKDAY_LABELS,
 } from '@/services/students/recurrence-scheduler';
+import {
+  formatRecurrenceConflict,
+  formatSporadicClassConflict,
+  prismaPeriodToClassPeriod,
+} from '@/utils/schedule-conflict';
 import { minutesBetween, periodFromStartTime } from '@/utils/time';
 import { getWeekdayFromDateKey, toDateKey } from '@/utils/workday';
 
@@ -17,9 +21,11 @@ export type RecurrenceAvailabilityContext = {
     date: Date;
     period: ClassPeriod;
     studentId: string;
+    studentName: string;
   }>;
   recurrences: Array<{
     studentId: string;
+    studentName: string;
     weekday: number;
     startTime: string;
     endTime: string;
@@ -31,6 +37,31 @@ function periodFromWeekdayRecurrence(
   recurrence: CreateStudentRecurrenceInput,
 ): 'morning' | 'afternoon' {
   return periodFromStartTime(recurrence.startTime);
+}
+
+function findBlockingRecurrence(
+  context: RecurrenceAvailabilityContext,
+  weekday: number,
+  period: 'morning' | 'afternoon',
+  excludeStudentId?: string,
+) {
+  return context.recurrences.find((recurrence) => {
+    if (
+      excludeStudentId !== undefined &&
+      recurrence.studentId === excludeStudentId
+    ) {
+      return false;
+    }
+
+    if (!recurrence.studentActive) {
+      return false;
+    }
+
+    return (
+      recurrence.weekday === weekday &&
+      periodFromStartTime(recurrence.startTime) === period
+    );
+  });
 }
 
 function isPeriodBlockedByOtherStudentRecurrence(
@@ -123,7 +154,7 @@ function isPeriodAvailableOnWeekday(
     return false;
   }
 
-  return getRecurrenceDates(weekday).some(
+  return getRecurrenceDates(weekday).every(
     (dateKey) =>
       !isSlotBlocked(
         context,
@@ -188,7 +219,7 @@ export function getFirstAvailablePeriodForWeekday(
   );
 }
 
-function validateSporadicConflictsInNextMonth(
+function validateSporadicConflictsInHorizon(
   context: RecurrenceAvailabilityContext,
   recurrences: CreateStudentRecurrenceInput[],
 ): void {
@@ -199,19 +230,24 @@ function validateSporadicConflictsInNextMonth(
 
     const period = periodFromWeekdayRecurrence(recurrence);
     const prismaPeriod = periodToPrisma(period);
-    const sporadicDates = getNextMonthSporadicCheckDates(recurrence.weekday);
-    const hasConflict = sporadicDates.some((dateKey) =>
-      context.classes.some(
+    const dates = getRecurrenceDates(recurrence.weekday);
+
+    for (const dateKey of dates) {
+      const conflictingClass = context.classes.find(
         (session) =>
           toDateKey(session.date) === dateKey &&
           session.period === prismaPeriod,
-      ),
-    );
-
-    if (hasConflict) {
-      throw new AppError(
-        'Há aulas avulsas agendadas neste período no próximo mês. Verifique a agenda antes de continuar.',
       );
+
+      if (conflictingClass) {
+        throw new AppError(
+          formatSporadicClassConflict(
+            conflictingClass.studentName,
+            dateKey,
+            period,
+          ),
+        );
+      }
     }
   }
 }
@@ -265,11 +301,46 @@ export function validateRecurrencesInContext(
         excludeStudentId,
       )
     ) {
+      const blockingRecurrence = findBlockingRecurrence(
+        context,
+        recurrence.weekday,
+        period,
+        excludeStudentId,
+      );
+
+      if (blockingRecurrence) {
+        throw new AppError(
+          formatRecurrenceConflict(
+            blockingRecurrence.studentName,
+            recurrence.weekday,
+            period,
+          ),
+        );
+      }
+
+      const conflictingClass = context.classes.find((session) => {
+        const sessionWeekday = getWeekdayFromDateKey(toDateKey(session.date));
+        return (
+          sessionWeekday === recurrence.weekday &&
+          prismaPeriodToClassPeriod(session.period) === period
+        );
+      });
+
+      if (conflictingClass) {
+        throw new AppError(
+          formatSporadicClassConflict(
+            conflictingClass.studentName,
+            toDateKey(conflictingClass.date),
+            period,
+          ),
+        );
+      }
+
       throw new AppError('Já existe uma aula nesse período.');
     }
   }
 
-  validateSporadicConflictsInNextMonth(context, filled);
+  validateSporadicConflictsInHorizon(context, filled);
 }
 
 export function buildWeekdayOptions(

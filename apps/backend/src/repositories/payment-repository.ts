@@ -22,6 +22,10 @@ class PaymentRepository {
     await client(db).payment.delete({ where: { id } });
   }
 
+  async deleteByStudentId(studentId: string, db?: DatabaseClient) {
+    await client(db).payment.deleteMany({ where: { studentId } });
+  }
+
   async deleteOrphanedByIds(ids: string[], db?: DatabaseClient) {
     for (const id of ids) {
       const remaining = await client(db).classAllocation.count({

@@ -3,6 +3,7 @@ import request from 'supertest';
 import { AttendanceStatus, ClassPeriod } from '../../generated/prisma/client';
 import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
+import { getFutureClassDate } from './helpers/dates';
 import { prisma } from './setup';
 
 async function createActiveStudent() {
@@ -60,7 +61,7 @@ async function createPastClassRecord(
 describe('classes attendance and makeups API', () => {
   it('updates attendance to absent and attended with content', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-13');
+    const created = await createFutureClass(student.id, getFutureClassDate());
 
     const absentResponse = await request(app)
       .patch(`/classes/${created.id}/attendance`)
@@ -130,7 +131,7 @@ describe('classes attendance and makeups API', () => {
       .post('/classes')
       .send({
         studentId: student.id,
-        date: '2026-08-20',
+        date: getFutureClassDate(15),
         period: 'morning',
         startTime: '08:00',
         durationMinutes: 60,
@@ -159,7 +160,7 @@ describe('classes attendance and makeups API', () => {
       pendingMakeupMinutes: 30,
     });
 
-    const target = await createFutureClass(student.id, '2026-08-21');
+    const target = await createFutureClass(student.id, getFutureClassDate(16));
 
     const linkResponse = await request(app)
       .post('/classes/link-makeup')
@@ -204,7 +205,7 @@ describe('classes attendance and makeups API', () => {
       attendance: AttendanceStatus.ABSENT,
       pendingMakeupMinutes: 60,
     });
-    const target = await createFutureClass(student.id, '2026-08-24');
+    const target = await createFutureClass(student.id, getFutureClassDate(17));
 
     await request(app)
       .patch(`/classes/${target.id}/attendance`)
@@ -237,7 +238,7 @@ describe('classes attendance and makeups API', () => {
       .post('/classes')
       .send({
         studentId: student.id,
-        date: '2026-08-25',
+        date: getFutureClassDate(18),
         period: 'morning',
         startTime: '08:00',
         durationMinutes: 60,
@@ -269,7 +270,7 @@ describe('classes attendance and makeups API', () => {
       .post('/classes')
       .send({
         studentId: student.id,
-        date: '2026-08-24',
+        date: getFutureClassDate(17),
         period: 'morning',
         startTime: '08:00',
         durationMinutes: 30,

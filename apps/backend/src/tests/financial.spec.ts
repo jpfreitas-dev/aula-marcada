@@ -7,6 +7,7 @@ import {
   toDateKey,
 } from '@/utils/workday';
 import { app } from '@/app';
+import { getFutureClassDate } from './helpers/dates';
 
 function futureWeekDates() {
   const anchor = addWorkdays(new Date(), 10);
@@ -21,9 +22,7 @@ function futureWeekDates() {
 }
 
 function futureDate(offsetWorkdays: number): string {
-  const base = new Date();
-  base.setHours(12, 0, 0, 0);
-  return toDateKey(addWorkdays(base, offsetWorkdays));
+  return getFutureClassDate(10 + offsetWorkdays);
 }
 
 async function createActiveStudent(name = 'Aluno Financeiro') {

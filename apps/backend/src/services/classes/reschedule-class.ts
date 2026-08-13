@@ -6,6 +6,7 @@ import {
 } from '@/services/classes/build-class-response';
 import { calculateRequiredMakeupMinutes } from '@/services/classes/calculate-required-makeup-minutes';
 import { getAvailablePeriods } from '@/services/classes/get-available-periods';
+import { validateScheduleSlotAvailable } from '@/services/classes/validate-schedule-slot';
 import type { ClassResponse, RescheduleClassInput } from '@/types/class';
 import { validateClassTimeWithinPeriod } from '@/utils/schedule-period';
 import {
@@ -39,6 +40,7 @@ class RescheduleClass {
 
     const available = await getAvailablePeriods.execute(input.date, id);
     if (!available.includes(input.period)) {
+      await validateScheduleSlotAvailable.execute(input.date, input.period, id);
       throw new AppError('Período indisponível.');
     }
 

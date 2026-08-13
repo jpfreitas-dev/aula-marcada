@@ -14,6 +14,10 @@ classesRoutes.get(
   asyncHandler(classController.pendingAbsences),
 );
 classesRoutes.get('/week', asyncHandler(classController.listByWeek));
+classesRoutes.get(
+  '/by-student/:studentId',
+  asyncHandler(classController.listByStudent),
+);
 classesRoutes.get('/', asyncHandler(classController.listByDate));
 classesRoutes.get('/:id', asyncHandler(classController.show));
 classesRoutes.post('/', asyncHandler(classController.create));

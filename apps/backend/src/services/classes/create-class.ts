@@ -16,6 +16,7 @@ import { validateClassTimeWithinPeriod } from '@/utils/schedule-period';
 import { addMinutesToTime, periodFromStartTime } from '@/utils/time';
 import { dateFromDateKey, isWeekday } from '@/utils/workday';
 import { getAvailablePeriods } from '@/services/classes/get-available-periods';
+import { validateScheduleSlotAvailable } from '@/services/classes/validate-schedule-slot';
 
 class CreateClass {
   async execute(input: CreateClassInput): Promise<ClassResponse> {
@@ -35,6 +36,7 @@ class CreateClass {
 
     const available = await getAvailablePeriods.execute(input.date);
     if (!available.includes(input.period)) {
+      await validateScheduleSlotAvailable.execute(input.date, input.period);
       throw new AppError('Período indisponível.');
     }
 

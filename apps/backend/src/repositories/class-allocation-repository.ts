@@ -113,6 +113,16 @@ class ClassAllocationRepository {
     return { advancePix, advanceCash };
   }
 
+  async deleteByClassIds(classIds: string[], db?: DatabaseClient) {
+    if (classIds.length === 0) {
+      return;
+    }
+
+    await client(db).classAllocation.deleteMany({
+      where: { classId: { in: classIds } },
+    });
+  }
+
   async deleteByClassId(classId: string, db?: DatabaseClient) {
     const allocations = await client(db).classAllocation.findMany({
       where: { classId },

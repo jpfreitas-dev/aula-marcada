@@ -58,6 +58,23 @@ export function getWeekStart(date: Date): Date {
   return start;
 }
 
+export function formatClassDateTime(
+  dateKey: string,
+  startTime: string,
+): string {
+  return `${dateKey}T${startTime}`;
+}
+
+export function getClassStartTimestampFromKey(
+  dateKey: string,
+  startTime: string,
+): number {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const [hours, minutes] = startTime.split(':').map(Number);
+
+  return new Date(year, month - 1, day, hours, minutes, 0, 0).getTime();
+}
+
 export function getWorkdaysOfWeek(weekStart: Date): Date[] {
   return Array.from({ length: 5 }, (_, index) => {
     const day = new Date(weekStart);

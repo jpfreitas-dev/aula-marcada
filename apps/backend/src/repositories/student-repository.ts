@@ -8,6 +8,21 @@ function client(db?: DatabaseClient): DatabaseClient {
 }
 
 class StudentRepository {
+  async findAllActiveWithRecurrences(db?: DatabaseClient) {
+    return client(db).student.findMany({
+      where: {
+        active: true,
+        recurrences: { some: {} },
+      },
+      include: {
+        recurrences: {
+          orderBy: [{ weekday: 'asc' }, { startTime: 'asc' }],
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findById(id: string, db?: DatabaseClient): Promise<Student | null> {
     return client(db).student.findUnique({ where: { id } });
   }
@@ -81,6 +96,10 @@ class StudentRepository {
           Number(student.advanceBalanceCash.toString()) + advanceCash,
       },
     });
+  }
+
+  async delete(id: string, db?: DatabaseClient) {
+    await client(db).student.delete({ where: { id } });
   }
 
   async updateAdvanceBalances(

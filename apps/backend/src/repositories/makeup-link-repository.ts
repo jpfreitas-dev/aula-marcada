@@ -30,6 +30,21 @@ class MakeupLinkRepository {
     await client(db).makeupLink.deleteMany({ where: { absenceClassId } });
   }
 
+  async deleteByClassIds(classIds: string[], db?: DatabaseClient) {
+    if (classIds.length === 0) {
+      return;
+    }
+
+    await client(db).makeupLink.deleteMany({
+      where: {
+        OR: [
+          { makeupClassId: { in: classIds } },
+          { absenceClassId: { in: classIds } },
+        ],
+      },
+    });
+  }
+
   async createMany(
     data: Array<{
       makeupClassId: string;

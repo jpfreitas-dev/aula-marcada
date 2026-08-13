@@ -645,7 +645,7 @@ Se já existir **qualquer** aula (de qualquer aluno) naquele dia da semana e per
 ## Geração na agenda
 
 - As recorrências geram aulas automaticamente na agenda para as semanas futuras.
-- Horizonte de geração: **4 semanas úteis à frente** a partir da data corrente (incluindo a semana atual), considerando apenas **segunda a sexta**. Conforme o tempo passa, novas aulas vão sendo geradas para manter esse horizonte.
+- Horizonte de geração: **3 meses à frente** a partir da data corrente (incluindo o dia atual), considerando apenas **segunda a sexta**. Conforme o tempo passa, novas aulas vão sendo geradas para manter esse horizonte.
 - Aulas geradas por recorrência nascem com presença **vazia**.
 - Alterar valor por hora **recalcula** o valor esperado das aulas **vazias** a partir de hoje (corte); aulas passadas e aulas já preenchidas **não** mudam.
 - Alterar recorrência **não altera** aulas passadas nem aulas futuras que já tenham sido preenchidas.
@@ -825,11 +825,11 @@ Representação visual proporcional: X / Y.
 
 # 28. Desativar aluno (Ex-alunos)
 
-No perfil, a ação de exclusão **não apaga** o aluno nem o histórico.
+No perfil de um aluno **ativo**, a ação de desativação **não apaga** o aluno nem o histórico.
 
 Em vez disso, o aluno é **desativado** e passa a constar em **Ex-alunos**.
 
-## Confirmação
+## Confirmação da desativação
 
 Exige digitar exatamente o nome do aluno antes de confirmar.
 
@@ -856,6 +856,23 @@ No perfil de um **Ex-aluno**, o professor pode **Ativar aluno**.
 - o professor pode cadastrar novas recorrências ou agendar aulas avulsas depois da reativação.
 
 A reativação **não** restaura configurações de recorrência anteriores.
+
+## Excluir aluno (Ex-alunos)
+
+No perfil de um **Ex-aluno**, abaixo de **Ativar aluno**, o professor pode **Excluir aluno**.
+
+Só é possível excluir alunos **desativados**. Alunos ativos devem ser desativados antes.
+
+### Confirmação da exclusão
+
+Exige digitar exatamente o nome do aluno antes de confirmar.
+
+### Efeitos da exclusão
+
+- o aluno e **todos os seus dados** são removidos permanentemente: aulas, pagamentos, recorrências, histórico e saldos de adiantamento;
+- a ação **não** pode ser desfeita;
+- se o ex-aluno tinha aulas de reposição vinculadas a faltas de **outros** alunos, os vínculos são desfeitos e o tempo pendente de reposição nas faltas dos outros alunos é restaurado;
+- após a exclusão, o professor é redirecionado para a lista de alunos.
 
 ---
 
@@ -1044,7 +1061,7 @@ Essas funcionalidades serão definidas posteriormente.
 | Pagamento misto na aula              | Registros sucessivos (uma forma por vez)                                         |
 | Excessso na aula vs saldo            | Excessso na aula = receita; antecipação só sem pendência (ou sobra no perfil)    |
 | Consumo de saldo                     | Ao marcar Compareceu                                                             |
-| Geração de recorrência               | Horizonte de 4 semanas úteis (seg–sex)                                           |
+| Geração de recorrência               | Horizonte de 3 meses (seg–sex)                                                   |
 | Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído     |
 | Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                             |
 | Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                       |
@@ -1055,3 +1072,4 @@ Essas funcionalidades serão definidas posteriormente.
 | Exclusão e reposição                 | Desfaz cobertura de tempo se a aula de reposição for excluída                    |
 | Desativar aluno                      | Soft-delete; aulas futuras saem da agenda; histórico permanece; lista Ex-alunos  |
 | Reativar aluno                       | Volta à lista ativa; mantém histórico, financeiro e valor/hora; sem recorrências |
+| Excluir aluno (Ex-alunos)            | Hard-delete permanente; só ex-alunos; remove todos os dados do aluno             |

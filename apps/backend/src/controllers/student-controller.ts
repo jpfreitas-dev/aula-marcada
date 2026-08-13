@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { createStudent } from '@/services/students/create-student';
 import { deactivateStudent } from '@/services/students/deactivate-student';
+import { deleteStudent } from '@/services/students/delete-student';
 import { getRecurrenceOptions } from '@/services/students/get-recurrence-options';
 import { listStudentRecurrences } from '@/services/students/list-student-recurrences';
 import { listStudents } from '@/services/students/list-students';
@@ -115,6 +116,13 @@ class StudentController {
     const student = await reactivateStudent.execute(params.id);
 
     return response.status(200).json(student);
+  }
+
+  async delete(request: Request, response: Response) {
+    const params = idParamsSchema.parse(request.params);
+    await deleteStudent.execute(params.id);
+
+    return response.status(204).send();
   }
 
   async listRecurrences(request: Request, response: Response) {

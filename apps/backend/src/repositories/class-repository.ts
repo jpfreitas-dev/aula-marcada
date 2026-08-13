@@ -72,8 +72,17 @@ class ClassRepository {
     return classes.map((item) => item.period);
   }
 
-  async findByStudentId(studentId: string, db?: DatabaseClient) {
-    return client(db).class.findMany({ where: { studentId } });
+  async findByStudentId(
+    studentId: string,
+    limit?: number,
+    db?: DatabaseClient,
+  ) {
+    return client(db).class.findMany({
+      where: { studentId },
+      include: { student: true },
+      orderBy: [{ date: 'desc' }, { startTime: 'desc' }],
+      ...(limit ? { take: limit } : {}),
+    });
   }
 
   async findPendingAbsencesByStudentId(studentId: string, db?: DatabaseClient) {
@@ -118,6 +127,9 @@ class ClassRepository {
         date: true,
         period: true,
         studentId: true,
+        student: {
+          select: { name: true },
+        },
       },
     });
   }

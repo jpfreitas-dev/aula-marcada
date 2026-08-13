@@ -32,6 +32,7 @@ studentsRoutes.post(
   '/:id/reactivate',
   asyncHandler(studentController.reactivate),
 );
+studentsRoutes.delete('/:id', asyncHandler(studentController.delete));
 studentsRoutes.get(
   '/:id/recurrences',
   asyncHandler(studentController.listRecurrences),

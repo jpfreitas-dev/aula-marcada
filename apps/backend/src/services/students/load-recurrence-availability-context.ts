@@ -12,11 +12,18 @@ class LoadRecurrenceAvailabilityContext {
     ]);
 
     return {
-      classes: excludeStudentId
+      classes: (excludeStudentId
         ? classes.filter((item) => item.studentId !== excludeStudentId)
-        : classes,
+        : classes
+      ).map((item) => ({
+        date: item.date,
+        period: item.period,
+        studentId: item.studentId,
+        studentName: item.student.name,
+      })),
       recurrences: recurrences.map((item) => ({
         studentId: item.studentId,
+        studentName: item.student.name,
         weekday: item.weekday,
         startTime: item.startTime,
         endTime: item.endTime,

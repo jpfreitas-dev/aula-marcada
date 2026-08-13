@@ -1,6 +1,8 @@
 import request from 'supertest';
 
 import { app } from '@/app';
+import { formatSporadicClassConflict } from '@/utils/schedule-conflict';
+import { getFutureWeekdayDate } from './helpers/dates';
 import { prisma } from './setup';
 
 describe('students API', () => {
@@ -41,7 +43,7 @@ describe('students API', () => {
       where: { studentId: response.body.id },
     });
 
-    expect(classes.length).toBeGreaterThan(0);
+    expect(classes.length).toBeGreaterThan(10);
     expect(classes.every((item) => item.attendance === 'EMPTY')).toBe(true);
   });
 
@@ -88,6 +90,48 @@ describe('students API', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain('já tem aula nesse período');
+  });
+
+  it('rejects recurrence when a sporadic class already exists in the horizon', async () => {
+    const conflictDate = getFutureWeekdayDate(4);
+    const existingStudent = await request(app).post('/students').send({
+      name: 'Eva Esporádica',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0011',
+      hourlyRate: 50,
+    });
+
+    await request(app).post('/classes').send({
+      studentId: existingStudent.body.id,
+      date: conflictDate,
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 50,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+
+    const response = await request(app)
+      .post('/students')
+      .send({
+        name: 'Felipe Recorrente',
+        guardianName: 'Responsável',
+        phone: '(11) 98888-0012',
+        hourlyRate: 60,
+        recurrences: [
+          {
+            weekday: 4,
+            startTime: '08:00',
+            endTime: '09:00',
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      formatSporadicClassConflict('Eva Esporádica', conflictDate, 'morning'),
+    );
   });
 
   it('lists students with search filter', async () => {
@@ -170,6 +214,62 @@ describe('students API', () => {
 
     expect(reactivated.status).toBe(200);
     expect(reactivated.body.active).toBe(true);
+  });
+
+  it('deletes an inactive student and all related data', async () => {
+    const created = await request(app)
+      .post('/students')
+      .send({
+        name: 'Helena Delete',
+        guardianName: 'Responsável',
+        phone: '(11) 98888-0009',
+        hourlyRate: 50,
+        recurrences: [
+          {
+            weekday: 2,
+            startTime: '08:00',
+            endTime: '09:00',
+          },
+        ],
+      });
+
+    const studentId = created.body.id;
+
+    await request(app).post(`/students/${studentId}/deactivate`);
+
+    const deleted = await request(app).delete(`/students/${studentId}`);
+
+    expect(deleted.status).toBe(204);
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+    });
+    expect(student).toBeNull();
+
+    const classes = await prisma.class.count({ where: { studentId } });
+    expect(classes).toBe(0);
+
+    const payments = await prisma.payment.count({ where: { studentId } });
+    expect(payments).toBe(0);
+
+    const recurrences = await prisma.studentRecurrence.count({
+      where: { studentId },
+    });
+    expect(recurrences).toBe(0);
+  });
+
+  it('rejects deleting an active student', async () => {
+    const created = await request(app).post('/students').send({
+      name: 'Igor Active',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0010',
+      hourlyRate: 45,
+    });
+
+    const response = await request(app).delete(`/students/${created.body.id}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Desative o aluno antes de excluir.');
   });
 
   it('returns recurrence options for draft rows', async () => {

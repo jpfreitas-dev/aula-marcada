@@ -22,7 +22,7 @@ class StudentRecurrenceRepository {
         startTime: true,
         endTime: true,
         student: {
-          select: { active: true },
+          select: { active: true, name: true },
         },
       },
     });

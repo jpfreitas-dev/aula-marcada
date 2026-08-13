@@ -3,6 +3,7 @@ import request from 'supertest';
 import { ClassPeriod } from '../../generated/prisma/client';
 import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
+import { getFutureClassDate } from './helpers/dates';
 import { prisma } from './setup';
 
 async function createActiveStudent() {
@@ -37,7 +38,7 @@ async function createFutureClass(studentId: string, date: string) {
 describe('classes attendance API', () => {
   it('updates attendance to absent and attended with content', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-13');
+    const created = await createFutureClass(student.id, getFutureClassDate());
 
     const absentResponse = await request(app)
       .patch(`/classes/${created.id}/attendance`)

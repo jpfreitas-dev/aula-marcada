@@ -3,6 +3,7 @@ import request from 'supertest';
 import { ClassPeriod } from '../../generated/prisma/client';
 import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
+import { getFutureClassDate } from './helpers/dates';
 import { prisma } from './setup';
 
 async function createActiveStudent(hourlyRate = 60) {
@@ -37,7 +38,7 @@ async function createFutureClass(studentId: string, date: string) {
 describe('payments API', () => {
   it('records partial payment when marking attended', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-13');
+    const created = await createFutureClass(student.id, getFutureClassDate());
 
     const response = await request(app)
       .patch(`/classes/${created.id}/attendance`)
@@ -56,7 +57,7 @@ describe('payments API', () => {
 
   it('settles class with full payment on attended', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-14');
+    const created = await createFutureClass(student.id, getFutureClassDate(11));
 
     const response = await request(app)
       .patch(`/classes/${created.id}/attendance`)
@@ -79,7 +80,7 @@ describe('payments API', () => {
       data: { advanceBalancePix: 100 },
     });
 
-    const created = await createFutureClass(student.id, '2026-08-17');
+    const created = await createFutureClass(student.id, getFutureClassDate(12));
 
     const response = await request(app)
       .patch(`/classes/${created.id}/attendance`)
@@ -99,7 +100,7 @@ describe('payments API', () => {
 
   it('allows additional payment on already attended class', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-18');
+    const created = await createFutureClass(student.id, getFutureClassDate(13));
 
     await request(app).patch(`/classes/${created.id}/attendance`).send({
       attendance: 'attended',
@@ -125,7 +126,7 @@ describe('payments API', () => {
 
   it('rejects payment above remaining due on class modal', async () => {
     const student = await createActiveStudent();
-    const created = await createFutureClass(student.id, '2026-08-20');
+    const created = await createFutureClass(student.id, getFutureClassDate(14));
 
     const response = await request(app)
       .patch(`/classes/${created.id}/attendance`)
