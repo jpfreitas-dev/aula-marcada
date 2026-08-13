@@ -76,30 +76,25 @@ export function FinancialPieLegend({
   valueClassName = 'text-text-muted',
 }: FinancialPieLegendProps) {
   return (
-    <div className="scroll-x-area w-full">
-      <ul className="flex w-max min-w-full gap-3 pb-1">
-        {slices.map((slice) => (
-          <li
-            key={slice.id}
-            className="flex w-28 shrink-0 items-start gap-2 sm:w-32"
-          >
-            <span
-              className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: slice.color }}
-            />
-            <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-text-main">
-                {slice.label}
-              </p>
-              <p
-                className={`truncate font-mono text-[11px] tabular-nums ${valueClassName}`}
-              >
-                {slice.legendValue}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="grid w-full grid-cols-2 gap-x-3 gap-y-2">
+      {slices.map((slice) => (
+        <li key={slice.id} className="flex min-w-0 items-start gap-2">
+          <span
+            className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: slice.color }}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold text-text-main">
+              {slice.label}
+            </p>
+            <p
+              className={`truncate font-mono text-[11px] tabular-nums ${valueClassName}`}
+            >
+              {slice.legendValue}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
