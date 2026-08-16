@@ -1,13 +1,11 @@
-import request from 'supertest';
-
-import { app } from '@/app';
 import { formatSporadicClassConflict } from '@/utils/schedule-conflict';
 import { getFutureWeekdayDate } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
 describe('students API', () => {
   it('creates a student without recurrences', async () => {
-    const response = await request(app).post('/students').send({
+    const response = await authRequest.post('/students').send({
       name: 'Ana Costa',
       guardianName: 'Paula Costa',
       phone: '(11) 98888-0001',
@@ -21,21 +19,19 @@ describe('students API', () => {
   });
 
   it('creates a student with recurrences and generates classes', async () => {
-    const response = await request(app)
-      .post('/students')
-      .send({
-        name: 'Bruno Lima',
-        guardianName: 'Rita Lima',
-        phone: '(11) 98888-0002',
-        hourlyRate: 50,
-        recurrences: [
-          {
-            weekday: 2,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-        ],
-      });
+    const response = await authRequest.post('/students').send({
+      name: 'Bruno Lima',
+      guardianName: 'Rita Lima',
+      phone: '(11) 98888-0002',
+      hourlyRate: 50,
+      recurrences: [
+        {
+          weekday: 2,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
 
     expect(response.status).toBe(201);
 
@@ -48,14 +44,14 @@ describe('students API', () => {
   });
 
   it('rejects duplicate student names', async () => {
-    await request(app).post('/students').send({
+    await authRequest.post('/students').send({
       name: 'Carla Duplicada',
       guardianName: 'Responsável',
       phone: '(11) 98888-0003',
       hourlyRate: 40,
     });
 
-    const response = await request(app).post('/students').send({
+    const response = await authRequest.post('/students').send({
       name: 'carla duplicada',
       guardianName: 'Outro',
       phone: '(11) 98888-0004',
@@ -67,26 +63,24 @@ describe('students API', () => {
   });
 
   it('rejects recurrence conflict for the same student period', async () => {
-    const response = await request(app)
-      .post('/students')
-      .send({
-        name: 'Daniel Conflict',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-0005',
-        hourlyRate: 50,
-        recurrences: [
-          {
-            weekday: 3,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-          {
-            weekday: 3,
-            startTime: '10:00',
-            endTime: '11:00',
-          },
-        ],
-      });
+    const response = await authRequest.post('/students').send({
+      name: 'Daniel Conflict',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0005',
+      hourlyRate: 50,
+      recurrences: [
+        {
+          weekday: 3,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+        {
+          weekday: 3,
+          startTime: '10:00',
+          endTime: '11:00',
+        },
+      ],
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain('já tem aula nesse período');
@@ -94,14 +88,14 @@ describe('students API', () => {
 
   it('rejects recurrence when a sporadic class already exists in the horizon', async () => {
     const conflictDate = getFutureWeekdayDate(4);
-    const existingStudent = await request(app).post('/students').send({
+    const existingStudent = await authRequest.post('/students').send({
       name: 'Eva Esporádica',
       guardianName: 'Responsável',
       phone: '(11) 98888-0011',
       hourlyRate: 50,
     });
 
-    await request(app).post('/classes').send({
+    await authRequest.post('/classes').send({
       studentId: existingStudent.body.id,
       date: conflictDate,
       period: 'morning',
@@ -112,21 +106,19 @@ describe('students API', () => {
       linkedAbsenceIds: [],
     });
 
-    const response = await request(app)
-      .post('/students')
-      .send({
-        name: 'Felipe Recorrente',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-0012',
-        hourlyRate: 60,
-        recurrences: [
-          {
-            weekday: 4,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-        ],
-      });
+    const response = await authRequest.post('/students').send({
+      name: 'Felipe Recorrente',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0012',
+      hourlyRate: 60,
+      recurrences: [
+        {
+          weekday: 4,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe(
@@ -135,14 +127,14 @@ describe('students API', () => {
   });
 
   it('lists students with search filter', async () => {
-    await request(app).post('/students').send({
+    await authRequest.post('/students').send({
       name: 'Elena Search',
       guardianName: 'Responsável',
       phone: '(11) 98888-0006',
       hourlyRate: 45,
     });
 
-    const response = await request(app).get('/students?search=elena');
+    const response = await authRequest.get('/students?search=elena');
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(1);
@@ -150,14 +142,14 @@ describe('students API', () => {
   });
 
   it('updates personal info', async () => {
-    const created = await request(app).post('/students').send({
+    const created = await authRequest.post('/students').send({
       name: 'Fernanda Edit',
       guardianName: 'Responsável',
       phone: '(11) 98888-0007',
       hourlyRate: 60,
     });
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/students/${created.body.id}/personal`)
       .send({
         name: 'Fernanda Editada',
@@ -171,27 +163,25 @@ describe('students API', () => {
   });
 
   it('deactivates and reactivates a student', async () => {
-    const created = await request(app)
-      .post('/students')
-      .send({
-        name: 'Gustavo Status',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-0008',
-        hourlyRate: 50,
-        recurrences: [
-          {
-            weekday: 4,
-            startTime: '19:00',
-            endTime: '20:00',
-          },
-        ],
-      });
+    const created = await authRequest.post('/students').send({
+      name: 'Gustavo Status',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0008',
+      hourlyRate: 50,
+      recurrences: [
+        {
+          weekday: 4,
+          startTime: '19:00',
+          endTime: '20:00',
+        },
+      ],
+    });
 
     const beforeDeactivate = await prisma.class.count({
       where: { studentId: created.body.id },
     });
 
-    const deactivated = await request(app).post(
+    const deactivated = await authRequest.post(
       `/students/${created.body.id}/deactivate`,
     );
 
@@ -208,7 +198,7 @@ describe('students API', () => {
     });
     expect(recurrences).toBe(0);
 
-    const reactivated = await request(app).post(
+    const reactivated = await authRequest.post(
       `/students/${created.body.id}/reactivate`,
     );
 
@@ -217,27 +207,25 @@ describe('students API', () => {
   });
 
   it('deletes an inactive student and all related data', async () => {
-    const created = await request(app)
-      .post('/students')
-      .send({
-        name: 'Helena Delete',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-0009',
-        hourlyRate: 50,
-        recurrences: [
-          {
-            weekday: 2,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-        ],
-      });
+    const created = await authRequest.post('/students').send({
+      name: 'Helena Delete',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0009',
+      hourlyRate: 50,
+      recurrences: [
+        {
+          weekday: 2,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
 
     const studentId = created.body.id;
 
-    await request(app).post(`/students/${studentId}/deactivate`);
+    await authRequest.post(`/students/${studentId}/deactivate`);
 
-    const deleted = await request(app).delete(`/students/${studentId}`);
+    const deleted = await authRequest.delete(`/students/${studentId}`);
 
     expect(deleted.status).toBe(204);
 
@@ -259,21 +247,21 @@ describe('students API', () => {
   });
 
   it('rejects deleting an active student', async () => {
-    const created = await request(app).post('/students').send({
+    const created = await authRequest.post('/students').send({
       name: 'Igor Active',
       guardianName: 'Responsável',
       phone: '(11) 98888-0010',
       hourlyRate: 45,
     });
 
-    const response = await request(app).delete(`/students/${created.body.id}`);
+    const response = await authRequest.delete(`/students/${created.body.id}`);
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Desative o aluno antes de excluir.');
   });
 
   it('returns recurrence options for draft rows', async () => {
-    const response = await request(app)
+    const response = await authRequest
       .post('/students/recurrence-options')
       .send({
         draftRecurrences: [],
@@ -286,7 +274,7 @@ describe('students API', () => {
   });
 
   it('returns 404 for unknown student', async () => {
-    const response = await request(app).get(
+    const response = await authRequest.get(
       '/students/00000000-0000-4000-8000-000000000001',
     );
 
