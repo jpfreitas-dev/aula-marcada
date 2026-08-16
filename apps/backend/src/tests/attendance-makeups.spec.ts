@@ -1,26 +1,22 @@
-import request from 'supertest';
-
 import { AttendanceStatus, ClassPeriod } from '../../generated/prisma/client';
-import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
 import { getFutureClassDate } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
 async function createActiveStudent() {
-  const response = await request(app)
-    .post('/students')
-    .send({
-      name: 'Aluno Agenda',
-      guardianName: 'Responsável',
-      phone: `(11) 98888-${Math.floor(Math.random() * 9000 + 1000)}`,
-      hourlyRate: 60,
-    });
+  const response = await authRequest.post('/students').send({
+    name: 'Aluno Agenda',
+    guardianName: 'Responsável',
+    phone: `(11) 98888-${Math.floor(Math.random() * 9000 + 1000)}`,
+    hourlyRate: 60,
+  });
 
   return response.body;
 }
 
 async function createFutureClass(studentId: string, date: string) {
-  const response = await request(app).post('/classes').send({
+  const response = await authRequest.post('/classes').send({
     studentId,
     date,
     period: 'morning',
@@ -63,7 +59,7 @@ describe('classes attendance and makeups API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate());
 
-    const absentResponse = await request(app)
+    const absentResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'absent' });
 
@@ -71,7 +67,7 @@ describe('classes attendance and makeups API', () => {
     expect(absentResponse.body.attendance).toBe('absent');
     expect(absentResponse.body.pendingMakeupMinutes).toBe(60);
 
-    const attendedResponse = await request(app)
+    const attendedResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -89,11 +85,11 @@ describe('classes attendance and makeups API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, '2026-12-15');
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'attended' });
 
-    const clearResponse = await request(app)
+    const clearResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'empty' });
 
@@ -106,11 +102,11 @@ describe('classes attendance and makeups API', () => {
     const student = await createActiveStudent();
     const created = await createPastClassRecord(student.id, '2026-08-04');
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'absent' });
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'empty' });
 
@@ -127,18 +123,16 @@ describe('classes attendance and makeups API', () => {
       pendingMakeupMinutes: 60,
     });
 
-    const makeupResponse = await request(app)
-      .post('/classes')
-      .send({
-        studentId: student.id,
-        date: getFutureClassDate(15),
-        period: 'morning',
-        startTime: '08:00',
-        durationMinutes: 60,
-        expectedAmount: 60,
-        isMakeupOnly: true,
-        linkedAbsenceIds: [absence.id],
-      });
+    const makeupResponse = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: getFutureClassDate(15),
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: true,
+      linkedAbsenceIds: [absence.id],
+    });
 
     expect(makeupResponse.status).toBe(201);
     expect(makeupResponse.body.isMakeupOnly).toBe(true);
@@ -149,7 +143,7 @@ describe('classes attendance and makeups API', () => {
     });
     expect(absenceRecord?.pendingMakeupMinutes).toBe(0);
 
-    const showAbsence = await request(app).get(`/classes/${absence.id}`);
+    const showAbsence = await authRequest.get(`/classes/${absence.id}`);
     expect(showAbsence.body.pendingMakeupMinutes).toBe(0);
   });
 
@@ -162,15 +156,13 @@ describe('classes attendance and makeups API', () => {
 
     const target = await createFutureClass(student.id, getFutureClassDate(16));
 
-    const linkResponse = await request(app)
-      .post('/classes/link-makeup')
-      .send({
-        targetClassId: target.id,
-        studentId: student.id,
-        absenceIds: [absence.id],
-        startTime: '08:00',
-        endTime: '09:30',
-      });
+    const linkResponse = await authRequest.post('/classes/link-makeup').send({
+      targetClassId: target.id,
+      studentId: student.id,
+      absenceIds: [absence.id],
+      startTime: '08:00',
+      endTime: '09:30',
+    });
 
     expect(linkResponse.status).toBe(200);
     expect(linkResponse.body.durationMinutes).toBe(90);
@@ -190,7 +182,7 @@ describe('classes attendance and makeups API', () => {
       pendingMakeupMinutes: 60,
     });
 
-    const response = await request(app).get(
+    const response = await authRequest.get(
       `/classes/pending-absences?studentId=${student.id}`,
     );
 
@@ -207,19 +199,17 @@ describe('classes attendance and makeups API', () => {
     });
     const target = await createFutureClass(student.id, getFutureClassDate(17));
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${target.id}/attendance`)
       .send({ attendance: 'attended' });
 
-    const response = await request(app)
-      .post('/classes/link-makeup')
-      .send({
-        targetClassId: target.id,
-        studentId: student.id,
-        absenceIds: [absence.id],
-        startTime: '08:00',
-        endTime: '09:00',
-      });
+    const response = await authRequest.post('/classes/link-makeup').send({
+      targetClassId: target.id,
+      studentId: student.id,
+      absenceIds: [absence.id],
+      startTime: '08:00',
+      endTime: '09:00',
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe(
@@ -234,22 +224,20 @@ describe('classes attendance and makeups API', () => {
       pendingMakeupMinutes: 60,
     });
 
-    const makeup = await request(app)
-      .post('/classes')
-      .send({
-        studentId: student.id,
-        date: getFutureClassDate(18),
-        period: 'morning',
-        startTime: '08:00',
-        durationMinutes: 60,
-        expectedAmount: 60,
-        isMakeupOnly: true,
-        linkedAbsenceIds: [absence.id],
-      });
+    const makeup = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: getFutureClassDate(18),
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: true,
+      linkedAbsenceIds: [absence.id],
+    });
 
     expect(makeup.status).toBe(201);
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${absence.id}/attendance`)
       .send({ attendance: 'empty' });
 
@@ -266,18 +254,16 @@ describe('classes attendance and makeups API', () => {
       pendingMakeupMinutes: 60,
     });
 
-    const response = await request(app)
-      .post('/classes')
-      .send({
-        studentId: student.id,
-        date: getFutureClassDate(17),
-        period: 'morning',
-        startTime: '08:00',
-        durationMinutes: 30,
-        expectedAmount: 30,
-        isMakeupOnly: true,
-        linkedAbsenceIds: [absence.id],
-      });
+    const response = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: getFutureClassDate(17),
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 30,
+      expectedAmount: 30,
+      isMakeupOnly: true,
+      linkedAbsenceIds: [absence.id],
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe(

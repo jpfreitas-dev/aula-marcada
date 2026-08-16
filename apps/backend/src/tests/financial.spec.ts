@@ -1,13 +1,11 @@
-import request from 'supertest';
-
 import {
   addWorkdays,
   getWeekStart,
   getWorkdaysOfWeek,
   toDateKey,
 } from '@/utils/workday';
-import { app } from '@/app';
 import { getFutureClassDate } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 
 function futureWeekDates() {
   const anchor = addWorkdays(new Date(), 10);
@@ -26,14 +24,12 @@ function futureDate(offsetWorkdays: number): string {
 }
 
 async function createActiveStudent(name = 'Aluno Financeiro') {
-  const response = await request(app)
-    .post('/students')
-    .send({
-      name,
-      guardianName: 'Responsável',
-      phone: `(11) 96666-${Math.floor(Math.random() * 9000 + 1000)}`,
-      hourlyRate: 60,
-    });
+  const response = await authRequest.post('/students').send({
+    name,
+    guardianName: 'Responsável',
+    phone: `(11) 96666-${Math.floor(Math.random() * 9000 + 1000)}`,
+    hourlyRate: 60,
+  });
 
   expect(response.status).toBe(201);
   return response.body;
@@ -45,19 +41,17 @@ async function createClass(
   expectedAmount = 60,
   options?: { hasManualAmountOverride?: boolean },
 ) {
-  const response = await request(app)
-    .post('/classes')
-    .send({
-      studentId,
-      date,
-      period: 'morning',
-      startTime: '08:00',
-      durationMinutes: 60,
-      expectedAmount,
-      hasManualAmountOverride: options?.hasManualAmountOverride ?? false,
-      isMakeupOnly: false,
-      linkedAbsenceIds: [],
-    });
+  const response = await authRequest.post('/classes').send({
+    studentId,
+    date,
+    period: 'morning',
+    startTime: '08:00',
+    durationMinutes: 60,
+    expectedAmount,
+    hasManualAmountOverride: options?.hasManualAmountOverride ?? false,
+    isMakeupOnly: false,
+    linkedAbsenceIds: [],
+  });
 
   expect(response.status).toBe(201);
   return response.body;
@@ -68,7 +62,7 @@ async function markAttended(
   paidAmount: number,
   paymentMethod: 'pix' | 'cash',
 ) {
-  const response = await request(app)
+  const response = await authRequest
     .patch(`/classes/${classId}/attendance`)
     .send({
       attendance: 'attended',
@@ -81,7 +75,7 @@ async function markAttended(
 }
 
 async function markAbsent(classId: string) {
-  const response = await request(app)
+  const response = await authRequest
     .patch(`/classes/${classId}/attendance`)
     .send({ attendance: 'absent' });
 
@@ -100,7 +94,7 @@ describe('financial API', () => {
     await markAttended(attended.id, 60, 'pix');
     await markAbsent(absent.id);
 
-    const response = await request(app).get('/financial/dashboard').query({
+    const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'week',
       referenceDate: reference,
     });
@@ -124,7 +118,7 @@ describe('financial API', () => {
     await markAttended(firstClass.id, 60, 'pix');
     await markAttended(secondClass.id, 60, 'cash');
 
-    const response = await request(app).get('/financial/dashboard').query({
+    const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'week',
       referenceDate: reference,
       studentId: firstStudent.id,
@@ -148,7 +142,7 @@ describe('financial API', () => {
     await markAttended(partial.id, 20, 'pix');
     await markAttended(settled.id, 60, 'cash');
 
-    const response = await request(app).get('/financial/dashboard').query({
+    const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'month',
       referenceDate: firstDay,
     });
@@ -177,7 +171,7 @@ describe('financial API', () => {
     await markAttended(secondAttended.id, 40, 'cash');
     await markAbsent(secondAbsent.id);
 
-    const response = await request(app).get('/financial/dashboard').query({
+    const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'week',
       referenceDate: reference,
     });
@@ -205,7 +199,7 @@ describe('financial API', () => {
   });
 
   it('rejects invalid query parameters', async () => {
-    const response = await request(app).get('/financial/dashboard').query({
+    const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'week',
       referenceDate: 'invalid-date',
     });

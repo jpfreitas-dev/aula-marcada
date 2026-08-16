@@ -1,16 +1,14 @@
-import request from 'supertest';
-
-import { app } from '@/app';
 import { formatExistingClassConflict } from '@/utils/schedule-conflict';
 import {
   getFutureClassDate,
   getFutureWeekdayDate,
   getWeekStartKeyForDate,
 } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
 async function createActiveStudent() {
-  const response = await request(app).post('/students').send({
+  const response = await authRequest.post('/students').send({
     name: 'Aluno Agenda',
     guardianName: 'Responsável',
     phone: '(11) 98888-1000',
@@ -25,7 +23,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate();
 
-    const response = await request(app).post('/classes').send({
+    const response = await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -46,7 +44,7 @@ describe('classes API', () => {
   it('rejects scheduling on weekends', async () => {
     const student = await createActiveStudent();
 
-    const response = await request(app).post('/classes').send({
+    const response = await authRequest.post('/classes').send({
       studentId: student.id,
       date: '2026-08-15',
       period: 'morning',
@@ -67,7 +65,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate();
 
-    await request(app).post('/classes').send({
+    await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -78,7 +76,7 @@ describe('classes API', () => {
       linkedAbsenceIds: [],
     });
 
-    const response = await request(app).post('/classes').send({
+    const response = await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -99,7 +97,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate();
 
-    await request(app).post('/classes').send({
+    await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'afternoon',
@@ -110,11 +108,11 @@ describe('classes API', () => {
       linkedAbsenceIds: [],
     });
 
-    const byDate = await request(app).get(`/classes?date=${classDate}`);
+    const byDate = await authRequest.get(`/classes?date=${classDate}`);
     expect(byDate.status).toBe(200);
     expect(byDate.body.length).toBe(1);
 
-    const byWeek = await request(app).get(
+    const byWeek = await authRequest.get(
       `/classes/week?start=${getWeekStartKeyForDate(classDate)}`,
     );
     expect(byWeek.status).toBe(200);
@@ -125,7 +123,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate(11);
 
-    await request(app).post('/classes').send({
+    await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -136,9 +134,7 @@ describe('classes API', () => {
       linkedAbsenceIds: [],
     });
 
-    const response = await request(app).get(
-      `/classes/by-student/${student.id}`,
-    );
+    const response = await authRequest.get(`/classes/by-student/${student.id}`);
 
     expect(response.status).toBe(200);
     expect(response.body.length).toBe(1);
@@ -149,7 +145,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate(12);
 
-    const created = await request(app).post('/classes').send({
+    const created = await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -160,12 +156,12 @@ describe('classes API', () => {
       linkedAbsenceIds: [],
     });
 
-    const deleteResponse = await request(app).delete(
+    const deleteResponse = await authRequest.delete(
       `/classes/${created.body.id}`,
     );
     expect(deleteResponse.status).toBe(204);
 
-    const showResponse = await request(app).get(`/classes/${created.body.id}`);
+    const showResponse = await authRequest.get(`/classes/${created.body.id}`);
     expect(showResponse.status).toBe(404);
 
     const classesOnDate = await prisma.class.findMany({
@@ -178,7 +174,7 @@ describe('classes API', () => {
     const student = await createActiveStudent();
     const classDate = getFutureClassDate(11);
 
-    const created = await request(app).post('/classes').send({
+    const created = await authRequest.post('/classes').send({
       studentId: student.id,
       date: classDate,
       period: 'morning',
@@ -189,7 +185,7 @@ describe('classes API', () => {
       linkedAbsenceIds: [],
     });
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.body.id}/reschedule`)
       .send({
         date: classDate,
@@ -209,25 +205,23 @@ describe('classes API', () => {
   it('rejects ad-hoc class in a period with recurring class', async () => {
     const classDate = getFutureWeekdayDate(4);
 
-    const recurringStudent = await request(app)
-      .post('/students')
-      .send({
-        name: 'Aluno Recorrente',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-1101',
-        hourlyRate: 60,
-        recurrences: [
-          {
-            weekday: 4,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-        ],
-      });
+    const recurringStudent = await authRequest.post('/students').send({
+      name: 'Aluno Recorrente',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-1101',
+      hourlyRate: 60,
+      recurrences: [
+        {
+          weekday: 4,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
 
     const sporadicStudent = await createActiveStudent();
 
-    const response = await request(app).post('/classes').send({
+    const response = await authRequest.post('/classes').send({
       studentId: sporadicStudent.id,
       date: classDate,
       period: 'morning',
@@ -249,25 +243,23 @@ describe('classes API', () => {
   });
 
   it('extends recurrence horizon when listing classes by week', async () => {
-    const created = await request(app)
-      .post('/students')
-      .send({
-        name: 'Aluno Horizonte',
-        guardianName: 'Responsável',
-        phone: '(11) 98888-1102',
-        hourlyRate: 60,
-        recurrences: [
-          {
-            weekday: 2,
-            startTime: '08:00',
-            endTime: '09:00',
-          },
-        ],
-      });
+    const created = await authRequest.post('/students').send({
+      name: 'Aluno Horizonte',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-1102',
+      hourlyRate: 60,
+      recurrences: [
+        {
+          weekday: 2,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
 
     await prisma.class.deleteMany({ where: { studentId: created.body.id } });
 
-    const response = await request(app).get(
+    const response = await authRequest.get(
       `/classes/week?start=${getWeekStartKeyForDate(getFutureClassDate())}`,
     );
 

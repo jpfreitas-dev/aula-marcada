@@ -1,26 +1,22 @@
-import request from 'supertest';
-
 import { ClassPeriod } from '../../generated/prisma/client';
-import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
 import { getFutureClassDate } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
 async function createActiveStudent(hourlyRate = 60) {
-  const response = await request(app)
-    .post('/students')
-    .send({
-      name: 'Aluno Pagamento',
-      guardianName: 'Responsável',
-      phone: `(11) 97777-${Math.floor(Math.random() * 9000 + 1000)}`,
-      hourlyRate,
-    });
+  const response = await authRequest.post('/students').send({
+    name: 'Aluno Pagamento',
+    guardianName: 'Responsável',
+    phone: `(11) 97777-${Math.floor(Math.random() * 9000 + 1000)}`,
+    hourlyRate,
+  });
 
   return response.body;
 }
 
 async function createFutureClass(studentId: string, date: string) {
-  const response = await request(app).post('/classes').send({
+  const response = await authRequest.post('/classes').send({
     studentId,
     date,
     period: 'morning',
@@ -40,7 +36,7 @@ describe('payments API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate());
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -59,7 +55,7 @@ describe('payments API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate(11));
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -82,7 +78,7 @@ describe('payments API', () => {
 
     const created = await createFutureClass(student.id, getFutureClassDate(12));
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -94,7 +90,7 @@ describe('payments API', () => {
     expect(response.body.advanceAppliedPix).toBe(90);
     expect(response.body.financialStatus).toBe('settled');
 
-    const updatedStudent = await request(app).get(`/students/${student.id}`);
+    const updatedStudent = await authRequest.get(`/students/${student.id}`);
     expect(updatedStudent.body.advanceBalancePix).toBe(10);
   });
 
@@ -102,13 +98,13 @@ describe('payments API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate(13));
 
-    await request(app).patch(`/classes/${created.id}/attendance`).send({
+    await authRequest.patch(`/classes/${created.id}/attendance`).send({
       attendance: 'attended',
       paidAmount: 30,
       paymentMethod: 'pix',
     });
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -128,7 +124,7 @@ describe('payments API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate(14));
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -170,7 +166,7 @@ describe('payments API', () => {
       },
     });
 
-    const response = await request(app)
+    const response = await authRequest
       .post(`/students/${student.id}/payments`)
       .send({ amount: 100, paymentMethod: 'pix' });
 
@@ -179,8 +175,8 @@ describe('payments API', () => {
     expect(response.body.advanceAmount).toBe(0);
     expect(response.body.settledClassIds).toEqual([older.id, newer.id]);
 
-    const olderClass = await request(app).get(`/classes/${older.id}`);
-    const newerClass = await request(app).get(`/classes/${newer.id}`);
+    const olderClass = await authRequest.get(`/classes/${older.id}`);
+    const newerClass = await authRequest.get(`/classes/${newer.id}`);
     expect(olderClass.body.financialStatus).toBe('settled');
     expect(newerClass.body.financialStatus).toBe('settled');
     expect(olderClass.body.paidPix).toBe(50);
@@ -203,7 +199,7 @@ describe('payments API', () => {
       },
     });
 
-    const response = await request(app)
+    const response = await authRequest
       .post(`/students/${student.id}/payments`)
       .send({ amount: 100, paymentMethod: 'cash' });
 
@@ -216,7 +212,7 @@ describe('payments API', () => {
   it('stores full profile payment as advance when there are no pending classes', async () => {
     const student = await createActiveStudent();
 
-    const response = await request(app)
+    const response = await authRequest
       .post(`/students/${student.id}/payments`)
       .send({ amount: 75, paymentMethod: 'pix' });
 
@@ -237,15 +233,15 @@ describe('payments API', () => {
 
     const created = await createFutureClass(student.id, '2026-12-10');
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'attended', paidAmount: 0 });
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'empty' });
 
-    const updatedStudent = await request(app).get(`/students/${student.id}`);
+    const updatedStudent = await authRequest.get(`/students/${student.id}`);
     expect(updatedStudent.body.advanceBalancePix).toBe(100);
   });
 });

@@ -1,26 +1,22 @@
-import request from 'supertest';
-
 import { ClassPeriod } from '../../generated/prisma/client';
-import { app } from '@/app';
 import { dateFromDateKey } from '@/utils/workday';
 import { getFutureClassDate } from './helpers/dates';
+import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
 async function createActiveStudent() {
-  const response = await request(app)
-    .post('/students')
-    .send({
-      name: 'Aluno Agenda',
-      guardianName: 'Responsável',
-      phone: `(11) 98888-${Math.floor(Math.random() * 9000 + 1000)}`,
-      hourlyRate: 60,
-    });
+  const response = await authRequest.post('/students').send({
+    name: 'Aluno Agenda',
+    guardianName: 'Responsável',
+    phone: `(11) 98888-${Math.floor(Math.random() * 9000 + 1000)}`,
+    hourlyRate: 60,
+  });
 
   return response.body;
 }
 
 async function createFutureClass(studentId: string, date: string) {
-  const response = await request(app).post('/classes').send({
+  const response = await authRequest.post('/classes').send({
     studentId,
     date,
     period: 'morning',
@@ -40,7 +36,7 @@ describe('classes attendance API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate());
 
-    const absentResponse = await request(app)
+    const absentResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'absent' });
 
@@ -48,7 +44,7 @@ describe('classes attendance API', () => {
     expect(absentResponse.body.attendance).toBe('absent');
     expect(absentResponse.body.pendingMakeupMinutes).toBe(60);
 
-    const attendedResponse = await request(app)
+    const attendedResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({
         attendance: 'attended',
@@ -66,11 +62,11 @@ describe('classes attendance API', () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, '2026-12-15');
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'attended' });
 
-    const clearResponse = await request(app)
+    const clearResponse = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'empty' });
 
@@ -93,11 +89,11 @@ describe('classes attendance API', () => {
       },
     });
 
-    await request(app)
+    await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'absent' });
 
-    const response = await request(app)
+    const response = await authRequest
       .patch(`/classes/${created.id}/attendance`)
       .send({ attendance: 'empty' });
 
