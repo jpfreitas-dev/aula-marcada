@@ -1,13 +1,16 @@
-import cors from 'cors';
 import express from 'express';
 
+import { env } from '@/config/env';
+import { corsMiddleware } from '@/middlewares/cors';
 import { errorHandling } from '@/middlewares/error-handling';
+import { helmetMiddleware } from '@/middlewares/helmet';
 import { routes } from '@/routes';
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.use(helmetMiddleware);
+app.use(corsMiddleware);
+app.use(express.json({ limit: env.jsonBodyLimit }));
 
 app.use(routes);
 

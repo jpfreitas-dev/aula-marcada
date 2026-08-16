@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
       POSTGRES_DB: ${POSTGRES_DB:-app}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -29,6 +29,13 @@ services:
     environment:
       PORT: 3333
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-app}
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_EMAIL: ${AUTH_EMAIL}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      LOGIN_RATE_LIMIT_MAX: ${LOGIN_RATE_LIMIT_MAX:-5}
+      LOGIN_RATE_LIMIT_WINDOW_MS: ${LOGIN_RATE_LIMIT_WINDOW_MS:-900000}
+      JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-1mb}
     volumes:
       - ./apps/backend:/app/apps/backend
       - /app/apps/backend/node_modules

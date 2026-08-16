@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test('home page shows agenda shell', async ({ page }) => {
-  await page.goto('/');
+import { loginThroughUi } from './helpers/auth';
 
+test.beforeEach(async ({ page }) => {
+  await loginThroughUi(page);
+});
+
+test('home page shows agenda shell', async ({ page }) => {
   await expect(
-    page.getByRole('heading', { name: 'AULAS DE REFORÇO' }),
+    page.getByRole('heading', { name: 'AULA MARCADA' }),
   ).toBeVisible();
   await expect(
     page.getByRole('navigation', { name: 'Navegação principal' }),
@@ -14,8 +18,6 @@ test('home page shows agenda shell', async ({ page }) => {
 });
 
 test('bottom navigation routes between main screens', async ({ page }) => {
-  await page.goto('/');
-
   await page.getByRole('link', { name: 'Alunos' }).click();
   await expect(page.getByPlaceholder('Buscar aluno...')).toBeVisible();
 

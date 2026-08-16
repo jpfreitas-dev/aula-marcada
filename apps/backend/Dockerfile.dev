@@ -19,4 +19,4 @@ RUN npm run prisma:generate
 
 EXPOSE 3333
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "cd /app && npm install --workspace @aula-marcada/backend --ignore-scripts && cd apps/backend && npm run dev"]

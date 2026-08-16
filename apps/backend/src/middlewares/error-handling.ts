@@ -11,6 +11,7 @@ export const errorHandling: ErrorRequestHandler = (
   _next,
 ) => {
   void _next;
+
   if (error instanceof AppError) {
     response.status(error.statusCode).json({
       message: error.message,
