@@ -1,4 +1,4 @@
-# Design System — App de Aulas de Reforço
+# Design System — AULA MARCADA
 
 Tom visual: **branco e roxo**. Identidade limpa, confiável e organizada — como uma agenda pessoal bem cuidada, não um app corporativo genérico.
 
@@ -35,7 +35,7 @@ Tom visual: **branco e roxo**. Identidade limpa, confiável e organizada — com
 
 | Papel         | Fonte                   | Uso                                                                        |
 | ------------- | ----------------------- | -------------------------------------------------------------------------- |
-| Display       | **Sora** (600/700)      | Títulos, header "AULAS DE REFORÇO", nomes de tela                          |
+| Display       | **Sora** (600/700)      | Títulos, header "AULA MARCADA", nomes de tela                              |
 | Texto         | **Inter** (400/500)     | Corpo, labels, textos de card                                              |
 | Dados/números | **IBM Plex Mono** (500) | Valores em R$, horários — alinhamento numérico limpo nas telas financeiras |
 
@@ -88,7 +88,7 @@ O botão **+** central deve se destacar visualmente dos outros 4 (maior, elevado
 
 ```
 ┌──────────────────────────────────────────┐
-│  AULAS DE REFORÇO                         │
+│  AULA MARCADA                         │
 ├──────────────────────────────────────────┤
 │  ◀   Segunda, 20 de julho   ▶             │
 │                                            │

@@ -212,7 +212,7 @@ Critério de conclusão: `main` e `develop` existem; docs e design estão versio
    - Tailwind com tokens do design system (`DESIGN_SYSTEM.md` / `tokens.json`);
    - React Router com rotas vazias/placeholders: `/`, `/students`, `/students/:id`, `/financial`;
    - Axios client (`VITE_API_URL`);
-   - layout shell: header “Aulas de reforço” + bottom nav (Início, Alunos, +, Financeiro, Mais);
+   - layout shell: header “AULA MARCADA” + bottom nav (Início, Alunos, +, Financeiro, Mais);
    - Playwright instalado (sem suíte completa ainda).
 
 ### 5.2 Fora desta fase

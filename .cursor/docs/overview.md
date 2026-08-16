@@ -14,7 +14,7 @@ Os modais possuem estruturas visuais semelhantes e poderão posteriormente ser r
 
 # 1. Tela de Aulas
 
-A tela inicial da aplicação é a agenda de aulas de reforço.
+A tela inicial da aplicação é a agenda de aulas do AULA MARCADA.
 
 Ela deve permitir visualizar:
 
@@ -695,7 +695,7 @@ Cada situação deve ter diferenciação visual correspondente.
 
 Ao clicar no card do aluno, o usuário entra na tela **Perfil do aluno**.
 
-Essa é a única tela que substitui o cabeçalho padrão de **Aulas de reforço**.
+Essa é a única tela que substitui o cabeçalho padrão de **AULA MARCADA**.
 
 No lugar dele:
 
