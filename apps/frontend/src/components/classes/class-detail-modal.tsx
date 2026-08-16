@@ -286,13 +286,19 @@ export function ClassDetailModal({
 
   const handleSelectPaymentMethod = (method: PaymentMethod | undefined) => {
     setPaymentMethod(method);
-    if (method && attendance === 'attended' && willApplyAdvance) {
+
+    if (!method) {
+      setPaidAmountInput(formatCurrencyInput(0));
+      return;
+    }
+
+    if (attendance === 'attended' && willApplyAdvance) {
       setPaidAmountInput(
         formatCurrencyInput(
           Math.max(session.expectedAmount - advanceAllocation, 0),
         ),
       );
-    } else if (method && attendance === 'attended' && !willApplyAdvance) {
+    } else if (attendance === 'attended' && !willApplyAdvance) {
       setPaidAmountInput(
         formatCurrencyInput(
           settledWithoutMoreDue
