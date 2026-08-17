@@ -237,8 +237,8 @@ Referências em `docs/design/screens/` alinhadas ao `overview.md`. Em conflito, 
 
 ## 8. Próximo passo imediato
 
-Quando autorizado a executar código:
+O código de go-live (migrate no start, `render.yaml`, `vercel.json`, guia no README) já está em `develop`.
 
-1. PR `chore/production-hosting`: script de migrate+start na API, rewrite SPA, env examples alinhados a Vercel/Render/Neon.
+1. Abrir PR `develop` → `main` e mergear a primeira release.
 2. Seguir o checklist da seção 3 (Neon → Render → cron → Vercel → smoke).
 3. Só então CI/E2E/README completo (seção 5.1).
