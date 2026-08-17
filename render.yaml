@@ -1,0 +1,44 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# After linking this repo, set secret env vars in the Render dashboard:
+# DATABASE_URL (Neon pooled URL), AUTH_EMAIL, AUTH_PASSWORD, FRONTEND_URL.
+#
+# The cron job pings GET /health to reduce cold starts on the free plan.
+
+services:
+  - type: web
+    name: aula-marcada-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build:backend
+    startCommand: npm run start:backend
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AUTH_EMAIL
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: cron
+    name: aula-marcada-api-keepalive
+    runtime: node
+    plan: free
+    region: oregon
+    schedule: '*/10 * * * *'
+    buildCommand: 'true'
+    startCommand: 'curl -fsS "$API_URL/health" > /dev/null'
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: aula-marcada-api
+          envVarKey: RENDER_EXTERNAL_URL
