@@ -24,6 +24,7 @@ import type { Student } from '@/types';
 import {
   calculateExpectedAmount,
   formatCurrencyInput,
+  formatCurrencyInputFromRaw,
   parseCurrencyInput,
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
@@ -532,8 +533,13 @@ function ScheduleClassForm({
                   R$
                 </span>
                 <input
+                  inputMode="numeric"
                   value={amountInput}
-                  onChange={(event) => setAmountInput(event.target.value)}
+                  onChange={(event) =>
+                    setAmountInput(
+                      formatCurrencyInputFromRaw(event.target.value),
+                    )
+                  }
                   className={`${fieldControlClassName} pl-10 pr-3 font-mono`}
                 />
               </div>
