@@ -895,6 +895,16 @@ services:
 
 O Docker Compose tem como objetivo facilitar o desenvolvimento local e reproduzir o ambiente necessário para executar a aplicação.
 
+Não é obrigatório em produção. A hospedagem prevista nesta fase (sem VPS) é:
+
+- frontend estático na **Vercel**;
+- API Node no **Render**;
+- PostgreSQL no **Neon**.
+
+A rota `GET /health` permanece pública para health check e para um cron que evite idle da API no plano gratuito. Variáveis de produção seguem a mesma lista documentada nos `.env.example` (`DATABASE_URL`, `JWT_SECRET`, `AUTH_EMAIL`, `AUTH_PASSWORD`, `FRONTEND_URL`, `VITE_API_URL`).
+
+Detalhes operacionais de go-live ficam em `.cursor/docs/implementation-plan.md`.
+
 ---
 
 # 6. TypeScript e ferramentas
