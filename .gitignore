@@ -10,6 +10,8 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+apps/frontend/*.config.d.ts
+apps/frontend/*.config.d.ts.map
 
 # Test / coverage
 coverage/
