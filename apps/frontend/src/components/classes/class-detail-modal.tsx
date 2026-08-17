@@ -45,6 +45,7 @@ type ClassDetailModalProps = {
 };
 
 type AttendanceDraft = AttendanceStatus;
+type PaymentSelection = null | 'unpaid' | PaymentMethod;
 
 export function ClassDetailModal({
   open,
@@ -55,9 +56,8 @@ export function ClassDetailModal({
   const [student, setStudent] = useState<Student | null>(null);
   const [attendance, setAttendance] = useState<AttendanceDraft>('empty');
   const [paidAmountInput, setPaidAmountInput] = useState('0,00');
-  const [paymentMethod, setPaymentMethod] = useState<
-    PaymentMethod | undefined
-  >();
+  const [paymentSelection, setPaymentSelection] =
+    useState<PaymentSelection>(null);
   const [content, setContent] = useState('');
   const [notes, setNotes] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -77,6 +77,10 @@ export function ClassDetailModal({
     setNotes(loaded.notes ?? '');
     setError(null);
 
+    const setPaymentFromMethod = (method: PaymentMethod | undefined) => {
+      setPaymentSelection(method ?? null);
+    };
+
     if (loaded.attendance === 'attended') {
       const advanceApplied = getAdvanceAppliedTotal(loaded);
       const directPaid = getDirectPaidAmount(loaded);
@@ -85,24 +89,24 @@ export function ClassDetailModal({
 
       if (advanceApplied >= loaded.expectedAmount && due === 0) {
         setPaidAmountInput(formatCurrencyInput(0));
-        setPaymentMethod(undefined);
+        setPaymentSelection(null);
         return;
       }
 
       if (due === 0) {
         setPaidAmountInput(formatCurrencyInput(directPaid));
-        setPaymentMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
+        setPaymentFromMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
         return;
       }
 
       if (advanceApplied > 0 || directPaid > 0) {
         setPaidAmountInput(formatCurrencyInput(due));
-        setPaymentMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
+        setPaymentFromMethod(directMethod ?? loaded.paymentMethod ?? 'pix');
         return;
       }
 
       setPaidAmountInput(formatCurrencyInput(due || loaded.expectedAmount));
-      setPaymentMethod(undefined);
+      setPaymentSelection(null);
       return;
     }
 
@@ -114,18 +118,18 @@ export function ClassDetailModal({
 
     if (advanceAllocation >= loaded.expectedAmount) {
       setPaidAmountInput(formatCurrencyInput(0));
-      setPaymentMethod(undefined);
+      setPaymentSelection(null);
       return;
     }
 
     if (advanceAllocation > 0) {
       setPaidAmountInput(formatCurrencyInput(remainingDue));
-      setPaymentMethod('pix');
+      setPaymentSelection('pix');
       return;
     }
 
     setPaidAmountInput(formatCurrencyInput(loaded.expectedAmount));
-    setPaymentMethod(loaded.paymentMethod);
+    setPaymentSelection(loaded.paymentMethod ?? null);
   };
 
   const reloadSession = async () => {
@@ -182,6 +186,10 @@ export function ClassDetailModal({
   const makeupCovered =
     session.attendance === 'absent' && isMakeupFullyCovered(session);
   const paidAmount = parseCurrencyInput(paidAmountInput);
+  const paymentMethod =
+    paymentSelection === 'pix' || paymentSelection === 'cash'
+      ? paymentSelection
+      : undefined;
   const classEnded = isClassSessionEnded(session);
   const attendanceLocked = lockedReposta;
   const deleteBlocked = lockedReposta;
@@ -245,7 +253,9 @@ export function ClassDetailModal({
     !(isAlreadyAttended && session.paidAmount > 0);
   const showPaymentAmount =
     attendance === 'attended' &&
-    (fullyCoveredByAdvance || Boolean(paymentMethod));
+    (fullyCoveredByAdvance ||
+      paymentSelection === 'pix' ||
+      paymentSelection === 'cash');
   const inputDisabled = fullyCoveredByAdvance || settledWithoutMoreDue;
 
   const toggleAttendance = (next: Exclude<AttendanceStatus, 'empty'>) => {
@@ -270,13 +280,13 @@ export function ClassDetailModal({
 
         if (consumption.usedTotal >= session.expectedAmount) {
           setPaidAmountInput(formatCurrencyInput(0));
-          setPaymentMethod(undefined);
+          setPaymentSelection(null);
         } else if (consumption.usedTotal > 0) {
           setPaidAmountInput(formatCurrencyInput(due));
-          setPaymentMethod('pix');
+          setPaymentSelection('pix');
         } else {
           setPaidAmountInput(formatCurrencyInput(session.expectedAmount));
-          setPaymentMethod(undefined);
+          setPaymentSelection(null);
         }
       }
 
@@ -284,11 +294,15 @@ export function ClassDetailModal({
     });
   };
 
-  const handleSelectPaymentMethod = (method: PaymentMethod | undefined) => {
-    setPaymentMethod(method);
+  const handleSelectPaymentMethod = (selection: PaymentSelection) => {
+    setPaymentSelection(selection);
 
-    if (!method) {
+    if (selection === 'unpaid') {
       setPaidAmountInput(formatCurrencyInput(0));
+      return;
+    }
+
+    if (!selection) {
       return;
     }
 
@@ -321,9 +335,21 @@ export function ClassDetailModal({
     try {
       const parsedPayment = parseCurrencyInput(paidAmountInput);
       const newMoney =
-        attendance === 'attended' && !fullyCoveredByAdvance
-          ? Math.min(Math.max(parsedPayment, 0), maxPaymentAmount)
-          : 0;
+        paymentSelection === 'unpaid'
+          ? 0
+          : attendance === 'attended' && !fullyCoveredByAdvance
+            ? Math.min(Math.max(parsedPayment, 0), maxPaymentAmount)
+            : 0;
+
+      if (
+        attendance === 'attended' &&
+        !fullyCoveredByAdvance &&
+        paymentSelection === null
+      ) {
+        setError('Selecione Pix, Dinheiro ou Não pago.');
+        setSaving(false);
+        return;
+      }
 
       if (attendance === 'attended' && newMoney > 0 && !paymentMethod) {
         setError('Selecione Pix ou Dinheiro para o valor recebido agora.');
@@ -487,7 +513,7 @@ export function ClassDetailModal({
                         type="button"
                         onClick={() => handleSelectPaymentMethod(method)}
                         className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                          paymentMethod === method
+                          paymentSelection === method
                             ? 'border-status-success/20 bg-emerald-100 text-emerald-800'
                             : 'border-outline-variant bg-surface text-on-surface-variant'
                         }`}
@@ -498,9 +524,9 @@ export function ClassDetailModal({
                     {allowUnpaidOption ? (
                       <button
                         type="button"
-                        onClick={() => handleSelectPaymentMethod(undefined)}
+                        onClick={() => handleSelectPaymentMethod('unpaid')}
                         className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-                          !paymentMethod
+                          paymentSelection === 'unpaid'
                             ? 'border-status-warning/20 bg-amber-100 text-amber-800'
                             : 'border-outline-variant bg-surface text-on-surface-variant'
                         }`}
