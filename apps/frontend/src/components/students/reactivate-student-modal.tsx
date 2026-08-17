@@ -32,7 +32,7 @@ export function ReactivateStudentModal({
     try {
       await reactivateStudent(student.id);
       onClose();
-      navigate(`/students/${student.id}`, { replace: true });
+      navigate('/students', { replace: true });
     } catch (reactivateError) {
       setError(
         reactivateError instanceof Error

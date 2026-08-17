@@ -16,39 +16,8 @@ export type StudentFinancialDisplay = {
 
 type StudentBalanceInput = Pick<
   Student,
-  'advanceBalancePix' | 'advanceBalanceCash' | 'hourlyRate'
+  'advanceBalancePix' | 'advanceBalanceCash'
 >;
-
-function formatHourCount(count: number): string {
-  return `${count} hora${count === 1 ? '' : 's'}`;
-}
-
-function formatHoursWithAmount(hours: number, amount: number): string {
-  if (hours > 0) {
-    return `${formatHourCount(hours)} (${formatCurrency(amount)})`;
-  }
-
-  return formatCurrency(amount);
-}
-
-export function resolveAdvanceHours(student: StudentBalanceInput): number {
-  if (student.hourlyRate <= 0) {
-    return 0;
-  }
-
-  return Math.floor(getStudentAdvanceBalance(student) / student.hourlyRate);
-}
-
-function resolvePendingHours(
-  student: StudentBalanceInput,
-  pending: StudentPendingSummary,
-): number {
-  if (student.hourlyRate <= 0) {
-    return 0;
-  }
-
-  return Math.floor(pending.amount / student.hourlyRate);
-}
 
 export function resolveStudentFinancialView(
   student: StudentBalanceInput,
@@ -72,27 +41,18 @@ export function getStudentFinancialDisplay(
   const view = resolveStudentFinancialView(student, pending);
 
   if (view === 'pending') {
-    const hours = resolvePendingHours(student, pending);
-    const detail = formatHoursWithAmount(hours, pending.amount);
-
     return {
       view,
-      label: `Pendente: ${detail}`,
+      label: `Pendente: ${formatCurrency(pending.amount)}`,
       tone: 'warning',
       badgeVariant: 'warning',
     };
   }
 
   if (view === 'advance') {
-    const hours = resolveAdvanceHours(student);
-    const detail = formatHoursWithAmount(
-      hours,
-      getStudentAdvanceBalance(student),
-    );
-
     return {
       view,
-      label: `Adiantado: ${detail}`,
+      label: `Adiantado: ${formatCurrency(getStudentAdvanceBalance(student))}`,
       tone: 'success',
       badgeVariant: 'success',
     };
@@ -113,28 +73,10 @@ export function getStudentFinancialBadge(
   const display = getStudentFinancialDisplay(student, pending);
 
   if (display.view === 'pending') {
-    const hours = resolvePendingHours(student, pending);
-
-    if (hours > 0) {
-      return {
-        label: `Pendente: ${formatHourCount(hours)}`,
-        variant: display.badgeVariant,
-      };
-    }
-
     return { label: 'Pendente', variant: display.badgeVariant };
   }
 
   if (display.view === 'advance') {
-    const hours = resolveAdvanceHours(student);
-
-    if (hours > 0) {
-      return {
-        label: `Saldo: ${formatHourCount(hours)}`,
-        variant: display.badgeVariant,
-      };
-    }
-
     return { label: 'Saldo adiantado', variant: display.badgeVariant };
   }
 
@@ -152,15 +94,6 @@ export function getStudentListFinancialBadge(
   }
 
   if (student.financialStatus === 'advance') {
-    const hours = resolveAdvanceHours(student);
-
-    if (hours > 0) {
-      return {
-        label: `Saldo: ${formatHourCount(hours)}`,
-        variant: 'success',
-      };
-    }
-
     return { label: 'Saldo adiantado', variant: 'success' };
   }
 

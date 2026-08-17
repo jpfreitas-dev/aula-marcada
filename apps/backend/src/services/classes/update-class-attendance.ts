@@ -34,7 +34,7 @@ class UpdateClassAttendance {
       isClassSessionEnded(existing)
     ) {
       throw new AppError(
-        'Não é possível desmarcar a presença de uma aula que já terminou.',
+        'Não é possível excluir o registro de uma aula que já terminou.',
       );
     }
 

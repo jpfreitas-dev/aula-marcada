@@ -16,7 +16,6 @@ import {
 } from '@/utils/class-value';
 import { formatCurrency } from '@/utils/currency';
 import { getStudentAdvanceBalance } from '@/utils/advance-balance';
-import { resolveAdvanceHours } from '@/utils/student-financial';
 
 type ReceivePaymentModalProps = {
   open: boolean;
@@ -68,7 +67,7 @@ function ReceivePaymentForm({
   const [saving, setSaving] = useState(false);
 
   const amount = parseCurrencyInput(amountInput);
-  const advanceHours = resolveAdvanceHours(student);
+  const advanceBalance = getStudentAdvanceBalance(student);
 
   const allocationPreview = useMemo(() => {
     if (amount <= 0) {
@@ -125,8 +124,8 @@ function ReceivePaymentForm({
         ) : (
           <p className="rounded-md bg-bg-subtle px-3 py-2 text-sm text-text-muted">
             Sem pendências. O valor entra como saldo adiantado
-            {advanceHours > 0
-              ? ` (atual: ${advanceHours}h · ${formatCurrency(getStudentAdvanceBalance(student))})`
+            {advanceBalance > 0
+              ? ` (atual: ${formatCurrency(advanceBalance)})`
               : ''}
             .
           </p>

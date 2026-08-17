@@ -53,9 +53,20 @@ export function getRecurrenceHorizonEnd(reference = new Date()): Date {
   return end;
 }
 
+export function isRecurrenceOccurrenceUpcoming(
+  dateKey: string,
+  startTime: string,
+  reference = new Date(),
+): boolean {
+  return (
+    getClassStartTimestampFromKey(dateKey, startTime) > reference.getTime()
+  );
+}
+
 export function getRecurrenceDates(
   weekday: number,
   reference = new Date(),
+  startTime?: string,
 ): string[] {
   const base = getDefaultAgendaDate(reference);
   const end = getRecurrenceHorizonEnd(reference);
@@ -66,7 +77,12 @@ export function getRecurrenceDates(
     const dateKey = toDateKey(cursor);
 
     if (getWeekdayFromDateKey(dateKey) === weekday) {
-      dates.push(dateKey);
+      if (
+        !startTime ||
+        isRecurrenceOccurrenceUpcoming(dateKey, startTime, reference)
+      ) {
+        dates.push(dateKey);
+      }
     }
 
     cursor.setDate(cursor.getDate() + 1);
@@ -153,7 +169,11 @@ export function buildGeneratedClassData(
     attendance: AttendanceStatus;
   }> = [];
 
-  for (const dateKey of getRecurrenceDates(recurrence.weekday)) {
+  for (const dateKey of getRecurrenceDates(
+    recurrence.weekday,
+    new Date(),
+    recurrence.startTime,
+  )) {
     const slotKey = `${dateKey}-${periodLabel}`;
     if (occupiedSlots.has(slotKey)) {
       continue;

@@ -5,6 +5,7 @@ import {
   ALL_PERIODS,
   ALL_WEEKDAYS,
   getRecurrenceDates,
+  isRecurrenceOccurrenceUpcoming,
   periodToPrisma,
   WEEKDAY_LABELS,
 } from '@/services/students/recurrence-scheduler';
@@ -13,7 +14,11 @@ import {
   formatSporadicClassConflict,
   prismaPeriodToClassPeriod,
 } from '@/utils/schedule-conflict';
-import { minutesBetween, periodFromStartTime } from '@/utils/time';
+import {
+  minutesBetween,
+  periodFromStartTime,
+  defaultStartTimeForPeriod,
+} from '@/utils/time';
 import { getWeekdayFromDateKey, toDateKey } from '@/utils/workday';
 
 export type RecurrenceAvailabilityContext = {
@@ -142,6 +147,8 @@ function isPeriodAvailableOnWeekday(
   period: 'morning' | 'afternoon',
   pendingRecurrences: CreateStudentRecurrenceInput[],
   excludeStudentId?: string,
+  startTime?: string,
+  reference = new Date(),
 ): boolean {
   if (
     isPeriodBlockedByOtherStudentRecurrence(
@@ -154,7 +161,9 @@ function isPeriodAvailableOnWeekday(
     return false;
   }
 
-  return getRecurrenceDates(weekday).every(
+  const effectiveStartTime = startTime ?? defaultStartTimeForPeriod(period);
+
+  return getRecurrenceDates(weekday, reference, effectiveStartTime).every(
     (dateKey) =>
       !isSlotBlocked(
         context,
@@ -230,7 +239,11 @@ function validateSporadicConflictsInHorizon(
 
     const period = periodFromWeekdayRecurrence(recurrence);
     const prismaPeriod = periodToPrisma(period);
-    const dates = getRecurrenceDates(recurrence.weekday);
+    const dates = getRecurrenceDates(
+      recurrence.weekday,
+      new Date(),
+      recurrence.startTime,
+    );
 
     for (const dateKey of dates) {
       const conflictingClass = context.classes.find(
@@ -299,6 +312,7 @@ export function validateRecurrencesInContext(
         period,
         otherRecurrences,
         excludeStudentId,
+        recurrence.startTime,
       )
     ) {
       const blockingRecurrence = findBlockingRecurrence(
@@ -319,10 +333,12 @@ export function validateRecurrencesInContext(
       }
 
       const conflictingClass = context.classes.find((session) => {
-        const sessionWeekday = getWeekdayFromDateKey(toDateKey(session.date));
+        const dateKey = toDateKey(session.date);
+        const sessionWeekday = getWeekdayFromDateKey(dateKey);
         return (
           sessionWeekday === recurrence.weekday &&
-          prismaPeriodToClassPeriod(session.period) === period
+          prismaPeriodToClassPeriod(session.period) === period &&
+          isRecurrenceOccurrenceUpcoming(dateKey, recurrence.startTime)
         );
       });
 
