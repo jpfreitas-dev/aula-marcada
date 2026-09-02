@@ -35,9 +35,9 @@ function ChartSection({
   const chartSlices = aggregateSlicesForPie(slices, { formatOthersLegend });
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm">
+    <section className="flex flex-col gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm md:p-5">
       <h3 className="font-display text-sm font-bold text-text-main">{title}</h3>
-      <div className="flex w-full flex-col items-center gap-4 overflow-visible">
+      <div className="flex w-full flex-col items-center gap-4 overflow-visible md:gap-5">
         <FinancialPieChart slices={chartSlices} />
         <FinancialPieLegend
           slices={chartSlices}
@@ -56,7 +56,7 @@ export function FinancialStudentCharts({
   const absenceValueSlices = buildAbsenceValueSlices(absences);
 
   return (
-    <div className="flex flex-col gap-stack-md">
+    <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2">
       <section className="flex flex-col gap-2">
         <h2 className="font-display text-base font-bold text-text-main">
           Quem mais paga

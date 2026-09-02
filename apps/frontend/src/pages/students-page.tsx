@@ -113,38 +113,41 @@ export function StudentsPage() {
             : 'Nenhum aluno encontrado.'}
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {filteredStudents.map((student) => {
             const financialBadge = getStudentListFinancialBadge(student);
 
             return (
-              <li key={student.id}>
+              <li key={student.id} className="min-w-0">
                 <Link
                   to={`/students/${student.id}`}
-                  className="block rounded-xl border border-outline-variant bg-white p-4 transition-transform active:scale-[0.99]"
+                  className="block h-full rounded-xl border border-outline-variant bg-white p-4 transition-transform active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="font-display text-base font-bold text-text-main">
+                    <span className="min-w-0 font-display text-base font-bold text-text-main">
                       {student.name}
                     </span>
                     {showingFormer ? (
                       <Badge
                         label="Ex-aluno"
                         variant="neutral"
-                        className="px-2.5 py-1"
+                        className="shrink-0 px-2.5 py-1"
                       />
                     ) : (
                       <Badge
                         label={financialBadge.label}
                         variant={financialBadge.variant}
-                        className="px-2.5 py-1"
+                        className="shrink-0 px-2.5 py-1"
                       />
                     )}
                   </div>
                   {!showingFormer ? (
-                    <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
-                      <Icon name="calendar_month" className="text-base" />
-                      <span>
+                    <div className="mt-2 flex min-w-0 items-center gap-1.5 text-sm text-text-muted">
+                      <Icon
+                        name="calendar_month"
+                        className="shrink-0 text-base"
+                      />
+                      <span className="min-w-0">
                         Próxima aula:{' '}
                         {formatRelativeNextClass(student.nextClassAt)}
                       </span>

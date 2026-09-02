@@ -10,22 +10,20 @@ export type FinancialPieSlice = {
 
 type FinancialPieChartProps = {
   slices: FinancialPieSlice[];
-  size?: number;
 };
 
 const PIE_MARGIN = { top: 8, right: 12, bottom: 8, left: 8 };
 
-export function FinancialPieChart({
-  slices,
-  size = 160,
-}: FinancialPieChartProps) {
+const chartFrameClassName =
+  'chart-non-interactive mx-auto h-40 w-full max-w-[180px] md:h-48 md:max-w-[220px]';
+
+export function FinancialPieChart({ slices }: FinancialPieChartProps) {
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   if (total <= 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-full bg-surface-variant/40 text-xs text-text-muted"
-        style={{ width: size, height: size }}
+        className={`${chartFrameClassName} flex items-center justify-center rounded-full bg-surface-variant/40 text-xs text-text-muted`}
       >
         Sem dados
       </div>
@@ -33,11 +31,8 @@ export function FinancialPieChart({
   }
 
   return (
-    <div
-      className="chart-non-interactive mx-auto w-full max-w-[180px]"
-      style={{ height: size }}
-    >
-      <ResponsiveContainer width="100%" height={size} minWidth={0}>
+    <div className={chartFrameClassName}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <PieChart margin={PIE_MARGIN}>
           <Pie
             data={slices}

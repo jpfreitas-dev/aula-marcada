@@ -36,7 +36,7 @@ export function BottomSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center md:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
@@ -48,8 +48,8 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
-        className={`relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl bg-white shadow-2xl ${
-          tall ? 'h-[85dvh]' : 'max-h-[95dvh]'
+        className={`relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl bg-white shadow-2xl md:max-w-xl md:rounded-2xl ${
+          tall ? 'h-[85dvh]' : 'max-h-[95dvh] md:max-h-[90dvh]'
         }`}
       >
         <div className="relative z-20 shrink-0 bg-white">

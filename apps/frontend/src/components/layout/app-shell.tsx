@@ -9,12 +9,14 @@ import { ScheduleModalProvider } from '@/context/schedule-modal-context';
 
 function ShellLayout() {
   return (
-    <div className="mx-auto flex h-dvh max-w-lg flex-col overflow-hidden bg-bg-subtle">
-      <AppHeader />
-      <main className="scroll-area flex-1 px-margin-main py-stack-md pb-24">
-        <Outlet />
-      </main>
-      <BottomNav />
+    <div className="h-dvh bg-surface-dim/40 md:px-6 md:py-4">
+      <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden bg-bg-subtle md:rounded-xl md:shadow-sm">
+        <AppHeader />
+        <main className="scroll-area flex-1 px-margin-main py-stack-md pb-24 md:px-6 lg:px-8">
+          <Outlet />
+        </main>
+        <BottomNav />
+      </div>
     </div>
   );
 }

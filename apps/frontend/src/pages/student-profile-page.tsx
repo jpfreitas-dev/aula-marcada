@@ -184,22 +184,25 @@ export function StudentProfilePage() {
         </p>
       </section>
 
-      <StudentFinancialCard
-        label={financialContent.label}
-        tone={financialContent.tone}
-        onReceivePayment={
-          student.active ? () => setReceivePaymentOpen(true) : undefined
-        }
-      />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <StudentFinancialCard
+          label={financialContent.label}
+          tone={financialContent.tone}
+          onReceivePayment={
+            student.active ? () => setReceivePaymentOpen(true) : undefined
+          }
+        />
 
-      <StudentSettingsCard
-        hourlyRate={student.hourlyRate}
-        recurrences={recurrences}
-        onEdit={student.active ? () => setSettingsModalOpen(true) : undefined}
-      />
+        <StudentSettingsCard
+          hourlyRate={student.hourlyRate}
+          recurrences={recurrences}
+          onEdit={student.active ? () => setSettingsModalOpen(true) : undefined}
+        />
 
-      <StudentAttendanceCard sessions={studentClasses} />
-
+        <div className="lg:col-span-2">
+          <StudentAttendanceCard sessions={studentClasses} />
+        </div>
+      </div>
       {student.active ? (
         <Button
           type="button"

@@ -14,11 +14,13 @@ export function EmptySlot({
   return (
     <button
       type="button"
-      className={`flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-outline-variant bg-bg-subtle p-card-padding transition-colors hover:bg-surface-variant active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-bg-subtle disabled:active:scale-100 ${className}`}
+      className={`flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-dashed border-outline-variant bg-bg-subtle p-3 transition-colors hover:bg-surface-variant active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-bg-subtle disabled:active:scale-100 md:p-card-padding ${className}`}
       {...props}
     >
-      <Icon name="add_circle" className="text-xl text-text-muted" />
-      <span className="text-sm font-medium text-text-muted">{label}</span>
+      <Icon name="add_circle" className="shrink-0 text-xl text-text-muted" />
+      <span className="text-center text-sm font-medium text-text-muted">
+        {label}
+      </span>
     </button>
   );
 }

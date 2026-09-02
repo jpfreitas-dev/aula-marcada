@@ -53,7 +53,7 @@ function PeriodSection({
   onOpenClass: (classId: string) => void;
 }) {
   return (
-    <section className="mt-4 flex flex-col gap-stack-sm">
+    <section className="flex min-w-0 flex-col gap-stack-sm">
       <h3 className="px-2 text-xs font-medium uppercase tracking-wider text-text-muted">
         {label}
       </h3>
@@ -121,7 +121,7 @@ export function HomePage() {
       />
 
       {view === 'day' ? (
-        <>
+        <div className="grid grid-cols-1 gap-stack-md md:grid-cols-2">
           <PeriodSection
             label={periodLabels.morning}
             session={getSessionForPeriod(sessions, 'morning')}
@@ -138,51 +138,61 @@ export function HomePage() {
             onAdd={openScheduleModal}
             onOpenClass={openClassDetail}
           />
-        </>
+        </div>
       ) : (
-        weekDays.map((day) => {
-          const dayKey = toDateKey(day);
-          const daySessions = sessions.filter(
-            (session) => session.date === dayKey,
-          );
-          const isToday = dayKey === todayKey;
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+          {weekDays.map((day) => {
+            const dayKey = toDateKey(day);
+            const daySessions = sessions.filter(
+              (session) => session.date === dayKey,
+            );
+            const isToday = dayKey === todayKey;
 
-          return (
-            <section
-              key={dayKey}
-              className="rounded-lg border border-outline-variant/20 bg-white p-3 shadow-sm"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-purple-900">
-                  {getWeekdayLabel(day)}, {formatShortDate(day)}
-                </h3>
-                {isToday ? (
-                  <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-xs font-semibold text-primary">
-                    Hoje
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex flex-col gap-2">
-                <PeriodSection
-                  label={periodLabels.morning}
-                  session={getSessionForPeriod(daySessions, 'morning')}
-                  date={dayKey}
-                  period="morning"
-                  onAdd={openScheduleModal}
-                  onOpenClass={openClassDetail}
-                />
-                <PeriodSection
-                  label={periodLabels.afternoon}
-                  session={getSessionForPeriod(daySessions, 'afternoon')}
-                  date={dayKey}
-                  period="afternoon"
-                  onAdd={openScheduleModal}
-                  onOpenClass={openClassDetail}
-                />
-              </div>
-            </section>
-          );
-        })
+            return (
+              <section
+                key={dayKey}
+                className="min-w-0 rounded-lg border border-outline-variant/20 bg-white p-3 shadow-sm"
+              >
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
+                  <h3 className="text-sm font-semibold text-purple-900">
+                    <span className="md:hidden">
+                      {getWeekdayLabel(day)}, {formatShortDate(day)}
+                    </span>
+                    <span className="hidden md:inline">
+                      {getWeekdayLabel(day)}
+                      <span className="mt-0.5 block text-xs font-medium text-text-muted">
+                        {formatShortDate(day)}
+                      </span>
+                    </span>
+                  </h3>
+                  {isToday ? (
+                    <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-xs font-semibold text-primary">
+                      Hoje
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <PeriodSection
+                    label={periodLabels.morning}
+                    session={getSessionForPeriod(daySessions, 'morning')}
+                    date={dayKey}
+                    period="morning"
+                    onAdd={openScheduleModal}
+                    onOpenClass={openClassDetail}
+                  />
+                  <PeriodSection
+                    label={periodLabels.afternoon}
+                    session={getSessionForPeriod(daySessions, 'afternoon')}
+                    date={dayKey}
+                    period="afternoon"
+                    onAdd={openScheduleModal}
+                    onOpenClass={openClassDetail}
+                  />
+                </div>
+              </section>
+            );
+          })}
+        </div>
       )}
     </div>
   );

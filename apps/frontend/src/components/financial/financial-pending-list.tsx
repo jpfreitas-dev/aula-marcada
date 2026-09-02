@@ -22,12 +22,12 @@ export function FinancialPendingList({ items }: FinancialPendingListProps) {
       <h2 className="font-display text-base font-bold text-text-main">
         Pagamentos pendentes
       </h2>
-      <ul className="flex flex-col gap-2">
+      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={item.id} className="min-w-0">
             <Link
               to={`/students/${item.studentId}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm transition-transform active:scale-[0.99]"
+              className="flex h-full items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm transition-transform active:scale-[0.99]"
             >
               <div className="min-w-0">
                 <p className="truncate font-display text-base font-bold text-text-main">

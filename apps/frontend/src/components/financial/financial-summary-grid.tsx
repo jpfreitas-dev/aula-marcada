@@ -18,7 +18,7 @@ const cardClassName =
 const labelClassName = 'w-full truncate text-sm font-medium text-text-muted';
 
 const valueClassName =
-  'w-full truncate font-mono font-bold leading-tight tabular-nums [font-size:clamp(0.8rem,3.2vw,1rem)]';
+  'w-full min-w-0 truncate font-mono font-bold leading-tight tabular-nums text-sm md:text-base';
 
 function SummaryCard({
   label,

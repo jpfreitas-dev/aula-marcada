@@ -28,8 +28,8 @@ export function FinancialComparisonChart({
   }, [points]);
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
-      <div className="mb-4 flex justify-center gap-4">
+    <div className="rounded-xl bg-white p-4 shadow-sm md:p-6">
+      <div className="mb-4 flex justify-center gap-4 md:mb-6">
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-3 rounded-full bg-surface-variant" />
           <span className="text-xs text-text-muted">Esperado</span>
@@ -42,13 +42,13 @@ export function FinancialComparisonChart({
 
       <div className={compact ? 'scroll-x-area' : ''}>
         <div
-          className="chart-non-interactive h-32 w-full min-w-0"
+          className="chart-non-interactive h-32 w-full min-w-0 md:h-52"
           style={chartMinWidth ? { minWidth: chartMinWidth } : undefined}
         >
-          <ResponsiveContainer width="100%" height={128} minWidth={0}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart
               data={points}
-              margin={{ top: 4, right: 12, left: 12, bottom: 0 }}
+              margin={{ top: 8, right: 16, left: 16, bottom: 4 }}
               barCategoryGap={compact ? '8%' : '20%'}
               barGap={compact ? 2 : 4}
             >
