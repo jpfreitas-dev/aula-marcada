@@ -13,7 +13,6 @@ import {
   listClassesByWeek,
 } from '@/services/class-service';
 import type { ClassPeriod, ClassSession } from '@/types';
-import { isSchedulePeriodOpen } from '@/utils/schedule-period';
 import {
   addWorkdays,
   formatShortDate,
@@ -53,8 +52,6 @@ function PeriodSection({
   onAdd: (slot: { date: string; period: ClassPeriod }) => void;
   onOpenClass: (classId: string) => void;
 }) {
-  const canSchedule = isSchedulePeriodOpen(date, period);
-
   return (
     <section className="mt-4 flex flex-col gap-stack-sm">
       <h3 className="px-2 text-xs font-medium uppercase tracking-wider text-text-muted">
@@ -63,10 +60,7 @@ function PeriodSection({
       {session ? (
         <ClassCard session={session} onClick={() => onOpenClass(session.id)} />
       ) : (
-        <EmptySlot
-          disabled={!canSchedule}
-          onClick={() => onAdd({ date, period })}
-        />
+        <EmptySlot onClick={() => onAdd({ date, period })} />
       )}
     </section>
   );

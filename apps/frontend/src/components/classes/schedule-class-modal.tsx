@@ -47,8 +47,7 @@ import {
   periodFromStartTime,
 } from '@/utils/time';
 import {
-  addWorkdays,
-  formatWorkdayLabel,
+  getAdHocScheduleDateBounds,
   getDefaultAgendaDate,
   isWeekday,
   toDateKey,
@@ -172,18 +171,7 @@ function ScheduleClassForm({
   const [pendingAbsences, setPendingAbsences] = useState<ClassSession[]>([]);
   const { refresh: refreshAgenda } = useAgendaRefresh();
 
-  const workdayOptions = useMemo(() => {
-    const base = getDefaultAgendaDate();
-    return Array.from({ length: 20 }, (_, index) => {
-      const day = addWorkdays(base, index);
-      return {
-        value: toDateKey(day),
-        label: formatWorkdayLabel(day),
-      };
-    });
-  }, []);
-  const dateMin = workdayOptions[0]?.value;
-  const dateMax = workdayOptions[workdayOptions.length - 1]?.value;
+  const { dateMin, dateMax } = useMemo(() => getAdHocScheduleDateBounds(), []);
 
   const boundedPeriods = useMemo(
     () =>

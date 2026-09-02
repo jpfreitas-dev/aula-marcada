@@ -1,8 +1,10 @@
 import { classRepository } from '@/repositories/class-repository';
 import { studentRecurrenceRepository } from '@/repositories/student-recurrence-repository';
 import type { ClassPeriod } from '@/types/class';
-import { isSchedulePeriodOpen } from '@/utils/schedule-period';
-import { periodFromPrisma } from '@/services/students/recurrence-scheduler';
+import {
+  isRecurrenceOccurrenceUpcoming,
+  periodFromPrisma,
+} from '@/services/students/recurrence-scheduler';
 import { periodFromStartTime } from '@/utils/time';
 import { getWeekdayFromDateKey } from '@/utils/workday';
 
@@ -27,16 +29,16 @@ class GetAvailablePeriods {
       recurrences
         .filter(
           (recurrence) =>
-            recurrence.student.active && recurrence.weekday === weekday,
+            recurrence.student.active &&
+            recurrence.weekday === weekday &&
+            isRecurrenceOccurrenceUpcoming(dateKey, recurrence.startTime),
         )
         .map((recurrence) => periodFromStartTime(recurrence.startTime)),
     );
 
     return ALL_PERIODS.filter(
       (period) =>
-        !occupiedPeriods.has(period) &&
-        !blockedByRecurrence.has(period) &&
-        isSchedulePeriodOpen(dateKey, period),
+        !occupiedPeriods.has(period) && !blockedByRecurrence.has(period),
     );
   }
 }

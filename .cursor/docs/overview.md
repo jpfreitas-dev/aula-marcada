@@ -119,17 +119,21 @@ O seletor de dia deve permitir **apenas datas de segunda a sexta**.
 
 Sábado e domingo não aparecem como opção e não podem ser agendados. Se o professor tentar selecionar um fim de semana no calendário do modal, a data **não** deve ser alterada, deve aparecer a mensagem **“Não é possível agendar aulas no fim de semana.”** e os demais campos do modal devem permanecer bloqueados até que um dia útil seja selecionado.
 
+O professor **pode** agendar uma aula avulsa em um **dia útil já passado** e em um **período já ocorrido no dia de hoje**, desde que o slot esteja vazio. A recorrência **não** gera aulas no passado: o horizonte continua sendo só as semanas futuras (ver §20). Conflito com recorrência vale apenas para ocorrências **ainda não começadas**; no passado, o slot só fica indisponível se já existir aula persistida.
+
+O seletor de data cobre dias úteis de cerca de **6 meses atrás** até o horizonte de **3 meses à frente**.
+
 O modal aberto pelo botão **"+"** deve iniciar sempre com a **data de hoje** (ou o próximo dia útil, se hoje for fim de semana).
 
-O modal aberto pelo botão **Adicionar aula** de um período específico deve iniciar com aquela data e restringir o horário ao período clicado (manhã ou tarde/noite). Ao **alterar a data** no modal, o horário passa a considerar os períodos ainda disponíveis na nova data (manhã, tarde/noite ou ambos, conforme ocupação e horário atual).
+O modal aberto pelo botão **Adicionar aula** de um período específico deve iniciar com aquela data e restringir o horário ao período clicado (manhã ou tarde/noite). Ao **alterar a data** no modal, o horário passa a considerar os períodos ainda disponíveis na nova data (manhã, tarde/noite ou ambos, conforme a ocupação).
 
-Se na data selecionada não houver nenhum horário disponível (períodos ocupados ou já passados), o campo de horário deve exibir **“Ocupado”** centralizado e o agendamento não pode ser salvo.
+Se na data selecionada não houver nenhum horário disponível (período que **já possui uma aula**), o campo de horário deve exibir **“Ocupado”** centralizado e o agendamento não pode ser salvo. “Ocupado” **não** se aplica só porque o dia ou o período já passou.
 
 O dia e os horários apresentados devem considerar apenas períodos disponíveis **em dias úteis**.
 
 Não deve ser possível selecionar um período que já possua uma aula.
 
-O horário de início e o horário de término devem permanecer dentro do período escolhido (manhã: 08h–12h; tarde/noite: 12h–22h). O fim deve ser posterior ao início.
+O horário de início e o horário de término devem permanecer dentro do período escolhido (manhã: 08h–12h; tarde/noite: 12h–22h). O fim deve ser posterior ao início. Em datas passadas e em períodos já ocorridos hoje, a faixa é a **faixa completa** do período — não se restringe ao horário atual.
 
 ## Aluno
 

@@ -1,5 +1,14 @@
 import { formatSporadicClassConflict } from '@/utils/schedule-conflict';
-import { getFutureWeekdayDate } from './helpers/dates';
+import {
+  dateFromDateKey,
+  getDefaultAgendaDate,
+  toDateKey,
+} from '@/utils/workday';
+import {
+  getFutureClassDate,
+  getFutureWeekdayDate,
+  getPastWeekdayDate,
+} from './helpers/dates';
 import { authRequest } from './helpers/auth-request';
 import { prisma } from './setup';
 
@@ -280,5 +289,122 @@ describe('students API', () => {
 
     expect(response.status).toBe(404);
     expect(response.body.message).toBe('Aluno não encontrado.');
+  });
+
+  it('removes only empty future classes when recurrence is cleared', async () => {
+    const weekday = 2;
+    const created = await authRequest.post('/students').send({
+      name: 'Joana Recorrencia',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-0013',
+      hourlyRate: 50,
+      recurrences: [
+        {
+          weekday,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
+
+    expect(created.status).toBe(201);
+
+    const pastMatching = await authRequest.post('/classes').send({
+      studentId: created.body.id,
+      date: getPastWeekdayDate(weekday, 10),
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 50,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+    expect(pastMatching.status).toBe(201);
+
+    const pastAdHoc = await authRequest.post('/classes').send({
+      studentId: created.body.id,
+      date: getPastWeekdayDate(weekday, 15),
+      period: 'afternoon',
+      startTime: '19:00',
+      durationMinutes: 60,
+      expectedAmount: 50,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+    expect(pastAdHoc.status).toBe(201);
+
+    const futureAdHoc = await authRequest.post('/classes').send({
+      studentId: created.body.id,
+      date: getFutureClassDate(12),
+      period: 'afternoon',
+      startTime: '19:00',
+      durationMinutes: 60,
+      expectedAmount: 50,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+    expect(futureAdHoc.status).toBe(201);
+
+    const cutoff = toDateKey(getDefaultAgendaDate());
+    const futureRecurrenceClass = await prisma.class.findFirst({
+      where: {
+        studentId: created.body.id,
+        startTime: '08:00',
+        endTime: '09:00',
+        attendance: 'EMPTY',
+        date: { gte: dateFromDateKey(cutoff) },
+      },
+      orderBy: { date: 'desc' },
+    });
+    expect(futureRecurrenceClass).toBeTruthy();
+
+    const attended = await authRequest
+      .patch(`/classes/${futureRecurrenceClass!.id}/attendance`)
+      .send({ attendance: 'attended' });
+    expect(attended.status).toBe(200);
+
+    const emptyFutureBefore = await prisma.class.count({
+      where: {
+        studentId: created.body.id,
+        attendance: 'EMPTY',
+        date: { gte: dateFromDateKey(cutoff) },
+      },
+    });
+    expect(emptyFutureBefore).toBeGreaterThan(1);
+
+    const patched = await authRequest
+      .patch(`/students/${created.body.id}/settings`)
+      .send({
+        hourlyRate: 50,
+        recurrences: [],
+      });
+
+    expect(patched.status).toBe(200);
+
+    expect(
+      await prisma.class.findUnique({ where: { id: pastMatching.body.id } }),
+    ).toBeTruthy();
+    expect(
+      await prisma.class.findUnique({ where: { id: pastAdHoc.body.id } }),
+    ).toBeTruthy();
+    expect(
+      await prisma.class.findUnique({
+        where: { id: futureRecurrenceClass!.id },
+      }),
+    ).toBeTruthy();
+    expect(
+      await prisma.class.findUnique({ where: { id: futureAdHoc.body.id } }),
+    ).toBeTruthy();
+
+    const remainingRecurrenceEmpties = await prisma.class.count({
+      where: {
+        studentId: created.body.id,
+        startTime: '08:00',
+        endTime: '09:00',
+        attendance: 'EMPTY',
+        date: { gte: dateFromDateKey(cutoff) },
+      },
+    });
+    expect(remainingRecurrenceEmpties).toBe(0);
   });
 });

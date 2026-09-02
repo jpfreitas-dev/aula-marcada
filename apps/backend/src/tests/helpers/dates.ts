@@ -23,6 +23,10 @@ export function getFutureClassDate(workdaysAhead = 10): string {
   return toUtcWeekdayDate(addWorkdays(new Date(), workdaysAhead));
 }
 
+export function getPastClassDate(workdaysBehind = 10): string {
+  return toUtcWeekdayDate(addWorkdays(new Date(), -workdaysBehind));
+}
+
 export function getFutureWeekdayDate(
   weekday: number,
   minWorkdaysAhead = 10,
@@ -31,6 +35,19 @@ export function getFutureWeekdayDate(
 
   while (getWeekdayFromDateKey(toDateKey(cursor)) !== weekday) {
     cursor = addWorkdays(cursor, 1);
+  }
+
+  return toDateKey(cursor);
+}
+
+export function getPastWeekdayDate(
+  weekday: number,
+  minWorkdaysBehind = 10,
+): string {
+  let cursor = addWorkdays(new Date(), -minWorkdaysBehind);
+
+  while (getWeekdayFromDateKey(toDateKey(cursor)) !== weekday) {
+    cursor = addWorkdays(cursor, -1);
   }
 
   return toDateKey(cursor);

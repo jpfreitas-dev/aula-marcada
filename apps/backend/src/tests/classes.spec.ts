@@ -1,7 +1,10 @@
 import { formatExistingClassConflict } from '@/utils/schedule-conflict';
+import { toDateKey } from '@/utils/workday';
 import {
   getFutureClassDate,
   getFutureWeekdayDate,
+  getPastClassDate,
+  getPastWeekdayDate,
   getWeekStartKeyForDate,
 } from './helpers/dates';
 import { authRequest } from './helpers/auth-request';
@@ -270,5 +273,100 @@ describe('classes API', () => {
     });
 
     expect(generated.length).toBeGreaterThan(10);
+  });
+
+  it('creates an ad-hoc class on a past weekday', async () => {
+    const student = await createActiveStudent();
+    const classDate = getPastClassDate();
+
+    const response = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: classDate,
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.date).toBe(classDate);
+    expect(response.body.attendance).toBe('empty');
+  });
+
+  it('rejects a past ad-hoc class when the period is already occupied', async () => {
+    const student = await createActiveStudent();
+    const classDate = getPastClassDate(8);
+
+    await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: classDate,
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+
+    const response = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: classDate,
+      period: 'morning',
+      startTime: '09:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      formatExistingClassConflict(student.name, classDate, 'morning'),
+    );
+  });
+
+  it('allows a past ad-hoc class on the same weekday as a future recurrence', async () => {
+    const weekday = 3;
+    const pastDate = getPastWeekdayDate(weekday);
+    const recurringStudent = await authRequest.post('/students').send({
+      name: 'Aluno Recorrente Passado',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-1103',
+      hourlyRate: 60,
+      recurrences: [
+        {
+          weekday,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
+
+    expect(recurringStudent.status).toBe(201);
+
+    const sporadicStudent = await createActiveStudent();
+    const response = await authRequest.post('/classes').send({
+      studentId: sporadicStudent.id,
+      date: pastDate,
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: false,
+      linkedAbsenceIds: [],
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.date).toBe(pastDate);
+
+    const generated = await prisma.class.findMany({
+      where: { studentId: recurringStudent.body.id },
+    });
+    const todayKey = toDateKey(new Date());
+    expect(generated.every((item) => toDateKey(item.date) >= todayKey)).toBe(
+      true,
+    );
   });
 });

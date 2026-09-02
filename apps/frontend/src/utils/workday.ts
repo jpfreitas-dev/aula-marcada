@@ -89,6 +89,25 @@ export function getWorkdaysOfWeek(weekStart: Date): Date[] {
   });
 }
 
+export const AD_HOC_SCHEDULE_LOOKBACK_MONTHS = 6;
+export const AD_HOC_SCHEDULE_HORIZON_MONTHS = 3;
+
+export function getAdHocScheduleDateBounds(reference = new Date()): {
+  dateMin: string;
+  dateMax: string;
+} {
+  const minDate = new Date(reference);
+  minDate.setMonth(minDate.getMonth() - AD_HOC_SCHEDULE_LOOKBACK_MONTHS);
+
+  const maxDate = getDefaultAgendaDate(reference);
+  maxDate.setMonth(maxDate.getMonth() + AD_HOC_SCHEDULE_HORIZON_MONTHS);
+
+  return {
+    dateMin: toDateKey(minDate),
+    dateMax: toDateKey(maxDate),
+  };
+}
+
 export function formatWeekRange(weekStart: Date): string {
   const workdays = getWorkdaysOfWeek(weekStart);
   const firstDay = workdays[0];

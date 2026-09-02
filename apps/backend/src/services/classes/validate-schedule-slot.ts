@@ -9,6 +9,7 @@ import {
   formatExistingClassConflict,
   formatRecurrenceConflict,
 } from '@/utils/schedule-conflict';
+import { isRecurrenceOccurrenceUpcoming } from '@/services/students/recurrence-scheduler';
 import { periodFromStartTime } from '@/utils/time';
 import { getWeekdayFromDateKey } from '@/utils/workday';
 
@@ -43,7 +44,8 @@ class ValidateScheduleSlotAvailable {
       (recurrence) =>
         recurrence.student.active &&
         recurrence.weekday === weekday &&
-        periodFromStartTime(recurrence.startTime) === period,
+        periodFromStartTime(recurrence.startTime) === period &&
+        isRecurrenceOccurrenceUpcoming(dateKey, recurrence.startTime),
     );
 
     if (blockingRecurrence) {
