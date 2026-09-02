@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { FinancialComparisonChart } from '@/components/financial/financial-comparison-chart';
+import { FinancialPendingList } from '@/components/financial/financial-pending-list';
 import { FinancialStudentCharts } from '@/components/financial/financial-student-charts';
 import { FinancialSummaryGrid } from '@/components/financial/financial-summary-grid';
 import { Icon } from '@/components/ui/icon';
@@ -161,9 +162,9 @@ export function FinancialPage() {
         options={granularityOptions}
       />
 
-      <div className="flex w-full gap-2">
+      <div className="flex w-full flex-col gap-2 md:flex-row">
         <PeriodNavigator
-          className="min-w-0 flex-[3]"
+          className="w-full md:min-w-0 md:flex-1"
           label={periodLabel}
           onPrevious={() =>
             setReferenceDate((current) =>
@@ -177,11 +178,11 @@ export function FinancialPage() {
           }
         />
 
-        <div className="relative min-w-0 flex-[2]">
+        <div className="relative w-full md:min-w-0 md:flex-1">
           <select
             value={studentFilter}
             onChange={(event) => setStudentFilter(event.target.value)}
-            className="min-h-12 w-full cursor-pointer appearance-none truncate rounded-md border border-outline-variant/30 bg-surface py-2 pl-3 pr-10 text-sm font-medium text-text-main shadow-sm focus:ring-0"
+            className="min-h-12 w-full cursor-pointer appearance-none rounded-md border border-outline-variant/30 bg-surface py-2 pl-3 pr-10 text-sm font-medium text-text-main shadow-sm focus:ring-0"
           >
             {studentOptions.map((option) => (
               <option key={option.id} value={option.id}>
@@ -227,6 +228,8 @@ export function FinancialPage() {
           comparativas por aluno.
         </p>
       )}
+
+      <FinancialPendingList items={summary.pending} />
     </div>
   );
 }

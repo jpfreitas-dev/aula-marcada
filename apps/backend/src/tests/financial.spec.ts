@@ -1,10 +1,10 @@
+import { resolveFinancialPeriod } from '@/utils/financial-period';
 import {
   addWorkdays,
   getWeekStart,
   getWorkdaysOfWeek,
   toDateKey,
 } from '@/utils/workday';
-import { getFutureClassDate } from './helpers/dates';
 import { authRequest } from './helpers/auth-request';
 
 function futureWeekDates() {
@@ -17,10 +17,6 @@ function futureWeekDates() {
     wednesday: toDateKey(workdays[2]),
     reference: toDateKey(workdays[1]),
   };
-}
-
-function futureDate(offsetWorkdays: number): string {
-  return getFutureClassDate(10 + offsetWorkdays);
 }
 
 async function createActiveStudent(name = 'Aluno Financeiro') {
@@ -133,28 +129,99 @@ describe('financial API', () => {
   });
 
   it('lists pending attended classes in the selected period', async () => {
-    const firstDay = futureDate(1);
-    const secondDay = futureDate(2);
+    const {
+      monday: olderDay,
+      tuesday: newerDay,
+      wednesday: settledDay,
+      reference,
+    } = futureWeekDates();
     const student = await createActiveStudent();
-    const partial = await createClass(student.id, firstDay);
-    const settled = await createClass(student.id, secondDay);
+    const olderPending = await createClass(student.id, olderDay);
+    const newerPending = await createClass(student.id, newerDay);
+    const settled = await createClass(student.id, settledDay);
 
-    await markAttended(partial.id, 20, 'pix');
+    await markAttended(olderPending.id, 20, 'pix');
+    await markAttended(newerPending.id, 10, 'pix');
     await markAttended(settled.id, 60, 'cash');
 
     const response = await authRequest.get('/financial/dashboard').query({
       granularity: 'month',
-      referenceDate: firstDay,
+      referenceDate: reference,
     });
 
     expect(response.status).toBe(200);
-    expect(response.body.pending).toHaveLength(1);
+    expect(response.body.pending).toHaveLength(2);
     expect(response.body.pending[0]).toMatchObject({
-      id: partial.id,
+      id: newerPending.id,
       studentId: student.id,
-      date: firstDay,
+      studentName: student.name,
+      date: newerDay,
+      amount: 50,
+    });
+    expect(response.body.pending[1]).toMatchObject({
+      id: olderPending.id,
+      date: olderDay,
       amount: 40,
     });
+  });
+
+  it('numbers february 2026 month weeks sequentially from 1 to 4', async () => {
+    const period = resolveFinancialPeriod('month', '2026-02-15');
+
+    expect(period.startDate).toBe('2026-02-01');
+    expect(period.endDate).toBe('2026-02-28');
+    expect(period.buckets.map((bucket) => bucket.label)).toEqual([
+      'Sem 1',
+      'Sem 2',
+      'Sem 3',
+      'Sem 4',
+    ]);
+    expect(period.buckets[0]).toMatchObject({
+      startDate: '2026-02-02',
+      endDate: '2026-02-06',
+    });
+
+    const response = await authRequest.get('/financial/dashboard').query({
+      granularity: 'month',
+      referenceDate: '2026-02-15',
+    });
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.chart.map((point: { label: string }) => point.label),
+    ).toEqual(['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4']);
+  });
+
+  it('numbers september 2026 month weeks sequentially from 1 to 5', async () => {
+    const period = resolveFinancialPeriod('month', '2026-09-10');
+
+    expect(period.startDate).toBe('2026-09-01');
+    expect(period.endDate).toBe('2026-09-30');
+    expect(period.buckets.map((bucket) => bucket.label)).toEqual([
+      'Sem 1',
+      'Sem 2',
+      'Sem 3',
+      'Sem 4',
+      'Sem 5',
+    ]);
+    expect(period.buckets[0]).toMatchObject({
+      startDate: '2026-09-01',
+      endDate: '2026-09-04',
+    });
+    expect(period.buckets[4]).toMatchObject({
+      startDate: '2026-09-28',
+      endDate: '2026-09-30',
+    });
+
+    const response = await authRequest.get('/financial/dashboard').query({
+      granularity: 'month',
+      referenceDate: '2026-09-10',
+    });
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.chart.map((point: { label: string }) => point.label),
+    ).toEqual(['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5']);
   });
 
   it('returns student payment and absence stats when no student filter is set', async () => {

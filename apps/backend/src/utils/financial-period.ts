@@ -7,6 +7,38 @@ import {
 
 import type { FinancialGranularity } from '@/types/financial';
 
+function padDatePart(value: number): string {
+  return value.toString().padStart(2, '0');
+}
+
+function addDaysToDateKey(dateKey: string, days: number): string {
+  const date = dateFromDateKey(dateKey);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toDateKey(date);
+}
+
+function mondayDateKeyOf(dateKey: string): string {
+  const date = dateFromDateKey(dateKey);
+  const weekday = date.getUTCDay();
+  const offset = weekday === 0 ? -6 : 1 - weekday;
+  return addDaysToDateKey(dateKey, offset);
+}
+
+function monthDateBounds(
+  year: number,
+  month: number,
+): {
+  startDate: string;
+  endDate: string;
+} {
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+  return {
+    startDate: `${year}-${padDatePart(month)}-01`,
+    endDate: `${year}-${padDatePart(month)}-${padDatePart(lastDay)}`,
+  };
+}
+
 export type PeriodBucket = {
   key: string;
   label: string;
@@ -48,30 +80,26 @@ function buildMonthWeekBuckets(
   startDate: string,
   endDate: string,
 ): PeriodBucket[] {
-  const firstDay = dateFromDateKey(startDate);
-  const lastDay = dateFromDateKey(endDate);
   const buckets: PeriodBucket[] = [];
-  let weekNumber = 1;
-  let cursor = getWeekStart(firstDay);
+  let weekNumber = 0;
+  let mondayKey = mondayDateKeyOf(startDate);
 
-  while (cursor <= lastDay && weekNumber <= 5) {
-    const workdays = getWorkdaysOfWeek(cursor).filter((day) => {
-      const dateKey = toDateKey(day);
-      return isDateKeyInRange(dateKey, startDate, endDate);
-    });
+  while (mondayKey <= endDate) {
+    const workdays = [0, 1, 2, 3, 4]
+      .map((offset) => addDaysToDateKey(mondayKey, offset))
+      .filter((dateKey) => isDateKeyInRange(dateKey, startDate, endDate));
 
     if (workdays.length > 0) {
+      weekNumber += 1;
       buckets.push({
         key: `week-${weekNumber}`,
         label: `Sem ${weekNumber}`,
-        startDate: toDateKey(workdays[0]),
-        endDate: toDateKey(workdays[workdays.length - 1]),
+        startDate: workdays[0],
+        endDate: workdays[workdays.length - 1],
       });
-      weekNumber += 1;
     }
 
-    cursor = new Date(cursor);
-    cursor.setDate(cursor.getDate() + 7);
+    mondayKey = addDaysToDateKey(mondayKey, 7);
   }
 
   return buckets;
@@ -100,12 +128,8 @@ export function resolveFinancialPeriod(
   }
 
   if (granularity === 'month') {
-    const year = referenceDate.getFullYear();
-    const month = referenceDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = toDateKey(firstDay);
-    const endDate = toDateKey(lastDay);
+    const [year, month] = referenceDateKey.split('-').map(Number);
+    const { startDate, endDate } = monthDateBounds(year, month);
 
     return {
       startDate,
@@ -114,20 +138,19 @@ export function resolveFinancialPeriod(
     };
   }
 
-  const year = referenceDate.getFullYear();
+  const year = Number(referenceDateKey.slice(0, 4));
 
   return {
     startDate: `${year}-01-01`,
     endDate: `${year}-12-31`,
-    buckets: Array.from({ length: 12 }, (_, month) => {
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
+    buckets: Array.from({ length: 12 }, (_, monthIndex) => {
+      const { startDate, endDate } = monthDateBounds(year, monthIndex + 1);
 
       return {
-        key: `month-${month}`,
-        label: MONTH_LABELS[month],
-        startDate: toDateKey(firstDay),
-        endDate: toDateKey(lastDay),
+        key: `month-${monthIndex}`,
+        label: MONTH_LABELS[monthIndex],
+        startDate,
+        endDate,
       };
     }),
   };
