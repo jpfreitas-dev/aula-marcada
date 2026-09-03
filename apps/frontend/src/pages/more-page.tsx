@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { Modal } from '@/components/ui/modal';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
 import { useAuth } from '@/context/auth-context';
 import { usePwaInstall } from '@/hooks/use-pwa-install';
@@ -138,21 +139,46 @@ function ThemeCard() {
 
 function LogoutCard() {
   const { logout } = useAuth();
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   return (
-    <SettingRow icon="logout" title="Sair da conta">
-      <p className="text-sm text-text-muted">
-        Você será redirecionado para a tela de login.
-      </p>
-      <Button
-        variant="danger"
-        size="md"
-        className="mt-3 w-full sm:w-auto"
-        onClick={logout}
+    <>
+      <SettingRow icon="logout" title="Sair da conta">
+        <p className="text-sm text-text-muted">
+          Você será redirecionado para a tela de login.
+        </p>
+        <Button
+          variant="danger"
+          size="md"
+          className="mt-3 w-full sm:w-auto"
+          onClick={() => setLogoutModalOpen(true)}
+        >
+          Sair
+        </Button>
+      </SettingRow>
+
+      <Modal
+        open={logoutModalOpen}
+        title="Sair da conta"
+        onClose={() => setLogoutModalOpen(false)}
+        onSubmit={logout}
       >
-        Sair
-      </Button>
-    </SettingRow>
+        <p className="text-sm text-text-muted">Tem certeza que deseja sair?</p>
+        <div className="mt-4 flex gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setLogoutModalOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" variant="danger" className="flex-1">
+            Sair
+          </Button>
+        </div>
+      </Modal>
+    </>
   );
 }
 

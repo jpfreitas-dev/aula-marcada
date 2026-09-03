@@ -42,7 +42,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative z-10 w-full max-w-sm rounded-md bg-surface p-card-padding shadow-xl"
+        className="relative z-10 w-full max-w-sm overflow-hidden rounded-xl border border-outline-variant/30 bg-surface p-card-padding shadow-xl"
       >
         <h2
           id="modal-title"
