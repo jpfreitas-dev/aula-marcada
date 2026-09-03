@@ -562,10 +562,11 @@ As variáveis devem ser documentadas no `.env.example`.
 
 Exemplo:
 
-| Variável       | Uso                    | Falha                           |
-| -------------- | ---------------------- | ------------------------------- |
-| `DATABASE_URL` | Conexão com PostgreSQL | Erro de conexão                 |
-| `PORT`         | Porta da API           | Default definido pela aplicação |
+| Variável       | Uso                                               | Falha                           |
+| -------------- | ------------------------------------------------- | ------------------------------- |
+| `DATABASE_URL` | Conexão pooled com PostgreSQL (runtime da API)    | Erro de conexão                 |
+| `DIRECT_URL`   | Conexão direct para Prisma CLI (`migrate deploy`) | Falha de migração no deploy     |
+| `PORT`         | Porta da API                                      | Default definido pela aplicação |
 
 A aplicação não deve depender de variáveis relacionadas a funcionalidades que não existem no produto.
 
@@ -912,7 +913,7 @@ Não é obrigatório em produção. A hospedagem prevista nesta fase (sem VPS) �
 - API Node no **Render**;
 - PostgreSQL no **Neon**.
 
-A rota `GET /health` permanece pública para health check e para um cron que evite idle da API no plano gratuito. Variáveis de produção seguem a mesma lista documentada nos `.env.example` (`DATABASE_URL`, `JWT_SECRET`, `AUTH_EMAIL`, `AUTH_PASSWORD`, `FRONTEND_URL`, `VITE_API_URL`).
+A rota `GET /health` permanece pública para health check e para um cron que evite idle da API no plano gratuito. Variáveis de produção seguem a mesma lista documentada nos `.env.example` (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `AUTH_EMAIL`, `AUTH_PASSWORD`, `FRONTEND_URL`, `VITE_API_URL`).
 
 Detalhes operacionais de go-live ficam em `.cursor/docs/implementation-plan.md`.
 
