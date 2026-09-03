@@ -156,7 +156,7 @@ export function StudentProfilePage() {
   return (
     <div className="flex flex-col gap-4">
       {error ? (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-status-warning">
+        <p className="rounded-md bg-status-warning-container px-3 py-2 text-sm text-status-warning">
           {error}
         </p>
       ) : null}

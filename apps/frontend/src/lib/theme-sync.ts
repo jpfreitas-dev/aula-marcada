@@ -4,7 +4,7 @@ const THEME_COLORS = {
     appleStatusBarStyle: 'default',
   },
   dark: {
-    themeColor: '#2e1065',
+    themeColor: '#3b1578',
     appleStatusBarStyle: 'black-translucent',
   },
 } as const;

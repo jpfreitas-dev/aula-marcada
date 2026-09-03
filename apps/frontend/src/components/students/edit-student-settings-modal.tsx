@@ -102,7 +102,7 @@ function EditStudentSettingsForm({
       onClose={onClose}
       onConfirm={() => void handleSave()}
     >
-      <section className="rounded-xl border border-purple-100 bg-bg-subtle p-4">
+      <section className="rounded-xl border border-outline-variant/40 bg-bg-subtle p-4">
         <StudentRecurrenceConfigFields
           excludeStudentId={student.id}
           hourlyRateInput={hourlyRateInput}

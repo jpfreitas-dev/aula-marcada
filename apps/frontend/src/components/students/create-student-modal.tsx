@@ -95,7 +95,7 @@ function CreateStudentForm({
         onClearError={() => setError(null)}
       />
 
-      <section className="rounded-xl border border-purple-100 bg-bg-subtle p-4">
+      <section className="rounded-xl border border-outline-variant/40 bg-bg-subtle p-4">
         <StudentRecurrenceConfigFields
           hourlyRateInput={hourlyRateInput}
           onHourlyRateChange={(value) => {

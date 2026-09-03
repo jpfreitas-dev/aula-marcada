@@ -350,13 +350,13 @@ function LinkMakeupForm({
         ) : null}
 
         {absences.length > 0 && missingMinutes > 0 ? (
-          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
+          <p className="rounded-md bg-status-warning-container px-3 py-2 text-sm font-medium text-status-warning">
             Necessário mais {formatHoursLabel(missingMinutes)} de aula.
           </p>
         ) : null}
 
         {absences.length > 0 && exceedsPeriodCapacity ? (
-          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-status-warning">
+          <p className="rounded-md bg-status-warning-container px-3 py-2 text-sm font-medium text-status-warning">
             A reposição excede o limite do período (
             {formatHoursLabel(maxPeriodMinutes)}).
           </p>

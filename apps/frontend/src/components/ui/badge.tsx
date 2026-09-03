@@ -7,11 +7,11 @@ type BadgeProps = {
 };
 
 const variantClasses: Record<ClassBadgeVariant, string> = {
-  success: 'bg-emerald-100 text-status-success',
-  warning: 'bg-amber-100 text-status-warning',
-  danger: 'bg-red-100 text-status-danger',
-  info: 'bg-blue-100 text-status-info',
-  neutral: 'bg-surface-variant text-text-muted',
+  success: 'bg-status-success-container text-status-success',
+  warning: 'bg-status-warning-container text-status-warning',
+  danger: 'bg-status-danger-container text-status-danger',
+  info: 'bg-status-info-container text-status-info',
+  neutral: 'bg-surface-variant text-on-surface-variant',
 };
 
 export function Badge({
