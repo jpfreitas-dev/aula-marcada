@@ -111,15 +111,8 @@ class BuildClassResponse {
     const breakdownMap =
       await classAllocationRepository.getPaymentBreakdownByClassIds(classIds);
 
-    const linkedAbsenceIdsMap = new Map<string, string[]>();
-    for (const classRecord of classRecords) {
-      linkedAbsenceIdsMap.set(
-        classRecord.id,
-        await makeupLinkRepository.findAbsenceIdsByMakeupClassId(
-          classRecord.id,
-        ),
-      );
-    }
+    const linkedAbsenceIdsMap =
+      await makeupLinkRepository.findAbsenceIdsByMakeupClassIds(classIds);
 
     return classRecords.map((classRecord) => {
       const linkedAbsenceIds = linkedAbsenceIdsMap.get(classRecord.id) ?? [];

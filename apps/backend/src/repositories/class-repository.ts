@@ -121,6 +121,48 @@ class ClassRepository {
     });
   }
 
+  async findSummaryByStudentIds(studentIds: string[], db?: DatabaseClient) {
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    return client(db).class.findMany({
+      where: { studentId: { in: studentIds } },
+      select: {
+        id: true,
+        studentId: true,
+        date: true,
+        startTime: true,
+        attendance: true,
+        expectedAmount: true,
+      },
+    });
+  }
+
+  async findLatestDateByStudentIds(
+    studentIds: string[],
+    db?: DatabaseClient,
+  ): Promise<Map<string, Date>> {
+    if (studentIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await client(db).class.groupBy({
+      by: ['studentId'],
+      where: { studentId: { in: studentIds } },
+      _max: { date: true },
+    });
+
+    const map = new Map<string, Date>();
+    for (const row of rows) {
+      if (row._max.date) {
+        map.set(row.studentId, row._max.date);
+      }
+    }
+
+    return map;
+  }
+
   async findScheduleSlots(db?: DatabaseClient) {
     return client(db).class.findMany({
       select: {
