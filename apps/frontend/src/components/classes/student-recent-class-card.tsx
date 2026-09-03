@@ -18,7 +18,7 @@ export function StudentRecentClassCard({
     <button
       type="button"
       onClick={onClick}
-      className="relative flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border border-outline-variant/30 bg-white p-3 text-left shadow-sm transition-transform active:scale-[0.99]"
+      className="relative flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border border-outline-variant/30 bg-surface p-3 text-left shadow-sm transition-transform active:scale-[0.99]"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="font-medium text-text-main">

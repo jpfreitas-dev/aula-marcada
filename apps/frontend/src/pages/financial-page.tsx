@@ -223,7 +223,7 @@ export function FinancialPage() {
           absences={summary.studentAbsences}
         />
       ) : (
-        <p className="rounded-xl border border-outline-variant/20 bg-white p-4 text-sm text-text-muted shadow-sm">
+        <p className="rounded-xl border border-outline-variant/20 bg-surface p-4 text-sm text-text-muted shadow-sm">
           Selecione &quot;Todos os alunos&quot; para ver as estatísticas
           comparativas por aluno.
         </p>

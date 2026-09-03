@@ -66,7 +66,7 @@ export function StudentsPage() {
             placeholder={
               showingFormer ? 'Buscar ex-aluno...' : 'Buscar aluno...'
             }
-            className="w-full rounded-lg border border-outline-variant bg-white py-2.5 pl-10 pr-3 text-sm text-text-main placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-surface py-2.5 pl-10 pr-3 text-sm text-text-main placeholder:text-text-muted focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         {!showingFormer ? (
@@ -120,7 +120,7 @@ export function StudentsPage() {
               <li key={student.id} className="min-w-0">
                 <Link
                   to={`/students/${student.id}`}
-                  className="block h-full rounded-xl border border-outline-variant bg-white p-4 transition-transform active:scale-[0.99]"
+                  className="block h-full rounded-xl border border-outline-variant bg-surface p-4 transition-transform active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className="min-w-0 font-display text-base font-bold text-text-main">

@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
 import { initPwaInstallCapture } from './lib/pwa-install-store';
+import { initThemeSync } from './lib/theme-sync';
 import './index.css';
 
 initPwaInstallCapture();
+initThemeSync();
 
 const rootElement = document.getElementById('root');
 

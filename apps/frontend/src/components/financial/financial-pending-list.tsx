@@ -27,7 +27,7 @@ export function FinancialPendingList({ items }: FinancialPendingListProps) {
           <li key={item.id} className="min-w-0">
             <Link
               to={`/students/${item.studentId}`}
-              className="flex h-full items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm transition-transform active:scale-[0.99]"
+              className="flex h-full items-center justify-between gap-3 rounded-xl border border-outline-variant/20 bg-surface p-4 shadow-sm transition-transform active:scale-[0.99]"
             >
               <div className="min-w-0">
                 <p className="truncate font-display text-base font-bold text-text-main">

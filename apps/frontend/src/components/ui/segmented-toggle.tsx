@@ -28,7 +28,7 @@ export function SegmentedToggle<T extends string>({
           onClick={() => onChange(option.value)}
           className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${
             value === option.value
-              ? 'bg-white text-purple-900 shadow-sm'
+              ? 'bg-surface text-purple-900 shadow-sm'
               : 'font-medium text-purple-700/70'
           }`}
         >

@@ -38,7 +38,7 @@ function InstallAppCard() {
 
   if (isInstalled) {
     return (
-      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+      <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
           <InstallCardIcon name="mobile_check" />
           <div className="min-w-0 flex-1">
@@ -66,7 +66,7 @@ function InstallAppCard() {
 
   return (
     <>
-      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+      <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
           <InstallCardIcon name="install_mobile" />
           <div className="flex w-full min-w-0 flex-1 flex-col">
@@ -122,14 +122,5 @@ function InstallAppCard() {
 }
 
 export function MorePage() {
-  return (
-    <div className="flex flex-col gap-3">
-      <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
-        <h2 className="font-display text-headline-md font-semibold text-purple-900">
-          Mais
-        </h2>
-      </section>
-      <InstallAppCard />
-    </div>
-  );
+  return <InstallAppCard />;
 }

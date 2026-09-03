@@ -45,7 +45,7 @@ export function AlarmTimePicker({
   };
 
   return (
-    <div className="w-full overflow-hidden rounded-md border border-outline-variant/40 bg-white p-3 shadow-lg">
+    <div className="w-full overflow-hidden rounded-md border border-outline-variant/40 bg-surface p-3 shadow-lg">
       <div className="flex items-center justify-center gap-3">
         <TimeStepper
           label="Hora"

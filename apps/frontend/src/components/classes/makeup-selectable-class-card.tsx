@@ -26,7 +26,7 @@ export function MakeupSelectableClassCard({
       className={`relative flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border p-3 text-left shadow-sm transition-colors ${
         selected
           ? 'border-2 border-primary bg-primary-fixed/20'
-          : 'border border-outline-variant/30 bg-white'
+          : 'border border-outline-variant/30 bg-surface'
       }`}
     >
       {session.attendance === 'absent' ? (

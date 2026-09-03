@@ -564,7 +564,7 @@ function ScheduleClassForm({
                 aria-pressed={isMakeupOnly}
               >
                 <span
-                  className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                  className={`h-4 w-4 rounded-full bg-surface shadow-sm transition-transform ${
                     isMakeupOnly ? 'translate-x-6' : 'translate-x-0'
                   }`}
                 />

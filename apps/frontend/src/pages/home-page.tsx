@@ -191,7 +191,7 @@ export function HomePage() {
                 return (
                   <section
                     key={dayKey}
-                    className="min-w-0 rounded-lg border border-outline-variant/20 bg-white p-3 shadow-sm"
+                    className="min-w-0 rounded-lg border border-outline-variant/20 bg-surface p-3 shadow-sm"
                   >
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
                       <h3 className="text-sm font-semibold text-purple-900">

@@ -13,7 +13,7 @@ type FinancialSummaryGridProps = {
 };
 
 const cardClassName =
-  'flex min-w-0 flex-col items-start justify-start gap-1 rounded-xl border border-outline-variant/20 bg-white px-3 py-2.5 shadow-sm';
+  'flex min-w-0 flex-col items-start justify-start gap-1 rounded-xl border border-outline-variant/20 bg-surface px-3 py-2.5 shadow-sm';
 
 const labelClassName = 'w-full truncate text-sm font-medium text-text-muted';
 

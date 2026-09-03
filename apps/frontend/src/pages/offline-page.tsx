@@ -1,6 +1,6 @@
 export function OfflinePage() {
   return (
-    <section className="rounded-md bg-white p-4 shadow-sm">
+    <section className="rounded-md bg-surface p-4 shadow-sm">
       <h2 className="font-display text-lg font-semibold text-purple-900">
         Você está offline
       </h2>
