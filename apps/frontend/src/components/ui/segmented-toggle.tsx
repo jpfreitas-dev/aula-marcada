@@ -20,7 +20,7 @@ export function SegmentedToggle<T extends string>({
 }: SegmentedToggleProps<T>) {
   return (
     <div
-      className={`mx-auto flex rounded-full bg-purple-100 p-1 ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`mx-auto flex select-none rounded-full bg-purple-100 p-1 ${fullWidth ? 'w-full' : ''} ${className}`}
       style={fullWidth ? undefined : { width: `${options.length * 4.5}rem` }}
     >
       {options.map((option) => (

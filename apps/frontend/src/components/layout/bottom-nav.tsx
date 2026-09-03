@@ -25,7 +25,7 @@ export function BottomNav() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 md:pointer-events-auto md:static">
       <nav
-        className="pointer-events-auto mx-auto flex max-w-6xl items-end justify-around border-t border-surface-variant bg-surface px-2 pt-2 shadow-lg pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:items-center md:pt-0 md:pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] min-h-[calc(5rem+env(safe-area-inset-bottom,0px))] md:min-h-20"
+        className="pointer-events-auto mx-auto flex max-w-6xl select-none items-end justify-around border-t border-surface-variant bg-surface px-2 pt-2 shadow-lg pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:items-center md:pt-0 md:pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] min-h-[calc(5rem+env(safe-area-inset-bottom,0px))] md:min-h-20"
         aria-label="Navegação principal"
       >
         {navItems.slice(0, 2).map((item) => {
