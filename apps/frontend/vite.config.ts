@@ -24,8 +24,8 @@ export default defineConfig({
         'pwa-512-maskable.png',
       ],
       manifest: {
-        name: 'AULA MARCADA',
-        short_name: 'AULA MARCADA',
+        name: 'Aula Marcada',
+        short_name: 'Aula Marcada',
         description: 'Agenda, alunos, presença e financeiro para professores.',
         lang: 'pt-BR',
         theme_color: '#4c1d95',

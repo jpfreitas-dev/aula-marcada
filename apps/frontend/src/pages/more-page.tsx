@@ -27,7 +27,7 @@ function IosInstallSheet({
       <ol className="list-decimal space-y-3 pl-5 text-sm text-text-main">
         <li>Toque no botão Compartilhar na barra inferior do Safari.</li>
         <li>Role a lista e escolha Adicionar à Tela de Início.</li>
-        <li>Confirme o nome AULA MARCADA e toque em Adicionar.</li>
+        <li>Confirme o nome Aula Marcada e toque em Adicionar.</li>
       </ol>
     </BottomSheet>
   );
@@ -48,7 +48,7 @@ function InstallAppCard() {
               App instalado
             </h3>
             <p className="mt-1 text-sm text-text-muted">
-              O AULA MARCADA já está disponível na sua tela inicial.
+              O Aula Marcada já está disponível na sua tela inicial.
             </p>
           </div>
         </div>
