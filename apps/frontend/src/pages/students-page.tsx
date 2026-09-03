@@ -5,6 +5,7 @@ import { CreateStudentModal } from '@/components/students/create-student-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { StudentListSkeleton } from '@/components/ui/skeleton';
 import {
   listStudents,
   type StudentListFilter,
@@ -23,11 +24,28 @@ export function StudentsPage() {
   const showingFormer = listFilter === 'inactive';
 
   const [students, setStudents] = useState<Student[]>([]);
+  const [loadedFilter, setLoadedFilter] = useState<StudentListFilter | null>(
+    null,
+  );
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const loading = loadedFilter !== listFilter;
 
   useEffect(() => {
-    void listStudents(listFilter).then(setStudents);
+    let cancelled = false;
+
+    void listStudents(listFilter).then((loadedStudents) => {
+      if (cancelled) {
+        return;
+      }
+
+      setStudents(loadedStudents);
+      setLoadedFilter(listFilter);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [listFilter]);
 
   const filteredStudents = useMemo(() => {
@@ -105,7 +123,9 @@ export function StudentsPage() {
         )}
       </div>
 
-      {filteredStudents.length === 0 ? (
+      {loading ? (
+        <StudentListSkeleton count={3} showingFormer={showingFormer} />
+      ) : filteredStudents.length === 0 ? (
         <p className="text-sm text-text-muted">
           {showingFormer
             ? 'Nenhum ex-aluno encontrado.'

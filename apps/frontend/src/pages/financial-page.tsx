@@ -7,7 +7,7 @@ import { FinancialSummaryGrid } from '@/components/financial/financial-summary-g
 import { Icon } from '@/components/ui/icon';
 import { PeriodNavigator } from '@/components/ui/period-navigator';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
-import { FinancialSkeleton } from '@/components/ui/skeleton';
+import { FinancialContentSkeleton } from '@/components/ui/skeleton';
 import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { getFinancialDashboard } from '@/services/financial-service';
 import { listStudents } from '@/services/student-service';
@@ -139,16 +139,8 @@ export function FinancialPage() {
   const realizedCashPercent = 100 - realizedPixPercent;
   const periodLabel = formatPeriodLabel(granularity, referenceDate);
 
-  if (loading && !summary) {
-    return <FinancialSkeleton />;
-  }
-
   if (error && !summary) {
     return <p className="text-sm text-status-danger">{error}</p>;
-  }
-
-  if (!summary) {
-    return null;
   }
 
   return (
@@ -194,39 +186,45 @@ export function FinancialPage() {
         </div>
       </div>
 
-      <FinancialSummaryGrid
-        expected={summary.expected}
-        realized={summary.realized}
-        absenceImpact={summary.absenceImpact}
-        realizedPix={summary.realizedPix}
-        realizedCash={summary.realizedCash}
-        realizedPixPercent={realizedPixPercent}
-        realizedCashPercent={realizedCashPercent}
-      />
+      {loading && !summary ? (
+        <FinancialContentSkeleton />
+      ) : summary ? (
+        <>
+          <FinancialSummaryGrid
+            expected={summary.expected}
+            realized={summary.realized}
+            absenceImpact={summary.absenceImpact}
+            realizedPix={summary.realizedPix}
+            realizedCash={summary.realizedCash}
+            realizedPixPercent={realizedPixPercent}
+            realizedCashPercent={realizedCashPercent}
+          />
 
-      <section className="flex flex-col gap-2">
-        <h2 className="font-display text-base font-bold text-text-main">
-          Comparativo do Período
-        </h2>
-        <FinancialComparisonChart
-          points={summary.chart}
-          compact={granularity === 'year'}
-        />
-      </section>
+          <section className="flex flex-col gap-2">
+            <h2 className="font-display text-base font-bold text-text-main">
+              Comparativo do Período
+            </h2>
+            <FinancialComparisonChart
+              points={summary.chart}
+              compact={granularity === 'year'}
+            />
+          </section>
 
-      {showStudentCharts ? (
-        <FinancialStudentCharts
-          payments={summary.studentPayments}
-          absences={summary.studentAbsences}
-        />
-      ) : (
-        <p className="rounded-xl border border-outline-variant/20 bg-surface p-4 text-sm text-text-muted shadow-sm">
-          Selecione &quot;Todos os alunos&quot; para ver as estatísticas
-          comparativas por aluno.
-        </p>
-      )}
+          {showStudentCharts ? (
+            <FinancialStudentCharts
+              payments={summary.studentPayments}
+              absences={summary.studentAbsences}
+            />
+          ) : (
+            <p className="rounded-xl border border-outline-variant/20 bg-surface p-4 text-sm text-text-muted shadow-sm">
+              Selecione &quot;Todos os alunos&quot; para ver as estatísticas
+              comparativas por aluno.
+            </p>
+          )}
 
-      <FinancialPendingList items={summary.pending} />
+          <FinancialPendingList items={summary.pending} />
+        </>
+      ) : null}
     </div>
   );
 }
