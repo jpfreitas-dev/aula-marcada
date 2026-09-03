@@ -29,6 +29,7 @@ services:
     environment:
       PORT: 3333
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-app}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-app}
       JWT_SECRET: ${JWT_SECRET}
       AUTH_EMAIL: ${AUTH_EMAIL}
       AUTH_PASSWORD: ${AUTH_PASSWORD}

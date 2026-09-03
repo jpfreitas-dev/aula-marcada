@@ -63,7 +63,8 @@ Checklist completo: `.cursor/docs/implementation-plan.md`.
 
 1. Crie um projeto PostgreSQL no [Neon](https://neon.tech).
 2. Copie a connection string **pooled** (com `?sslmode=require`) para `DATABASE_URL`.
-3. Se `prisma migrate deploy` falhar no pooler, rode as migrações uma vez com a URL **direct** e mantenha a pooled na API.
+3. Copie a connection string **direct** (sem `-pooler` no host) para `DIRECT_URL`.
+4. O `prisma migrate deploy` usa `DIRECT_URL`; a API em runtime usa `DATABASE_URL` (pooled).
 
 Não rode `prisma:seed` em produção.
 
@@ -75,6 +76,7 @@ Não rode `prisma:seed` em produção.
 4. **Health check path:** `/health`
 5. Defina as variáveis:
    - `DATABASE_URL` — Neon (pooled)
+   - `DIRECT_URL` — Neon (direct, para migrações no start)
    - `JWT_SECRET` — string longa e aleatória
    - `AUTH_EMAIL` / `AUTH_PASSWORD` — login do professor
    - `FRONTEND_URL` — URL da Vercel (ex.: `https://seu-app.vercel.app`)

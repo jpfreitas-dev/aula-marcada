@@ -53,15 +53,16 @@ Professor  →  Vercel (SPA)  →  Render (Express)  →  Neon (Postgres)
                  └── VITE_API_URL aponta para a URL da API
 ```
 
-| Serviço | Papel                    | Observação                                                                                       |
-| ------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| Neon    | Banco PostgreSQL         | Pooler na `DATABASE_URL` da API; URL direta para `migrate deploy` se o pooler falhar em migração |
-| Render  | Web Service Node (API)   | `GET /health` já é público (sem JWT) — usar no cron                                              |
-| Vercel  | Frontend estático (Vite) | `VITE_API_URL` é **build-time**                                                                  |
+| Serviço | Papel                    | Observação                                                                           |
+| ------- | ------------------------ | ------------------------------------------------------------------------------------ |
+| Neon    | Banco PostgreSQL         | `DATABASE_URL` pooled na API; `DIRECT_URL` direct para `migrate deploy` (Prisma CLI) |
+| Render  | Web Service Node (API)   | `GET /health` já é público (sem JWT) — usar no cron                                  |
+| Vercel  | Frontend estático (Vite) | `VITE_API_URL` é **build-time**                                                      |
 
 Variáveis mínimas da API (Render):
 
-- `DATABASE_URL` — connection string do Neon (com SSL)
+- `DATABASE_URL` — connection string pooled do Neon (com SSL)
+- `DIRECT_URL` — connection string direct do Neon (migrações no start)
 - `JWT_SECRET` — string longa e aleatória
 - `AUTH_EMAIL` / `AUTH_PASSWORD` — credenciais do professor
 - `FRONTEND_URL` — origem do Vercel (`https://….vercel.app`; várias origens separadas por vírgula, se necessário)
@@ -90,21 +91,19 @@ Ordem sugerida. Não bloquear o deploy por E2E, CI, Docker de produção ou feat
 
 Sem esses itens o app pode subir, mas o dia a dia no Render/Vercel fica frágil:
 
-- [ ] Script de start da API que rode **migrações e depois o servidor**, por exemplo: `prisma migrate deploy` + `tsx src/server.ts` (a partir de `apps/backend`, com `DATABASE_URL` do Neon)
+- [ ] Script de start da API que rode **migrações e depois o servidor**, por exemplo: `prisma migrate deploy` + `tsx src/server.ts` (Prisma CLI com `DIRECT_URL`; runtime com `DATABASE_URL` pooled)
 - [ ] Garantir `prisma generate` no install/build da API
 - [ ] SPA na Vercel: rewrite de rotas do React Router para `index.html` (evitar 404 em `/students/:id` no refresh)
 - [ ] Confirmar CORS: `FRONTEND_URL` igual à origem HTTPS da Vercel (sem path)
 
-Opcional no mesmo PR, só se quebrar no primeiro deploy:
-
-- [ ] Neon: se `migrate deploy` falhar no pooler, usar URL **direct** só nas migrações e pooler na API
+- [ ] Neon: `DIRECT_URL` (direct) no Render para `migrate deploy`; `DATABASE_URL` (pooled) para a API
 - [ ] Root do Render: repositório monorepo — build/start com workspace (`npm install` na raiz + scripts no `apps/backend`)
 
 ### 3.3 Neon
 
 - [ ] Criar projeto/branch de produção
-- [ ] Copiar connection string (pooled) para `DATABASE_URL`
-- [ ] Rodar `prisma migrate deploy` uma vez (local apontando para Neon **ou** no start do Render)
+- [ ] Copiar connection string pooled para `DATABASE_URL` e direct para `DIRECT_URL`
+- [ ] Rodar `prisma migrate deploy` uma vez (local com `DIRECT_URL` do Neon **ou** no start do Render)
 - [ ] **Não** rodar `prisma/seed.ts` em produção a menos que queira dados de exemplo
 
 ### 3.4 Render (API)

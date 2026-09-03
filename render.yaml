@@ -1,7 +1,7 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
 # After linking this repo, set secret env vars in the Render dashboard:
-# DATABASE_URL (Neon pooled URL), AUTH_EMAIL, AUTH_PASSWORD, FRONTEND_URL.
+# DATABASE_URL (Neon pooled), DIRECT_URL (Neon direct), AUTH_EMAIL, AUTH_PASSWORD, FRONTEND_URL.
 #
 # The cron job pings GET /health to reduce cold starts on the free plan.
 
@@ -18,6 +18,8 @@ services:
       - key: NODE_VERSION
         value: '22'
       - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
