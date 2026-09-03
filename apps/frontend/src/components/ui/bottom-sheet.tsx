@@ -36,7 +36,7 @@ export function BottomSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center md:p-6">
+    <div className="fixed inset-0 z-60 flex items-end justify-center md:items-center md:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
