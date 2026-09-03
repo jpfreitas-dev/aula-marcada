@@ -90,6 +90,8 @@ apps/backend/
     ├── routes/
     ├── controllers/
     ├── services/
+    │   └── <domain>/          # ex.: students/, classes/
+    ├── repositories/
     ├── middlewares/
     ├── lib/
     │   └── prisma.ts
@@ -122,7 +124,17 @@ Recebem as requisições HTTP, validam os dados de entrada e chamam os services.
 
 **`services/`**
 
-Contêm as regras de aplicação e coordenam operações que envolvem persistência ou outras partes do sistema.
+Contêm os casos de uso da aplicação, organizados por domínio (ex.: `students/`, `classes/`).
+
+Cada arquivo representa **um caso de uso** com responsabilidade única e expõe um método `execute`.
+
+Services coordenam regras de aplicação e repositories; **não** acessam Prisma diretamente.
+
+**`repositories/`**
+
+Concentram o acesso ao banco via Prisma.
+
+Controllers e services não devem chamar Prisma diretamente; a persistência passa pelos repositories.
 
 **`middlewares/`**
 
@@ -152,7 +164,8 @@ Contém testes da API e seus arquivos auxiliares.
 | ---------- | ------------------------ | ------------------------ |
 | Rota       | `<domain>-routes.ts`     | `<domain>Routes`         |
 | Controller | `<domain>-controller.ts` | `<Domain>Controller`     |
-| Service    | `<domain>-service.ts`    | `<domain>Service`        |
+| Service    | `<domain>/<use-case>.ts` | instância com `execute`  |
+| Repository | `<entity>-repository.ts` | `<entity>Repository`     |
 | Middleware | `kebab-case.ts`          | função nomeada           |
 | Utilitário | `kebab-case.ts`          | função ou classe nomeada |
 
@@ -186,9 +199,12 @@ HTTP Request
        valida entrada
             │
             ▼
-         Service
+         Service (use case)
             │
        regra de aplicação
+            │
+            ▼
+       Repository
             │
             ▼
          Prisma
@@ -209,15 +225,25 @@ O controller:
 - define o status HTTP;
 - não acessa diretamente o Prisma.
 
-### Service
+### Service (caso de uso)
 
 O service:
 
 - não conhece `Request` ou `Response`;
 - recebe dados já validados;
-- executa a lógica de aplicação;
-- acessa o banco através do Prisma;
-- retorna dados para o controller.
+- executa a lógica de aplicação de **um** caso de uso via `execute`;
+- coordena repositories e outras operações de aplicação;
+- retorna dados para o controller;
+- **não** acessa Prisma diretamente.
+
+### Repository
+
+O repository:
+
+- concentra queries e mutações do banco;
+- usa o Prisma Client singleton;
+- não contém regras de negócio complexas;
+- pode receber um client de transação quando a operação exige atomicidade.
 
 ### Prisma
 
@@ -234,9 +260,9 @@ A lógica de aplicação não deve ser espalhada diretamente pelas queries.
 Exemplo:
 
 ```ts
-import "dotenv/config";
+import 'dotenv/config';
 
-import { app } from "@/app";
+import { app } from '@/app';
 
 const PORT = Number(process.env.PORT) || 3333;
 
@@ -248,12 +274,11 @@ app.listen(PORT, () => {
 `app.ts` deve configurar a aplicação e exportá-la para utilização nos testes.
 
 ```ts
-import cors from "cors";
-import express from "express";
-import "express-async-errors";
+import cors from 'cors';
+import express from 'express';
 
-import { routes } from "@/routes";
-import { errorHandling } from "@/middlewares/error-handling";
+import { routes } from '@/routes';
+import { errorHandling } from '@/middlewares/error-handling';
 
 const app = express();
 
@@ -266,6 +291,8 @@ app.use(errorHandling);
 
 export { app };
 ```
+
+Com Express 5, erros em handlers assíncronos são encaminhados ao middleware de erro sem `express-async-errors`.
 
 A ordem dos middlewares deve ser preservada:
 
@@ -283,23 +310,23 @@ As rotas devem ser centralizadas em `routes/index.ts`.
 Exemplo:
 
 ```ts
-import { Router } from "express";
+import { Router } from 'express';
 
-import { studentsRoutes } from "./students-routes";
-import { classesRoutes } from "./classes-routes";
-import { paymentsRoutes } from "./payments-routes";
+import { studentsRoutes } from './students-routes';
+import { classesRoutes } from './classes-routes';
+import { paymentsRoutes } from './payments-routes';
 
 const routes = Router();
 
-routes.get("/health", (_request, response) => {
+routes.get('/health', (_request, response) => {
   return response.status(200).json({
-    status: "ok",
+    status: 'ok',
   });
 });
 
-routes.use("/students", studentsRoutes);
-routes.use("/classes", classesRoutes);
-routes.use("/payments", paymentsRoutes);
+routes.use('/students', studentsRoutes);
+routes.use('/classes', classesRoutes);
+routes.use('/payments', paymentsRoutes);
 
 export { routes };
 ```
@@ -379,7 +406,7 @@ export const errorHandling: ErrorRequestHandler = (
 
   if (error instanceof ZodError) {
     response.status(400).json({
-      message: "Erro de validação",
+      message: 'Erro de validação',
       issues: error.format(),
     });
 
@@ -387,7 +414,7 @@ export const errorHandling: ErrorRequestHandler = (
   }
 
   response.status(500).json({
-    message: "Erro interno do servidor",
+    message: 'Erro interno do servidor',
   });
 };
 ```
@@ -422,10 +449,10 @@ O Prisma Client deve ser utilizado como singleton.
 Exemplo:
 
 ```ts
-import "dotenv/config";
+import 'dotenv/config';
 
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../generated/prisma/client";
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../../generated/prisma/client';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -469,43 +496,67 @@ A modelagem deve ser derivada dos requisitos funcionais e definida posteriorment
 
 ---
 
-# 3.9 Services
+# 3.9 Services (casos de uso)
 
-Services representam a camada responsável pela execução dos casos de uso da aplicação.
+Services representam casos de uso da aplicação — **um arquivo por operação**, com método `execute`.
+
+Organização por domínio, alinhada aos controllers:
+
+```text
+services/
+├── students/
+│   ├── create-student.ts
+│   ├── list-students.ts
+│   └── ...
+└── classes/
+    └── ...
+```
 
 Exemplo estrutural:
 
 ```ts
-class ExampleService {
-  async create(data: CreateInput) {
-    return prisma.example.create({
-      data,
-    });
-  }
-
-  async show(id: string) {
-    const record = await prisma.example.findFirst({
-      where: { id },
-    });
-
-    if (!record) {
-      throw new AppError("Registro não encontrado", 404);
-    }
-
-    return record;
+class CreateStudent {
+  async execute(data: CreateStudentInput) {
+    // validações de negócio, coordenação de repositories
+    return buildStudentResponse.execute(student);
   }
 }
 
-export const exampleService = new ExampleService();
+export const createStudent = new CreateStudent();
 ```
 
-O service deve ser o principal ponto de concentração da lógica de aplicação.
-
-Controllers não devem conter regras de negócio complexas.
+O service concentra a lógica do caso de uso. Controllers permanecem finos e delegam a um service específico.
 
 ---
 
-# 3.10 Variáveis de ambiente
+# 3.10 Repositories
+
+Repositories concentram persistência com Prisma. Services **não** chamam Prisma diretamente.
+
+```text
+repositories/
+├── student-repository.ts
+├── class-repository.ts
+└── ...
+```
+
+Exemplo:
+
+```ts
+class StudentRepository {
+  async findById(id: string, db?: DatabaseClient) {
+    return client(db).student.findUnique({ where: { id } });
+  }
+}
+
+export const studentRepository = new StudentRepository();
+```
+
+Repositories podem aceitar um client de transação (`prisma.$transaction`) para operações atômicas coordenadas por services.
+
+---
+
+# 3.11 Variáveis de ambiente
 
 As variáveis devem ser documentadas no `.env.example`.
 
@@ -522,7 +573,7 @@ O arquivo `.env` real nunca deve ser versionado.
 
 ---
 
-# 3.11 Testes de API
+# 3.12 Testes de API
 
 A API deve utilizar:
 
@@ -669,7 +720,7 @@ O frontend deve utilizar um único cliente HTTP centralizado.
 Exemplo:
 
 ```ts
-import axios from "axios";
+import axios from 'axios';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -683,7 +734,7 @@ Exemplo:
 ```ts
 export const studentsService = {
   async list() {
-    const response = await api.get("/students");
+    const response = await api.get('/students');
 
     return response.data;
   },
@@ -766,10 +817,10 @@ Os tokens visuais da aplicação devem ser definidos de forma centralizada quand
 Exemplo:
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --default-font-family: "Open Sans", sans-serif;
+  --default-font-family: 'Open Sans', sans-serif;
 }
 ```
 
@@ -825,7 +876,7 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile.dev
     ports:
-      - "${BACKEND_PORT:-3333}:3333"
+      - '${BACKEND_PORT:-3333}:3333'
     environment:
       DATABASE_URL: postgresql://app:app@postgres:5432/app
     depends_on:
@@ -837,12 +888,22 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile.dev
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - '${FRONTEND_PORT:-5173}:5173'
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
 ```
 
 O Docker Compose tem como objetivo facilitar o desenvolvimento local e reproduzir o ambiente necessário para executar a aplicação.
+
+Não é obrigatório em produção. A hospedagem prevista nesta fase (sem VPS) é:
+
+- frontend estático na **Vercel**;
+- API Node no **Render**;
+- PostgreSQL no **Neon**.
+
+A rota `GET /health` permanece pública para health check e para um cron que evite idle da API no plano gratuito. Variáveis de produção seguem a mesma lista documentada nos `.env.example` (`DATABASE_URL`, `JWT_SECRET`, `AUTH_EMAIL`, `AUTH_PASSWORD`, `FRONTEND_URL`, `VITE_API_URL`).
+
+Detalhes operacionais de go-live ficam em `.cursor/docs/implementation-plan.md`.
 
 ---
 
@@ -901,7 +962,9 @@ Routes
     ↓
 Controllers
     ↓
-Services
+Services (use cases)
+    ↓
+Repositories
     ↓
 Prisma
     ↓
@@ -920,17 +983,17 @@ Não devem se tornar o local principal das regras da aplicação.
 
 ## 7.3 Services como camada de aplicação
 
-Services devem concentrar operações e regras que envolvem o comportamento da aplicação.
+Services representam **casos de uso** — um arquivo por operação, com método `execute`, organizados por domínio (`services/students/`, `services/classes/`, etc.).
 
-Quando uma operação envolver múltiplas etapas ou validações relacionadas ao domínio, a implementação deve permanecer na camada apropriada de serviço.
+Quando uma operação envolver múltiplas etapas ou validações relacionadas ao domínio, a implementação permanece no service do caso de uso, coordenando repositories.
 
 ---
 
-## 7.4 Banco isolado
+## 7.4 Persistência via repositories
 
-O restante da aplicação não deve acessar diretamente o banco.
+O restante da aplicação não deve acessar Prisma diretamente.
 
-O acesso ao Prisma deve permanecer concentrado na camada de persistência utilizada pelos services.
+O acesso ao banco fica concentrado em **repositories**, utilizados pelos services.
 
 ---
 

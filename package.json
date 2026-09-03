@@ -1,0 +1,53 @@
+{
+  "name": "aula-marcada",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace @aula-marcada/backend",
+    "dev:frontend": "npm run dev --workspace @aula-marcada/frontend",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "build:backend": "npm run prisma:generate --workspace @aula-marcada/backend",
+    "build:frontend": "npm run build --workspace @aula-marcada/frontend",
+    "start:backend": "npm run start --workspace @aula-marcada/backend",
+    "test:api": "npm run test --workspace @aula-marcada/backend",
+    "test:e2e": "npm run test:e2e --workspace @aula-marcada/frontend",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.4",
+    "globals": "^17.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.67.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.9.1": true
+  }
+}

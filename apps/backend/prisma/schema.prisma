@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AttendanceStatus {
+  EMPTY
+  ATTENDED
+  ABSENT
+}
+
+enum ClassPeriod {
+  MORNING
+  AFTERNOON
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+}
+
+enum AllocationSource {
+  PAYMENT
+  ADVANCE_PIX
+  ADVANCE_CASH
+}
+
+model Student {
+  id                 String   @id @default(uuid())
+  name               String
+  guardianName       String   @map("guardian_name")
+  phone              String
+  hourlyRate         Decimal  @map("hourly_rate") @db.Decimal(10, 2)
+  advanceBalancePix  Decimal  @default(0) @map("advance_balance_pix") @db.Decimal(10, 2)
+  advanceBalanceCash Decimal  @default(0) @map("advance_balance_cash") @db.Decimal(10, 2)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  recurrences StudentRecurrence[]
+  classes     Class[]
+  payments    Payment[]
+
+  @@map("students")
+}
+
+model StudentRecurrence {
+  id        String   @id @default(uuid())
+  studentId String   @map("student_id")
+  weekday   Int
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, weekday])
+  @@map("student_recurrences")
+}
+
+model Class {
+  id                      String           @id @default(uuid())
+  studentId               String           @map("student_id")
+  date                    DateTime         @db.Date
+  period                  ClassPeriod
+  startTime               String           @map("start_time")
+  endTime                 String           @map("end_time")
+  durationMinutes         Int              @map("duration_minutes")
+  expectedAmount          Decimal          @map("expected_amount") @db.Decimal(10, 2)
+  attendance              AttendanceStatus @default(EMPTY)
+  isMakeupOnly            Boolean          @default(false) @map("is_makeup_only")
+  pendingMakeupMinutes    Int              @default(0) @map("pending_makeup_minutes")
+  content                 String?          @db.VarChar(500)
+  notes                   String?          @db.VarChar(500)
+  hasManualAmountOverride Boolean          @default(false) @map("has_manual_amount_override")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
+
+  student              Student           @relation(fields: [studentId], references: [id])
+  makeupLinksAsMakeup  MakeupLink[]      @relation("MakeupClass")
+  makeupLinksAsAbsence MakeupLink[]      @relation("AbsenceClass")
+  allocations          ClassAllocation[]
+
+  @@unique([date, period])
+  @@index([studentId])
+  @@map("classes")
+}
+
+model MakeupLink {
+  id             String   @id @default(uuid())
+  makeupClassId  String   @map("makeup_class_id")
+  absenceClassId String   @map("absence_class_id")
+  coveredMinutes Int      @map("covered_minutes")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  makeupClass  Class @relation("MakeupClass", fields: [makeupClassId], references: [id], onDelete: Cascade)
+  absenceClass Class @relation("AbsenceClass", fields: [absenceClassId], references: [id], onDelete: Cascade)
+
+  @@unique([makeupClassId, absenceClassId])
+  @@map("makeup_links")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  studentId String        @map("student_id")
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  paidAt    DateTime      @map("paid_at")
+  note      String?
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  student     Student           @relation(fields: [studentId], references: [id])
+  allocations ClassAllocation[]
+
+  @@map("payments")
+}
+
+model ClassAllocation {
+  id        String           @id @default(uuid())
+  classId   String           @map("class_id")
+  amount    Decimal          @db.Decimal(10, 2)
+  method    PaymentMethod
+  source    AllocationSource
+  paymentId String?          @map("payment_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  class   Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id])
+
+  @@index([classId])
+  @@map("class_allocations")
+}

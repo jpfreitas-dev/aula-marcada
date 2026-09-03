@@ -1,94 +1,94 @@
 ---
 name: Tutor System
 colors:
-  surface: "#fef7ff"
-  surface-dim: "#dfd7e5"
-  surface-bright: "#fef7ff"
-  surface-container-lowest: "#ffffff"
-  surface-container-low: "#f9f1ff"
-  surface-container: "#f3ebf9"
-  surface-container-high: "#ede5f3"
-  surface-container-highest: "#e8e0ee"
-  on-surface: "#1d1a24"
-  on-surface-variant: "#4a4455"
-  inverse-surface: "#332f39"
-  inverse-on-surface: "#f6eefc"
-  outline: "#7b7486"
-  outline-variant: "#ccc3d7"
-  surface-tint: "#7331df"
-  primary: "#5300b7"
-  on-primary: "#ffffff"
-  primary-container: "#6d28d9"
-  on-primary-container: "#dac5ff"
-  inverse-primary: "#d3bbff"
-  secondary: "#5e5c6e"
-  on-secondary: "#ffffff"
-  secondary-container: "#e4e0f5"
-  on-secondary-container: "#646274"
-  tertiary: "#6b3000"
-  on-tertiary: "#ffffff"
-  tertiary-container: "#8f4200"
-  on-tertiary-container: "#ffc19e"
-  error: "#ba1a1a"
-  on-error: "#ffffff"
-  error-container: "#ffdad6"
-  on-error-container: "#93000a"
-  primary-fixed: "#ebddff"
-  primary-fixed-dim: "#d3bbff"
-  on-primary-fixed: "#250059"
-  on-primary-fixed-variant: "#5b00c5"
-  secondary-fixed: "#e4e0f5"
-  secondary-fixed-dim: "#c7c4d8"
-  on-secondary-fixed: "#1b1a29"
-  on-secondary-fixed-variant: "#464555"
-  tertiary-fixed: "#ffdbc8"
-  tertiary-fixed-dim: "#ffb68b"
-  on-tertiary-fixed: "#321300"
-  on-tertiary-fixed-variant: "#743400"
-  background: "#fef7ff"
-  on-background: "#1d1a24"
-  surface-variant: "#e8e0ee"
-  bg-subtle: "#F7F5FC"
-  purple-900: "#4C1D95"
-  purple-400: "#A78BFA"
-  text-main: "#1F1B2E"
-  text-muted: "#6B6478"
-  status-success: "#10B981"
-  status-warning: "#F59E0B"
-  status-danger: "#EF4444"
-  status-info: "#3B82F6"
-  status-neutral: "#D4D0DC"
+  surface: '#fef7ff'
+  surface-dim: '#dfd7e5'
+  surface-bright: '#fef7ff'
+  surface-container-lowest: '#ffffff'
+  surface-container-low: '#f9f1ff'
+  surface-container: '#f3ebf9'
+  surface-container-high: '#ede5f3'
+  surface-container-highest: '#e8e0ee'
+  on-surface: '#1d1a24'
+  on-surface-variant: '#4a4455'
+  inverse-surface: '#332f39'
+  inverse-on-surface: '#f6eefc'
+  outline: '#7b7486'
+  outline-variant: '#ccc3d7'
+  surface-tint: '#7331df'
+  primary: '#5300b7'
+  on-primary: '#ffffff'
+  primary-container: '#6d28d9'
+  on-primary-container: '#dac5ff'
+  inverse-primary: '#d3bbff'
+  secondary: '#5e5c6e'
+  on-secondary: '#ffffff'
+  secondary-container: '#e4e0f5'
+  on-secondary-container: '#646274'
+  tertiary: '#6b3000'
+  on-tertiary: '#ffffff'
+  tertiary-container: '#8f4200'
+  on-tertiary-container: '#ffc19e'
+  error: '#ba1a1a'
+  on-error: '#ffffff'
+  error-container: '#ffdad6'
+  on-error-container: '#93000a'
+  primary-fixed: '#ebddff'
+  primary-fixed-dim: '#d3bbff'
+  on-primary-fixed: '#250059'
+  on-primary-fixed-variant: '#5b00c5'
+  secondary-fixed: '#e4e0f5'
+  secondary-fixed-dim: '#c7c4d8'
+  on-secondary-fixed: '#1b1a29'
+  on-secondary-fixed-variant: '#464555'
+  tertiary-fixed: '#ffdbc8'
+  tertiary-fixed-dim: '#ffb68b'
+  on-tertiary-fixed: '#321300'
+  on-tertiary-fixed-variant: '#743400'
+  background: '#fef7ff'
+  on-background: '#1d1a24'
+  surface-variant: '#e8e0ee'
+  bg-subtle: '#F7F5FC'
+  purple-900: '#4C1D95'
+  purple-400: '#A78BFA'
+  text-main: '#1F1B2E'
+  text-muted: '#6B6478'
+  status-success: '#10B981'
+  status-warning: '#F59E0B'
+  status-danger: '#EF4444'
+  status-info: '#3B82F6'
+  status-neutral: '#D4D0DC'
 typography:
   display-lg:
     fontFamily: Sora
     fontSize: 32px
-    fontWeight: "700"
-    lineHeight: "1.2"
+    fontWeight: '700'
+    lineHeight: '1.2'
   headline-md:
     fontFamily: Sora
     fontSize: 20px
-    fontWeight: "600"
-    lineHeight: "1.4"
+    fontWeight: '600'
+    lineHeight: '1.4'
   body-md:
     fontFamily: Inter
     fontSize: 16px
-    fontWeight: "400"
-    lineHeight: "1.5"
+    fontWeight: '400'
+    lineHeight: '1.5'
   body-sm:
     fontFamily: Inter
     fontSize: 14px
-    fontWeight: "400"
-    lineHeight: "1.5"
+    fontWeight: '400'
+    lineHeight: '1.5'
   label-strong:
     fontFamily: Inter
     fontSize: 14px
-    fontWeight: "500"
-    lineHeight: "1.2"
+    fontWeight: '500'
+    lineHeight: '1.2'
   data-mono:
     fontFamily: IBM Plex Mono
     fontSize: 14px
-    fontWeight: "500"
-    lineHeight: "1.0"
+    fontWeight: '500'
+    lineHeight: '1.0'
 rounded:
   sm: 0.25rem
   DEFAULT: 0.5rem
@@ -104,7 +104,7 @@ spacing:
   card-padding: 1.25rem
 ---
 
-# Design System — App de Aulas de Reforço
+# Design System — AULA MARCADA
 
 Tom visual: **branco e roxo**. Identidade limpa, confiável e organizada — como uma agenda pessoal bem cuidada, não um app corporativo genérico.
 
@@ -141,7 +141,7 @@ Tokens estruturados: [`design-system/tokens.json`](./design-system/tokens.json) 
 
 | Papel         | Fonte                   | Uso                                                                        |
 | ------------- | ----------------------- | -------------------------------------------------------------------------- |
-| Display       | **Sora** (600/700)      | Títulos, header "AULAS DE REFORÇO", nomes de tela                          |
+| Display       | **Sora** (600/700)      | Títulos, header "AULA MARCADA", nomes de tela                              |
 | Texto         | **Inter** (400/500)     | Corpo, labels, textos de card                                              |
 | Dados/números | **IBM Plex Mono** (500) | Valores em R$, horários — alinhamento numérico limpo nas telas financeiras |
 
