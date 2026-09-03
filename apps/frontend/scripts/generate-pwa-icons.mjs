@@ -9,19 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, '../public');
 
 const themeColor = '#4c1d95';
-const backgroundColor = '#fef7ff';
 
 function buildSvg(size, maskable = false) {
-  const padding = maskable ? Math.round(size * 0.1) : Math.round(size * 0.12);
-  const innerSize = size - padding * 2;
-  const radius = maskable
-    ? Math.round(size * 0.2)
-    : Math.round(innerSize * 0.22);
-  const fontSize = Math.round(size * 0.28);
+  const fontSize = Math.round(size * (maskable ? 0.26 : 0.32));
 
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" fill="${backgroundColor}" />
-  <rect x="${padding}" y="${padding}" width="${innerSize}" height="${innerSize}" rx="${radius}" fill="${themeColor}" />
+  <rect width="${size}" height="${size}" fill="${themeColor}" />
   <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="700">AM</text>
 </svg>`);
 }
