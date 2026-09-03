@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
+import { StudentProfileSkeleton } from '@/components/ui/skeleton';
 import { useProfilePageHeader } from '@/hooks/use-profile-page-header';
 import { listClassesByStudent } from '@/services/class-service';
 import {
@@ -137,9 +138,7 @@ export function StudentProfilePage() {
   }
 
   if (loading) {
-    return (
-      <p className="text-sm text-text-muted">Carregando perfil do aluno...</p>
-    );
+    return <StudentProfileSkeleton />;
   }
 
   if (error && !student) {
