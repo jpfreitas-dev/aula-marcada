@@ -8,6 +8,7 @@ type SegmentedToggleProps<T extends string> = {
   onChange: (value: T) => void;
   options: SegmentedToggleOption<T>[];
   className?: string;
+  fullWidth?: boolean;
 };
 
 export function SegmentedToggle<T extends string>({
@@ -15,11 +16,12 @@ export function SegmentedToggle<T extends string>({
   onChange,
   options,
   className = '',
+  fullWidth = false,
 }: SegmentedToggleProps<T>) {
   return (
     <div
-      className={`mx-auto flex rounded-full bg-purple-100 p-1 ${className}`}
-      style={{ width: `${options.length * 4.5}rem` }}
+      className={`mx-auto flex rounded-full bg-purple-100 p-1 ${fullWidth ? 'w-full' : ''} ${className}`}
+      style={fullWidth ? undefined : { width: `${options.length * 4.5}rem` }}
     >
       {options.map((option) => (
         <button

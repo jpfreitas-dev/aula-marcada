@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { SegmentedToggle } from '@/components/ui/segmented-toggle';
 import { usePwaInstall } from '@/hooks/use-pwa-install';
+import { useThemePreference } from '@/hooks/use-theme-preference';
 
 function InstallCardIcon({ name }: { name: string }) {
   return (
@@ -91,7 +93,7 @@ function InstallAppCard() {
 
             {!canInstall && !isIos ? (
               <p className="mt-4 rounded-md bg-bg-subtle px-3 py-2.5 text-sm text-text-muted">
-                Se o botão não aparecer, abra o menu do navegador (⋮) e escolha{' '}
+                Abra o menu do navegador (⋮) e escolha{' '}
                 <span className="font-medium text-text-main">
                   Instalar aplicativo
                 </span>
@@ -121,6 +123,43 @@ function InstallAppCard() {
   );
 }
 
+const themeOptions = [
+  { value: 'light' as const, label: 'Modo claro' },
+  { value: 'dark' as const, label: 'Modo escuro' },
+];
+
+function ThemeCard() {
+  const { theme, setTheme } = useThemePreference();
+
+  return (
+    <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
+      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+        <InstallCardIcon name="contrast" />
+        <div className="flex w-full min-w-0 flex-1 flex-col">
+          <h3 className="font-display text-base font-semibold text-purple-900">
+            Aparência
+          </h3>
+          <p className="mt-1 text-sm text-text-muted">
+            Escolha entre modo claro ou escuro.
+          </p>
+          <SegmentedToggle
+            value={theme}
+            onChange={setTheme}
+            options={themeOptions}
+            fullWidth
+            className="mt-4 max-w-xs sm:self-start"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function MorePage() {
-  return <InstallAppCard />;
+  return (
+    <div className="flex flex-col gap-stack-md">
+      <InstallAppCard />
+      <ThemeCard />
+    </div>
+  );
 }

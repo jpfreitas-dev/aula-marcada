@@ -1,3 +1,9 @@
+import {
+  getEffectiveTheme,
+  getThemePreference,
+  subscribeThemePreference,
+} from './theme-preference-store';
+
 const THEME_COLORS = {
   light: {
     themeColor: '#4c1d95',
@@ -8,12 +14,6 @@ const THEME_COLORS = {
     appleStatusBarStyle: 'black-translucent',
   },
 } as const;
-
-function getColorScheme(): keyof typeof THEME_COLORS {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-}
 
 function setMetaContent(name: string, content: string) {
   let meta = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
@@ -28,7 +28,7 @@ function setMetaContent(name: string, content: string) {
 }
 
 function applyThemeSync() {
-  const scheme = getColorScheme();
+  const scheme = getEffectiveTheme();
   const { themeColor, appleStatusBarStyle } = THEME_COLORS[scheme];
 
   document.documentElement.style.colorScheme = scheme;
@@ -42,7 +42,12 @@ export function initThemeSync() {
   }
 
   applyThemeSync();
+  subscribeThemePreference(applyThemeSync);
 
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  mediaQuery.addEventListener('change', applyThemeSync);
+  mediaQuery.addEventListener('change', () => {
+    if (getThemePreference() === null) {
+      applyThemeSync();
+    }
+  });
 }
