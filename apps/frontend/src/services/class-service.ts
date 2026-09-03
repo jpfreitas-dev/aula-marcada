@@ -18,26 +18,40 @@ export {
   isLockedRepostaAbsence,
 } from '@/utils/class-session';
 
-export async function listClassesByDate(date: Date): Promise<ClassSession[]> {
+export async function listClassesByDate(
+  date: Date,
+  signal?: AbortSignal,
+): Promise<ClassSession[]> {
   try {
     const response = await api.get<ClassSession[]>('/classes', {
       params: { date: toDateKey(date) },
+      signal,
     });
     return response.data;
   } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
+
     throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
   }
 }
 
 export async function listClassesByWeek(
   weekStart: Date,
+  signal?: AbortSignal,
 ): Promise<ClassSession[]> {
   try {
     const response = await api.get<ClassSession[]>('/classes/week', {
       params: { start: toDateKey(weekStart) },
+      signal,
     });
     return response.data;
   } catch (error) {
+    if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
+
     throw toApiRequestError(error, 'Não foi possível carregar as aulas.');
   }
 }

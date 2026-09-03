@@ -25,11 +25,10 @@ export function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     void listStudents(listFilter).then(setStudents);
-  }, [listFilter, refreshKey]);
+  }, [listFilter]);
 
   const filteredStudents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -167,7 +166,13 @@ export function StudentsPage() {
       <CreateStudentModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onSaved={() => setRefreshKey((current) => current + 1)}
+        onSaved={(student) => {
+          setStudents((current) =>
+            [student, ...current].sort((left, right) =>
+              left.name.localeCompare(right.name, 'pt-BR'),
+            ),
+          );
+        }}
       />
     </div>
   );
