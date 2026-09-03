@@ -3,14 +3,16 @@ import { useState } from 'react';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { Modal } from '@/components/ui/modal';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
+import { useAuth } from '@/context/auth-context';
 import { usePwaInstall } from '@/hooks/use-pwa-install';
 import { useThemePreference } from '@/hooks/use-theme-preference';
 
-function InstallCardIcon({ name }: { name: string }) {
+function SettingIcon({ name }: { name: string }) {
   return (
-    <span className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary sm:mx-0">
-      <Icon name={name} className="text-2xl" />
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
+      <Icon name={name} className="text-xl" />
     </span>
   );
 }
@@ -27,7 +29,7 @@ function IosInstallSheet({
       <ol className="list-decimal space-y-3 pl-5 text-sm text-text-main">
         <li>Toque no botão Compartilhar na barra inferior do Safari.</li>
         <li>Role a lista e escolha Adicionar à Tela de Início.</li>
-        <li>Confirme o nome AULA MARCADA e toque em Adicionar.</li>
+        <li>Confirme o nome Aula Marcada e toque em Adicionar.</li>
       </ol>
     </BottomSheet>
   );
@@ -40,19 +42,11 @@ function InstallAppCard() {
 
   if (isInstalled) {
     return (
-      <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
-        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-          <InstallCardIcon name="mobile_check" />
-          <div className="min-w-0 flex-1">
-            <h3 className="font-display text-base font-semibold text-purple-900">
-              App instalado
-            </h3>
-            <p className="mt-1 text-sm text-text-muted">
-              O AULA MARCADA já está disponível na sua tela inicial.
-            </p>
-          </div>
-        </div>
-      </section>
+      <SettingRow icon="mobile_check" title="App instalado">
+        <p className="text-sm text-text-muted">
+          O Aula Marcada já está disponível na sua tela inicial.
+        </p>
+      </SettingRow>
     );
   }
 
@@ -68,53 +62,49 @@ function InstallAppCard() {
 
   return (
     <>
-      <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
-        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-          <InstallCardIcon name="install_mobile" />
-          <div className="flex w-full min-w-0 flex-1 flex-col">
-            <h3 className="font-display text-base font-semibold text-purple-900">
+      <SettingRow icon="install_mobile" title="Instalar aplicativo">
+        <p className="text-sm text-text-muted">
+          Use na tela inicial como app, sem barra do navegador.
+        </p>
+
+        {canInstall ? (
+          <Button
+            type="button"
+            size="md"
+            className="mt-3 w-full sm:w-auto"
+            disabled={installing}
+            onClick={() => void handleInstall()}
+          >
+            {installing ? 'Instalando...' : 'Instalar'}
+          </Button>
+        ) : null}
+
+        {!canInstall ? (
+          <p className="mt-3 rounded-md bg-bg-subtle px-3 py-2.5 text-sm text-text-muted">
+            Para instalar, abra o menu ou as opções do seu navegador e selecione{' '}
+            <span className="font-medium text-text-main">
               Instalar aplicativo
-            </h3>
-            <p className="mt-1 text-sm text-text-muted">
-              Use na tela inicial como app, sem barra do navegador.
-            </p>
+            </span>{' '}
+            ou{' '}
+            <span className="font-medium text-text-main">
+              Adicionar à Tela de Início
+            </span>
+            .
+          </p>
+        ) : null}
 
-            {canInstall ? (
-              <Button
-                type="button"
-                size="md"
-                className="mt-4 w-full sm:w-auto sm:self-start"
-                disabled={installing}
-                onClick={() => void handleInstall()}
-              >
-                {installing ? 'Instalando...' : 'Instalar'}
-              </Button>
-            ) : null}
-
-            {!canInstall && !isIos ? (
-              <p className="mt-4 rounded-md bg-bg-subtle px-3 py-2.5 text-sm text-text-muted">
-                Abra o menu do navegador (⋮) e escolha{' '}
-                <span className="font-medium text-text-main">
-                  Instalar aplicativo
-                </span>
-                .
-              </p>
-            ) : null}
-
-            {isIos ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                className="mt-4 w-full sm:w-auto sm:self-start"
-                onClick={() => setIosSheetOpen(true)}
-              >
-                Como instalar no iPhone
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </section>
+        {isIos ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            className="mt-3 w-full sm:w-auto"
+            onClick={() => setIosSheetOpen(true)}
+          >
+            Como instalar no iPhone
+          </Button>
+        ) : null}
+      </SettingRow>
       <IosInstallSheet
         open={iosSheetOpen}
         onClose={() => setIosSheetOpen(false)}
@@ -132,34 +122,104 @@ function ThemeCard() {
   const { theme, setTheme } = useThemePreference();
 
   return (
-    <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
-      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-        <InstallCardIcon name="contrast" />
-        <div className="flex w-full min-w-0 flex-1 flex-col">
-          <h3 className="font-display text-base font-semibold text-purple-900">
-            Aparência
-          </h3>
-          <p className="mt-1 text-sm text-text-muted">
-            Escolha entre modo claro ou escuro.
-          </p>
-          <SegmentedToggle
-            value={theme}
-            onChange={setTheme}
-            options={themeOptions}
-            fullWidth
-            className="mt-4 max-w-xs sm:self-start"
-          />
+    <SettingRow icon="contrast" title="Aparência">
+      <p className="text-sm text-text-muted">
+        Escolha entre modo claro ou escuro.
+      </p>
+      <SegmentedToggle
+        value={theme}
+        onChange={setTheme}
+        options={themeOptions}
+        fullWidth
+        className="mt-3 sm:max-w-xs sm:self-start"
+      />
+    </SettingRow>
+  );
+}
+
+function LogoutCard() {
+  const { logout } = useAuth();
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+
+  return (
+    <>
+      <SettingRow icon="logout" title="Sair da conta">
+        <p className="text-sm text-text-muted">
+          Você será redirecionado para a tela de login.
+        </p>
+        <Button
+          variant="danger"
+          size="md"
+          className="mt-3 w-full sm:w-auto"
+          onClick={() => setLogoutModalOpen(true)}
+        >
+          Sair
+        </Button>
+      </SettingRow>
+
+      <Modal
+        open={logoutModalOpen}
+        title="Sair da conta"
+        onClose={() => setLogoutModalOpen(false)}
+        onSubmit={logout}
+      >
+        <p className="text-sm text-text-muted">Tem certeza que deseja sair?</p>
+        <div className="mt-4 flex gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setLogoutModalOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" variant="danger" className="flex-1">
+            Sair
+          </Button>
         </div>
+      </Modal>
+    </>
+  );
+}
+
+function SettingRow({
+  icon,
+  title,
+  children,
+}: {
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-4">
+        <SettingIcon name={icon} />
+        <h3 className="font-display text-sm font-semibold text-text-main">
+          {title}
+        </h3>
       </div>
-    </section>
+      <div className="flex w-full flex-col gap-3">{children}</div>
+    </div>
   );
 }
 
 export function MorePage() {
   return (
-    <div className="flex flex-col gap-stack-md">
-      <InstallAppCard />
-      <ThemeCard />
+    <div className="mx-auto w-full max-w-2xl">
+      <section className="rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
+        <div className="flex flex-col divide-y divide-outline-variant/30">
+          <div className="pb-5">
+            <InstallAppCard />
+          </div>
+          <div className="py-5">
+            <ThemeCard />
+          </div>
+          <div className="pt-5">
+            <LogoutCard />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

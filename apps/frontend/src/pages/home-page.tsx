@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ClassCard } from '@/components/classes/class-card';
 import { EmptySlot } from '@/components/ui/empty-slot';
-import { Icon } from '@/components/ui/icon';
 import { PeriodNavigator } from '@/components/ui/period-navigator';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
+import {
+  AgendaDaySkeleton,
+  AgendaWeekSkeleton,
+} from '@/components/ui/skeleton';
 import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { useClassDetail } from '@/context/class-detail-context';
 import { useScheduleModal } from '@/context/schedule-modal-context';
@@ -153,9 +156,11 @@ export function HomePage() {
       />
 
       {isLoading && displaySessions.length === 0 ? (
-        <div className="flex items-center justify-center py-12 text-text-muted">
-          <Icon name="progress_activity" className="animate-spin text-3xl" />
-        </div>
+        view === 'day' ? (
+          <AgendaDaySkeleton />
+        ) : (
+          <AgendaWeekSkeleton />
+        )
       ) : (
         <div
           className={`transition-opacity ${isStale ? 'opacity-60' : 'opacity-100'}`}

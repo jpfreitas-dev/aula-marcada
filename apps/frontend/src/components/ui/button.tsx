@@ -1,33 +1,38 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md' | 'lg';
+import { tv, type VariantProps } from 'tailwind-variants';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  children: ReactNode;
-};
+export const buttonVariants = tv({
+  base: 'inline-flex items-center justify-center rounded-md font-medium transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
+  variants: {
+    variant: {
+      primary: 'bg-primary-container text-white hover:bg-primary',
+      secondary:
+        'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed',
+      ghost: 'bg-transparent text-primary hover:bg-primary-fixed/40',
+      danger: 'bg-status-danger text-white hover:bg-red-600',
+    },
+    size: {
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-5 py-3 text-base',
+    },
+  },
+  defaultVariants: {
+    variant: 'primary',
+    size: 'lg',
+  },
+});
 
-const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    'bg-primary-container text-white hover:bg-primary disabled:opacity-50',
-  secondary:
-    'bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed',
-  ghost: 'bg-transparent text-primary hover:bg-primary-fixed/40',
-  danger: 'bg-status-danger text-white hover:bg-red-600 disabled:opacity-50',
-};
-
-const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-3 text-base',
-};
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants> & {
+    children: ReactNode;
+  };
 
 export function Button({
-  variant = 'primary',
-  size = 'lg',
-  className = '',
+  variant,
+  size,
+  className,
   children,
   type = 'button',
   ...props
@@ -35,7 +40,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center rounded-md font-medium transition-colors cursor-pointer disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     >
       {children}

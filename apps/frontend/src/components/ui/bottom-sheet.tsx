@@ -48,11 +48,11 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="bottom-sheet-title"
-        className={`relative z-10 flex w-full max-w-lg flex-col rounded-t-2xl bg-surface shadow-2xl md:max-w-xl md:rounded-2xl ${
+        className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-b-0 border-outline-variant/30 bg-surface shadow-xl md:max-w-xl md:rounded-2xl md:border-b ${
           tall ? 'h-[85dvh]' : 'max-h-[95dvh] md:max-h-[90dvh]'
         }`}
       >
-        <div className="relative z-20 shrink-0 bg-surface">
+        <div className="relative shrink-0 bg-surface">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1.5 w-12 rounded-full bg-outline-variant/50" />
           </div>
@@ -71,7 +71,7 @@ export function BottomSheet({
             />
           </div>
         </div>
-        <div className="scroll-area relative z-10 min-h-0 flex-1 overflow-x-visible px-margin-main py-4">
+        <div className="scroll-area relative min-h-0 flex-1 overflow-x-visible px-margin-main py-4">
           {children}
         </div>
         {footer ? (

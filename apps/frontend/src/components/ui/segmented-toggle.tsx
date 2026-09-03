@@ -1,7 +1,32 @@
+import { tv } from 'tailwind-variants';
+
 export type SegmentedToggleOption<T extends string> = {
   value: T;
   label: string;
 };
+
+const toggleRoot = tv({
+  base: 'flex select-none rounded-full bg-purple-100 p-1',
+  variants: {
+    fullWidth: {
+      true: 'w-full',
+      false: 'mx-auto',
+    },
+  },
+  defaultVariants: {
+    fullWidth: false,
+  },
+});
+
+const toggleButton = tv({
+  base: 'flex-1 rounded-full py-1.5 text-xs transition-all',
+  variants: {
+    active: {
+      true: 'bg-surface font-bold text-text-main shadow-sm',
+      false: 'font-medium text-on-surface-variant',
+    },
+  },
+});
 
 type SegmentedToggleProps<T extends string> = {
   value: T;
@@ -15,12 +40,12 @@ export function SegmentedToggle<T extends string>({
   value,
   onChange,
   options,
-  className = '',
+  className,
   fullWidth = false,
 }: SegmentedToggleProps<T>) {
   return (
     <div
-      className={`mx-auto flex select-none rounded-full bg-purple-100 p-1 ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={toggleRoot({ fullWidth, className })}
       style={fullWidth ? undefined : { width: `${options.length * 4.5}rem` }}
     >
       {options.map((option) => (
@@ -28,11 +53,7 @@ export function SegmentedToggle<T extends string>({
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
-          className={`flex-1 rounded-full py-1.5 text-xs transition-all ${
-            value === option.value
-              ? 'bg-surface font-bold text-text-main shadow-sm'
-              : 'font-medium text-on-surface-variant'
-          }`}
+          className={toggleButton({ active: value === option.value })}
         >
           {option.label}
         </button>
