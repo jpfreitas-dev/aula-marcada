@@ -4,6 +4,18 @@ import { clearStoredAuth, getStoredToken } from '@/services/auth-service';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333';
 
+export function isNetworkFailure(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+    return true;
+  }
+
+  return !error.response && Boolean(error.request);
+}
+
 export const api = axios.create({
   baseURL,
 });
@@ -32,6 +44,16 @@ api.interceptors.response.use(
       }
     }
 
+    if (isNetworkFailure(error)) {
+      error.isOffline = true;
+    }
+
     return Promise.reject(error);
   },
 );
+
+declare module 'axios' {
+  export interface AxiosError {
+    isOffline?: boolean;
+  }
+}

@@ -2,15 +2,20 @@ import { Outlet } from 'react-router-dom';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { BottomNav } from '@/components/layout/bottom-nav';
+import { OfflineBanner } from '@/components/layout/offline-banner';
 import { PageHeaderProvider } from '@/context/page-header-context';
 import { AgendaRefreshProvider } from '@/context/agenda-refresh-context';
 import { ClassDetailProvider } from '@/context/class-detail-context';
 import { ScheduleModalProvider } from '@/context/schedule-modal-context';
+import { useConnectivity } from '@/hooks/use-connectivity';
 
 function ShellLayout() {
+  const { isOnline } = useConnectivity();
+
   return (
     <div className="h-dvh bg-surface-dim/40 md:px-6 md:py-4">
-      <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden bg-bg-subtle md:rounded-xl md:shadow-sm">
+      <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden bg-bg-subtle pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:rounded-xl md:shadow-sm">
+        {!isOnline ? <OfflineBanner /> : null}
         <AppHeader />
         <main className="scroll-area flex-1 px-margin-main py-stack-md pb-24 md:px-6 lg:px-8">
           <Outlet />

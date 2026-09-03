@@ -24,7 +24,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="sticky bottom-0 z-40 flex h-20 items-center justify-around border-t border-surface-variant bg-surface px-2 pb-2 shadow-lg"
+      className="sticky bottom-0 z-40 flex h-20 items-center justify-around border-t border-surface-variant bg-surface px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg"
       aria-label="Navegação principal"
     >
       {navItems.slice(0, 2).map((item) => {
