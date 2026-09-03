@@ -2,6 +2,7 @@ import { classAllocationRepository } from '@/repositories/class-allocation-repos
 import { financialRepository } from '@/repositories/financial-repository';
 import {
   dateKeyFromClass,
+  isLockedRepostaAbsenceClass,
   mapAttendanceFromPrisma,
 } from '@/services/classes/class-session-helpers';
 import type {
@@ -26,6 +27,7 @@ type ClassMetrics = {
   studentName: string;
   dateKey: string;
   attendance: 'empty' | 'attended' | 'absent';
+  countsAsAbsenceImpact: boolean;
   expectedAmount: number;
   paidAmount: number;
   paidPix: number;
@@ -70,12 +72,16 @@ class GetFinancialDashboard {
         advanceAppliedCash: 0,
       };
 
+      const attendance = mapAttendanceFromPrisma(classRecord.attendance);
+
       return {
         id: classRecord.id,
         studentId: classRecord.studentId,
         studentName: classRecord.student.name,
         dateKey: dateKeyFromClass(classRecord),
-        attendance: mapAttendanceFromPrisma(classRecord.attendance),
+        attendance,
+        countsAsAbsenceImpact:
+          attendance === 'absent' && !isLockedRepostaAbsenceClass(classRecord),
         expectedAmount: decimalToNumber(classRecord.expectedAmount),
         paidAmount: roundMoney(breakdown.paidPix + breakdown.paidCash),
         paidPix: breakdown.paidPix,
@@ -118,7 +124,7 @@ class GetFinancialDashboard {
         }
       }
 
-      if (session.attendance === 'absent') {
+      if (session.countsAsAbsenceImpact) {
         absenceImpact = roundMoney(absenceImpact + session.expectedAmount);
 
         const currentAbsence = studentAbsenceTotals.get(session.studentId) ?? {

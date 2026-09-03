@@ -493,7 +493,7 @@ O card deve continuar registrando presença **Não compareceu** no histórico (a
 
 Campos de pagamento, conteúdo e observações **não** aparecem nesse estado.
 
-**Impacto financeiro:** a falta entra em “Impacto de faltas” pelo valor esperado que a aula teria; a quitação financeira dessa aula original não é exigida (não há cobrança de presença). O tempo continua pendente de reposição até ser coberto.
+**Impacto financeiro:** enquanto a falta **não** estiver totalmente reposta, ela entra em “Impacto de faltas” pelo valor esperado que a aula teria. Quando o tempo pendente chega a zero (**Reposta**), a falta **sai** do impacto — como se tivesse sido recuperada. A quitação financeira dessa aula original não é exigida (não há cobrança de presença). O tempo continua pendente de reposição até ser coberto.
 
 ---
 
@@ -917,7 +917,7 @@ Todos os indicadores, o gráfico e a lista de pendências respeitam esses filtro
 
 Soma dos **valores esperados** das aulas **agendadas no período** cuja presença **não** é “Não compareceu”.  
 Inclui aulas vazias e aulas comparecidas (o que “deveria entrar” pelo calendário ativo).  
-Faltas (Não compareceu) **não** entram no Esperado; entram no Impacto de faltas.
+Faltas (Não compareceu) **não** entram no Esperado. Faltas **ainda não totalmente repostas** entram no Impacto de faltas.
 
 ### Realizado
 
@@ -934,9 +934,9 @@ Essa decomposição **não** substitui os indicadores principais; é detalhe do 
 
 ### Impacto de faltas
 
-Soma dos valores esperados das aulas com presença **Não compareceu** no período (o que deixou de ser recebido por falta).
+Soma dos valores esperados das aulas com presença **Não compareceu** no período que **ainda têm tempo de reposição pendente** (o que deixou de ser recebido por falta não recuperada).
 
-Faltas já totalmente repostas **continuam** contando no impacto da data da falta (a receita da reposição entra no Realizado/Esperado da **aula de reposição**, em outra data).
+Faltas já totalmente **Repostas** **não** entram no impacto. A receita da reposição entra no Realizado/Esperado da **aula de reposição**, na data dela. Se a reposição também for marcada como falta, essa aula de reposição passa a contar no impacto até ser coberta.
 
 ---
 
@@ -1070,7 +1070,7 @@ Essas funcionalidades serão definidas posteriormente.
 | Geração de recorrência               | Horizonte de 3 meses (seg–sex)                                                   |
 | Dias de operação                     | Segunda a sexta em agenda, recorrência e agendamento; fim de semana excluído     |
 | Semana na UI                         | Segunda a sexta (visão Semana e Dia)                                             |
-| Esperado vs Impacto                  | Faltas saem do Esperado e vão para Impacto                                       |
+| Esperado vs Impacto                  | Faltas saem do Esperado; só faltas ainda não repostas entram no Impacto          |
 | Pendentes no financeiro              | Só Compareceu com valor em aberto; toque → perfil                                |
 | Limite de texto                      | 500 caracteres em conteúdo e observações                                         |
 | Frequência                           | Y = aulas já ocorridas do período, excluindo faltas Reposta                      |
