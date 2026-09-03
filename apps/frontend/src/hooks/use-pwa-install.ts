@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+
+import {
+  canPromptInstall,
+  clearDeferredInstallPrompt,
+  getDeferredInstallPrompt,
+  markInstallPromptConsumed,
+  subscribePwaInstall,
+} from '@/lib/pwa-install-store';
 
 function isStandaloneMode(): boolean {
   if (typeof window === 'undefined') {
@@ -23,58 +31,61 @@ function isIosSafari(): boolean {
   return isIos && isSafari;
 }
 
+function getInstallSnapshot() {
+  return canPromptInstall();
+}
+
+function getInstallServerSnapshot() {
+  return false;
+}
+
 export function usePwaInstall() {
-  const [installEvent, setInstallEvent] =
-    useState<BeforeInstallPromptEvent | null>(null);
+  const canInstall = useSyncExternalStore(
+    subscribePwaInstall,
+    getInstallSnapshot,
+    getInstallServerSnapshot,
+  );
   const [isInstalled, setIsInstalled] = useState(isStandaloneMode);
   const [isIos] = useState(isIosSafari);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setInstallEvent(event as BeforeInstallPromptEvent);
-    };
-
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     const handleDisplayModeChange = () => {
       setIsInstalled(isStandaloneMode());
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleDisplayModeChange);
     mediaQuery.addEventListener('change', handleDisplayModeChange);
 
     return () => {
-      window.removeEventListener(
-        'beforeinstallprompt',
-        handleBeforeInstallPrompt,
-      );
       window.removeEventListener('appinstalled', handleDisplayModeChange);
       mediaQuery.removeEventListener('change', handleDisplayModeChange);
     };
   }, []);
 
-  const canInstall = Boolean(installEvent) && !isInstalled;
-
   const promptInstall = useCallback(async () => {
-    if (!installEvent) {
+    const installEvent = getDeferredInstallPrompt();
+
+    if (!installEvent || !canPromptInstall()) {
       return false;
     }
 
     await installEvent.prompt();
     const choice = await installEvent.userChoice;
 
+    markInstallPromptConsumed();
+
     if (choice.outcome === 'accepted') {
-      setInstallEvent(null);
+      clearDeferredInstallPrompt();
       setIsInstalled(true);
       return true;
     }
 
     return false;
-  }, [installEvent]);
+  }, []);
 
   return {
-    canInstall,
+    canInstall: canInstall && !isInstalled,
     isInstalled,
     isIos,
     promptInstall,

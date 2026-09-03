@@ -25,7 +25,15 @@ test.beforeEach(async ({ page }) => {
   await loginThroughUi(page);
 });
 
-test('more page shows install app card when install prompt is available', async ({
+test('more page always shows install app card', async ({ page }) => {
+  await page.getByRole('link', { name: 'Mais' }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Instalar aplicativo' }),
+  ).toBeVisible();
+});
+
+test('more page shows install button when install prompt is available', async ({
   page,
 }) => {
   await page.getByRole('link', { name: 'Mais' }).click();
@@ -35,4 +43,12 @@ test('more page shows install app card when install prompt is available', async 
     page.getByRole('heading', { name: 'Instalar aplicativo' }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Instalar' })).toBeVisible();
+});
+
+test('more page shows browser fallback when install prompt is unavailable', async ({
+  page,
+}) => {
+  await page.getByRole('link', { name: 'Mais' }).click();
+
+  await expect(page.getByText(/menu do navegador/i)).toBeVisible();
 });

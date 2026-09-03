@@ -13,7 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       devOptions: {
-        enabled: false,
+        enabled: true,
       },
       includeAssets: [
         'favicon.svg',

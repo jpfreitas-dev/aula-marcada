@@ -2,7 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
+import { initPwaInstallCapture } from './lib/pwa-install-store';
 import './index.css';
+
+initPwaInstallCapture();
 
 const rootElement = document.getElementById('root');
 

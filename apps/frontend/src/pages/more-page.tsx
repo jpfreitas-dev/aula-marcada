@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { usePwaInstall } from '@/hooks/use-pwa-install';
 
+function InstallCardIcon({ name }: { name: string }) {
+  return (
+    <span className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary sm:mx-0">
+      <Icon name={name} className="text-2xl" />
+    </span>
+  );
+}
+
 function IosInstallSheet({
   open,
   onClose,
@@ -31,11 +39,9 @@ function InstallAppCard() {
   if (isInstalled) {
     return (
       <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
-            <Icon name="mobile_check" className="text-xl" />
-          </span>
-          <div>
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+          <InstallCardIcon name="mobile_check" />
+          <div className="min-w-0 flex-1">
             <h3 className="font-display text-base font-semibold text-purple-900">
               App instalado
             </h3>
@@ -46,10 +52,6 @@ function InstallAppCard() {
         </div>
       </section>
     );
-  }
-
-  if (!canInstall && !isIos) {
-    return null;
   }
 
   const handleInstall = async () => {
@@ -65,36 +67,48 @@ function InstallAppCard() {
   return (
     <>
       <section className="rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
-            <Icon name="install_mobile" className="text-xl" />
-          </span>
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+          <InstallCardIcon name="install_mobile" />
+          <div className="flex w-full min-w-0 flex-1 flex-col">
             <h3 className="font-display text-base font-semibold text-purple-900">
               Instalar aplicativo
             </h3>
             <p className="mt-1 text-sm text-text-muted">
               Use na tela inicial como app, sem barra do navegador.
             </p>
+
             {canInstall ? (
               <Button
                 type="button"
                 size="md"
-                className="mt-4"
+                className="mt-4 w-full sm:w-auto sm:self-start"
                 disabled={installing}
                 onClick={() => void handleInstall()}
               >
                 {installing ? 'Instalando...' : 'Instalar'}
               </Button>
             ) : null}
+
+            {!canInstall && !isIos ? (
+              <p className="mt-4 rounded-md bg-bg-subtle px-3 py-2.5 text-sm text-text-muted">
+                Se o botão não aparecer, abra o menu do navegador (⋮) e escolha{' '}
+                <span className="font-medium text-text-main">
+                  Instalar aplicativo
+                </span>
+                .
+              </p>
+            ) : null}
+
             {isIos ? (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="md"
+                className="mt-4 w-full sm:w-auto sm:self-start"
                 onClick={() => setIosSheetOpen(true)}
-                className="mt-3 block text-sm font-medium text-primary"
               >
                 Como instalar no iPhone
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
