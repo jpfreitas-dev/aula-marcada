@@ -219,9 +219,13 @@ export function ClassDetailModal({
     (willApplyAdvance || remainingDue === 0);
   const partiallyCoveredByAdvance =
     advanceAllocation > 0 && advanceAllocation < session.expectedAmount;
-  /** Max receivable now in this modal — extras only via student profile. */
+  /** Max new money in this modal — extras only via student profile. */
   const maxPaymentAmount = remainingDue;
-  const settledWithoutMoreDue = isAlreadyAttended && remainingDue === 0;
+  const settledWithSingleMethod =
+    isAlreadyAttended &&
+    remainingDue === 0 &&
+    !fullyCoveredByAdvance &&
+    Boolean(resolveDirectPaymentMethod(session) ?? session.paymentMethod);
 
   const directPaymentNow =
     paymentMethod && paidAmount > 0
@@ -229,7 +233,7 @@ export function ClassDetailModal({
       : 0;
 
   const effectivePaidPreview = (() => {
-    if (settledWithoutMoreDue) {
+    if (settledWithSingleMethod) {
       return session.paidAmount;
     }
     if (willApplyAdvance) {
@@ -256,7 +260,7 @@ export function ClassDetailModal({
     (fullyCoveredByAdvance ||
       paymentSelection === 'pix' ||
       paymentSelection === 'cash');
-  const inputDisabled = fullyCoveredByAdvance || settledWithoutMoreDue;
+  const inputDisabled = fullyCoveredByAdvance || remainingDue === 0;
 
   const toggleAttendance = (next: Exclude<AttendanceStatus, 'empty'>) => {
     if (attendanceLocked) {
@@ -315,7 +319,7 @@ export function ClassDetailModal({
     } else if (attendance === 'attended' && !willApplyAdvance) {
       setPaidAmountInput(
         formatCurrencyInput(
-          settledWithoutMoreDue
+          remainingDue === 0
             ? getDirectPaidAmount(session)
             : Math.max(session.expectedAmount - session.paidAmount, 0),
         ),
@@ -357,11 +361,16 @@ export function ClassDetailModal({
         return;
       }
 
+      const correctingMethod =
+        settledWithSingleMethod && Boolean(paymentMethod);
+
       await saveClassDetail(session.id, {
         attendance,
         paidAmount: newMoney,
         paymentMethod:
-          attendance === 'attended' && newMoney > 0 ? paymentMethod : undefined,
+          attendance === 'attended' && (newMoney > 0 || correctingMethod)
+            ? paymentMethod
+            : undefined,
         content: attendance === 'attended' ? content : undefined,
         notes: attendance === 'attended' ? notes : undefined,
       });

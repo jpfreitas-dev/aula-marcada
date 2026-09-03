@@ -375,6 +375,8 @@ No registro feito **pelo modal da aula**, o professor escolhe **uma** forma por 
 
 Se precisar registrar mais de uma forma para a mesma aula (pagamento misto), deve fazer **registros sucessivos** (ex.: primeiro R$ 30 Pix, depois R$ 20 Dinheiro), ou quitar pelo perfil com pagamentos separados. Cada registro preserva sua forma.
 
+Se a aula já estiver **quitada** com uma única forma e o professor tiver escolhido a forma errada, pode trocar **Pix** por **Dinheiro** (ou o contrário) no mesmo modal, sem desmarcar a presença. Isso só corrige a forma; não apaga nem substitui registros sucessivos já feitos.
+
 A forma de pagamento **não** substitui o estado principal da aula. O badge continua sendo Pago / Falta R$ X / Pendente; quando quitada com uma única forma, pode complementar com **Pago · Pix** ou **Pago · Dinheiro**.
 
 ## Consumo de saldo adiantado

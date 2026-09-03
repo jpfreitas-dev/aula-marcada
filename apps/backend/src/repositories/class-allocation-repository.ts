@@ -142,6 +142,71 @@ class ClassAllocationRepository {
     return paymentIds;
   }
 
+  async updateExclusivePaymentMethod(
+    classId: string,
+    method: import('../../generated/prisma/client').PaymentMethod,
+    db?: DatabaseClient,
+  ): Promise<boolean> {
+    const allocations = await client(db).classAllocation.findMany({
+      where: { classId, source: AllocationSource.PAYMENT },
+      select: { paymentId: true, method: true },
+    });
+
+    const exclusivePaymentIds: string[] = [];
+
+    for (const paymentId of [
+      ...new Set(
+        allocations
+          .map((item) => item.paymentId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ]) {
+      const otherAllocations = await client(db).classAllocation.count({
+        where: {
+          paymentId,
+          classId: { not: classId },
+        },
+      });
+
+      if (otherAllocations === 0) {
+        exclusivePaymentIds.push(paymentId);
+      }
+    }
+
+    if (exclusivePaymentIds.length === 0) {
+      return false;
+    }
+
+    const exclusiveMethods = new Set(
+      allocations
+        .filter(
+          (item) =>
+            item.paymentId !== null &&
+            exclusivePaymentIds.includes(item.paymentId),
+        )
+        .map((item) => item.method),
+    );
+
+    if (exclusiveMethods.size !== 1) {
+      return false;
+    }
+
+    await client(db).payment.updateMany({
+      where: { id: { in: exclusivePaymentIds } },
+      data: { method },
+    });
+    await client(db).classAllocation.updateMany({
+      where: {
+        classId,
+        paymentId: { in: exclusivePaymentIds },
+        source: AllocationSource.PAYMENT,
+      },
+      data: { method },
+    });
+
+    return true;
+  }
+
   async create(
     data: {
       classId: string;

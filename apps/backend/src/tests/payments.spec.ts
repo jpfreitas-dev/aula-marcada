@@ -120,6 +120,33 @@ describe('payments API', () => {
     expect(response.body.paymentMethod).toBeUndefined();
   });
 
+  it('corrects payment method on a fully paid class without unmarking attendance', async () => {
+    const student = await createActiveStudent();
+    const created = await createFutureClass(student.id, getFutureClassDate(16));
+
+    await authRequest.patch(`/classes/${created.id}/attendance`).send({
+      attendance: 'attended',
+      paidAmount: 60,
+      paymentMethod: 'pix',
+    });
+
+    const response = await authRequest
+      .patch(`/classes/${created.id}/attendance`)
+      .send({
+        attendance: 'attended',
+        paidAmount: 0,
+        paymentMethod: 'cash',
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.paidAmount).toBe(60);
+    expect(response.body.paidPix).toBe(0);
+    expect(response.body.paidCash).toBe(60);
+    expect(response.body.financialStatus).toBe('settled');
+    expect(response.body.paymentMethod).toBe('cash');
+    expect(response.body.attendance).toBe('attended');
+  });
+
   it('rejects payment above remaining due on class modal', async () => {
     const student = await createActiveStudent();
     const created = await createFutureClass(student.id, getFutureClassDate(14));

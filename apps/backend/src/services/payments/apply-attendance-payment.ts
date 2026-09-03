@@ -87,7 +87,7 @@ export async function applyAttendancePayment(
       Math.max(expectedAmount - consumption.usedTotal, 0),
     );
     methodPaid = Math.min(methodPaid, maxNewMoney);
-  } else if (methodPaid > 0) {
+  } else {
     const breakdownMap =
       await classAllocationRepository.getPaymentBreakdownByClassIds(
         [classRecord.id],
@@ -100,8 +100,20 @@ export async function applyAttendancePayment(
       advanceAppliedCash: 0,
     };
     const currentPaid = roundMoney(breakdown.paidPix + breakdown.paidCash);
-    const maxNewMoney = roundMoney(Math.max(expectedAmount - currentPaid, 0));
-    methodPaid = Math.min(methodPaid, maxNewMoney);
+    const remainingDue = roundMoney(Math.max(expectedAmount - currentPaid, 0));
+
+    if (remainingDue > 0) {
+      methodPaid = Math.min(methodPaid, remainingDue);
+    } else {
+      if (paymentMethod) {
+        await classAllocationRepository.updateExclusivePaymentMethod(
+          classRecord.id,
+          mapPaymentMethodToPrisma(paymentMethod),
+          db,
+        );
+      }
+      methodPaid = 0;
+    }
   }
 
   if (methodPaid > 0 && paymentMethod) {
