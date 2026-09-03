@@ -31,11 +31,17 @@ export function FinancialComparisonChart({
     <div className="rounded-xl bg-white p-4 shadow-sm md:p-6">
       <div className="mb-4 flex justify-center gap-4 md:mb-6">
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-surface-variant" />
+          <div
+            className="h-3 w-3 shrink-0 rounded-full border border-outline-variant"
+            style={{ backgroundColor: EXPECTED_COLOR }}
+          />
           <span className="text-xs text-text-muted">Esperado</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-primary-container" />
+          <div
+            className="h-3 w-3 shrink-0 rounded-full border border-primary-container"
+            style={{ backgroundColor: REALIZED_COLOR }}
+          />
           <span className="text-xs text-text-muted">Realizado</span>
         </div>
       </div>

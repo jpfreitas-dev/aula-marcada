@@ -17,7 +17,7 @@ export function ClassCard({ session, onClick }: ClassCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="relative flex w-full min-w-0 cursor-pointer items-start gap-3 overflow-hidden rounded-lg border border-outline-variant/30 bg-white p-3 text-left shadow-sm transition-transform active:scale-[0.99] md:gap-4 md:p-card-padding"
+      className="relative flex min-h-22 w-full min-w-0 cursor-pointer items-start gap-3 overflow-hidden rounded-lg border border-outline-variant/30 bg-white p-3 text-left shadow-sm transition-transform active:scale-[0.99] md:min-h-24 md:gap-4 md:p-card-padding"
     >
       <div
         className={`absolute bottom-0 left-0 top-0 w-1 ${stripeColor}`}

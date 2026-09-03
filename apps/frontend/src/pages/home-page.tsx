@@ -140,7 +140,7 @@ export function HomePage() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+        <div className="flex flex-col gap-3">
           {weekDays.map((day) => {
             const dayKey = toDateKey(day);
             const daySessions = sessions.filter(
@@ -155,15 +155,7 @@ export function HomePage() {
               >
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
                   <h3 className="text-sm font-semibold text-purple-900">
-                    <span className="md:hidden">
-                      {getWeekdayLabel(day)}, {formatShortDate(day)}
-                    </span>
-                    <span className="hidden md:inline">
-                      {getWeekdayLabel(day)}
-                      <span className="mt-0.5 block text-xs font-medium text-text-muted">
-                        {formatShortDate(day)}
-                      </span>
-                    </span>
+                    {getWeekdayLabel(day)}, {formatShortDate(day)}
                   </h3>
                   {isToday ? (
                     <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-xs font-semibold text-primary">

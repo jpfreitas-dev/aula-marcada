@@ -16,7 +16,7 @@ export function PeriodNavigator({
 }: PeriodNavigatorProps) {
   return (
     <div
-      className={`flex min-h-12 items-center justify-between gap-0.5 rounded-md border border-outline-variant/30 bg-surface px-1.5 py-2 shadow-sm ${className}`}
+      className={`flex h-12 items-center justify-between gap-0.5 rounded-md border border-outline-variant/30 bg-surface px-1.5 shadow-sm ${className}`}
     >
       <button
         type="button"

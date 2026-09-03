@@ -23,9 +23,13 @@ export function FinancialPieChart({ slices }: FinancialPieChartProps) {
   if (total <= 0) {
     return (
       <div
-        className={`${chartFrameClassName} flex items-center justify-center rounded-full bg-surface-variant/40 text-xs text-text-muted`}
+        className={`${chartFrameClassName} relative flex items-center justify-center`}
       >
-        Sem dados
+        <div
+          className="aspect-square h-[78%] rounded-full border-2 border-outline-variant bg-surface-variant/30"
+          aria-hidden="true"
+        />
+        <span className="absolute text-xs text-text-muted">Sem dados</span>
       </div>
     );
   }

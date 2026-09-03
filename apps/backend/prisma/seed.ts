@@ -30,6 +30,8 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const TODAY_KEY = toDateKey(new Date());
+const PAST_WEEKS = 18;
+const DURATION_MINUTES = 60;
 
 type HistoryKind =
   | 'paid_pix'
@@ -37,7 +39,6 @@ type HistoryKind =
   | 'partial'
   | 'absent_pending'
   | 'absent_reposta'
-  | 'advance'
   | 'attended_pending';
 
 type SeedRecurrence = {
@@ -53,77 +54,67 @@ type SeedStudent = {
   hourlyRate: number;
   advanceBalancePix?: number;
   advanceBalanceCash?: number;
-  recurrence: SeedRecurrence;
-  history: HistoryKind;
-  content?: string;
+  recurrences: SeedRecurrence[];
+  contents: string[];
 };
 
 /**
- * Demo roster: Mon–Fri morning + afternoon coverage for the current week agenda.
- * History states are applied to each student's most recent past occurrence.
+ * Five students at R$45 / R$50, eight weekly slots filled, two mornings
+ * left free for make-up lessons. History spans several months.
  */
 const STUDENTS: SeedStudent[] = [
   {
     name: 'Ana Souza',
     guardianName: 'Márcia Souza',
     phone: '11999001001',
-    hourlyRate: 60,
-    recurrence: { weekday: 1, startTime: '08:00', endTime: '09:00' },
-    history: 'paid_pix',
-    content: 'Revisão de frações',
+    hourlyRate: 50,
+    recurrences: [
+      { weekday: 1, startTime: '08:00', endTime: '09:00' },
+      { weekday: 3, startTime: '14:00', endTime: '15:00' },
+    ],
+    contents: ['Revisão de frações', 'Equações do 1º grau'],
   },
   {
     name: 'Bruno Lima',
     guardianName: 'Paulo Lima',
     phone: '11999001002',
-    hourlyRate: 55,
-    recurrence: { weekday: 2, startTime: '14:00', endTime: '15:00' },
-    history: 'paid_cash',
-    content: 'Equações do 1º grau',
+    hourlyRate: 45,
+    advanceBalancePix: 45,
+    recurrences: [
+      { weekday: 2, startTime: '14:00', endTime: '15:00' },
+      { weekday: 5, startTime: '08:00', endTime: '09:00' },
+    ],
+    contents: ['Geometria plana', 'Potenciação'],
   },
   {
     name: 'Carla Mendes',
     guardianName: 'Rita Mendes',
     phone: '11999001003',
     hourlyRate: 50,
-    recurrence: { weekday: 3, startTime: '09:00', endTime: '10:00' },
-    history: 'partial',
-    content: 'Leitura e interpretação',
+    recurrences: [
+      { weekday: 3, startTime: '08:00', endTime: '09:00' },
+      { weekday: 5, startTime: '15:00', endTime: '16:00' },
+    ],
+    contents: ['Leitura e interpretação', 'Produção de texto'],
   },
   {
     name: 'Diego Rocha',
     guardianName: 'Sérgio Rocha',
     phone: '11999001004',
-    hourlyRate: 58,
-    recurrence: { weekday: 4, startTime: '15:00', endTime: '16:00' },
-    history: 'absent_pending',
+    hourlyRate: 45,
+    recurrences: [
+      { weekday: 4, startTime: '15:00', endTime: '16:00' },
+      { weekday: 1, startTime: '16:00', endTime: '17:00' },
+    ],
+    contents: ['Tabuada e operações', 'Problemas de lógica'],
   },
   {
     name: 'Fernanda Alves',
     guardianName: 'Cláudia Alves',
     phone: '11999001005',
-    hourlyRate: 62,
-    recurrence: { weekday: 5, startTime: '10:00', endTime: '11:00' },
-    history: 'absent_reposta',
-  },
-  {
-    name: 'Gustavo Nunes',
-    guardianName: 'Helena Nunes',
-    phone: '11999001006',
-    hourlyRate: 60,
-    advanceBalancePix: 60,
-    recurrence: { weekday: 1, startTime: '16:00', endTime: '17:00' },
-    history: 'advance',
-    content: 'Geometria plana',
-  },
-  {
-    name: 'Helena Dias',
-    guardianName: 'Roberto Dias',
-    phone: '11999001007',
-    hourlyRate: 55,
-    recurrence: { weekday: 5, startTime: '18:00', endTime: '19:00' },
-    history: 'attended_pending',
-    content: 'Produção de texto',
+    hourlyRate: 50,
+    recurrences: [{ weekday: 4, startTime: '18:00', endTime: '19:00' }],
+    contents: ['Gramática e acentuação'],
   },
 ];
 
@@ -131,13 +122,75 @@ function slotKey(dateKey: string, period: 'morning' | 'afternoon'): string {
   return `${dateKey}-${period}`;
 }
 
-function getRecentPastOccurrence(
+function historyKindFor(name: string, index: number): HistoryKind {
+  if (name === 'Fernanda Alves') {
+    const cycle = [
+      'absent_pending',
+      'absent_reposta',
+      'paid_pix',
+      'absent_pending',
+      'partial',
+      'attended_pending',
+    ] as const;
+    return cycle[index % cycle.length];
+  }
+
+  if (name === 'Ana Souza') {
+    const cycle = [
+      'paid_pix',
+      'paid_cash',
+      'paid_pix',
+      'partial',
+      'paid_pix',
+      'paid_cash',
+    ] as const;
+    return cycle[index % cycle.length];
+  }
+
+  if (name === 'Diego Rocha') {
+    const cycle = [
+      'attended_pending',
+      'paid_pix',
+      'partial',
+      'attended_pending',
+      'paid_cash',
+      'absent_pending',
+    ] as const;
+    return cycle[index % cycle.length];
+  }
+
+  if (name === 'Carla Mendes') {
+    const cycle = [
+      'paid_cash',
+      'partial',
+      'paid_pix',
+      'absent_reposta',
+      'paid_cash',
+      'attended_pending',
+    ] as const;
+    return cycle[index % cycle.length];
+  }
+
+  const cycle = [
+    'paid_pix',
+    'paid_cash',
+    'absent_reposta',
+    'partial',
+    'paid_pix',
+    'attended_pending',
+  ] as const;
+  return cycle[index % cycle.length];
+}
+
+function getPastOccurrenceDates(
   weekday: number,
   startTime: string,
-  durationMinutes = 60,
+  weeksBack = PAST_WEEKS,
   reference = new Date(),
-): string {
-  for (let dayOffset = 0; dayOffset < 21; dayOffset++) {
+): string[] {
+  const dates: string[] = [];
+
+  for (let dayOffset = 0; dayOffset < weeksBack * 7 + 6; dayOffset++) {
     const candidate = new Date(reference);
     candidate.setHours(0, 0, 0, 0);
     candidate.setDate(candidate.getDate() - dayOffset);
@@ -149,14 +202,14 @@ function getRecentPastOccurrence(
 
     const endedAt =
       getClassStartTimestampFromKey(dateKey, startTime) +
-      durationMinutes * 60_000;
+      DURATION_MINUTES * 60_000;
 
     if (endedAt <= reference.getTime()) {
-      return dateKey;
+      dates.push(dateKey);
     }
   }
 
-  throw new Error(`No past occurrence found for weekday ${weekday}`);
+  return dates.reverse();
 }
 
 function getPastFreeSlot(
@@ -164,25 +217,22 @@ function getPastFreeSlot(
   startTime: string,
   occupied: Set<string>,
   reference = new Date(),
-): { dateKey: string; period: 'morning' | 'afternoon' } {
+): { dateKey: string; period: 'morning' | 'afternoon' } | null {
   const period = periodFromStartTime(startTime);
 
-  for (let weekOffset = 0; weekOffset < 6; weekOffset++) {
-    const candidate = new Date(reference);
-    candidate.setHours(0, 0, 0, 0);
-    candidate.setDate(candidate.getDate() - weekOffset * 7);
-
-    const dateKey = getRecentPastOccurrence(weekday, startTime, 60, candidate);
+  for (const dateKey of getPastOccurrenceDates(
+    weekday,
+    startTime,
+    PAST_WEEKS,
+    reference,
+  ).reverse()) {
     const key = slotKey(dateKey, period);
-
     if (!occupied.has(key)) {
       return { dateKey, period };
     }
   }
 
-  throw new Error(
-    `No free past slot for weekday ${weekday} ${startTime} (${period})`,
-  );
+  return null;
 }
 
 async function allocateClass(
@@ -261,29 +311,25 @@ async function createHistoryClass(input: {
   });
 }
 
-async function seedStudentHistory(
-  student: SeedStudent,
-  studentId: string,
-  occupied: Set<string>,
-) {
-  const { recurrence, history } = student;
-  const durationMinutes = 60;
+async function seedOccurrence(input: {
+  student: SeedStudent;
+  studentId: string;
+  recurrence: SeedRecurrence;
+  dateKey: string;
+  history: HistoryKind;
+  content?: string;
+  occupied: Set<string>;
+}) {
+  const { student, studentId, recurrence, dateKey, history, occupied } = input;
   const expectedAmount = calculateExpectedAmount(
-    durationMinutes,
+    DURATION_MINUTES,
     student.hourlyRate,
-  );
-  const dateKey = getRecentPastOccurrence(
-    recurrence.weekday,
-    recurrence.startTime,
-    durationMinutes,
   );
   const periodLabel = periodFromStartTime(recurrence.startTime);
   const key = slotKey(dateKey, periodLabel);
 
   if (occupied.has(key)) {
-    throw new Error(
-      `Schedule conflict on ${key} while seeding ${student.name}`,
-    );
+    return;
   }
   occupied.add(key);
 
@@ -293,10 +339,10 @@ async function seedStudentHistory(
       dateKey,
       startTime: recurrence.startTime,
       endTime: recurrence.endTime,
-      durationMinutes,
+      durationMinutes: DURATION_MINUTES,
       expectedAmount,
       attendance: AttendanceStatus.ABSENT,
-      pendingMakeupMinutes: durationMinutes,
+      pendingMakeupMinutes: DURATION_MINUTES,
       notes: 'Falta com reposição pendente',
     });
     return;
@@ -308,23 +354,36 @@ async function seedStudentHistory(
       dateKey,
       startTime: recurrence.startTime,
       endTime: recurrence.endTime,
-      durationMinutes,
+      durationMinutes: DURATION_MINUTES,
       expectedAmount,
       attendance: AttendanceStatus.ABSENT,
       pendingMakeupMinutes: 0,
       notes: 'Falta já reposta',
     });
 
-    // Tuesday morning is free in the demo roster (Bruno is Tuesday afternoon).
-    const makeupSlot = getPastFreeSlot(2, '08:00', occupied);
+    const makeupSlot =
+      getPastFreeSlot(2, '08:00', occupied) ??
+      getPastFreeSlot(4, '08:00', occupied);
+
+    if (!makeupSlot) {
+      await prisma.class.update({
+        where: { id: absence.id },
+        data: {
+          pendingMakeupMinutes: DURATION_MINUTES,
+          notes: 'Falta com reposição pendente',
+        },
+      });
+      return;
+    }
+
     occupied.add(slotKey(makeupSlot.dateKey, makeupSlot.period));
 
     const makeup = await createHistoryClass({
       studentId,
       dateKey: makeupSlot.dateKey,
-      startTime: '08:00',
-      endTime: '09:00',
-      durationMinutes,
+      startTime: makeupSlot.period === 'morning' ? '08:00' : '14:00',
+      endTime: makeupSlot.period === 'morning' ? '09:00' : '15:00',
+      durationMinutes: DURATION_MINUTES,
       expectedAmount,
       attendance: AttendanceStatus.ATTENDED,
       isMakeupOnly: true,
@@ -335,7 +394,7 @@ async function seedStudentHistory(
       data: {
         makeupClassId: makeup.id,
         absenceClassId: absence.id,
-        coveredMinutes: durationMinutes,
+        coveredMinutes: DURATION_MINUTES,
       },
     });
 
@@ -354,10 +413,10 @@ async function seedStudentHistory(
     dateKey,
     startTime: recurrence.startTime,
     endTime: recurrence.endTime,
-    durationMinutes,
+    durationMinutes: DURATION_MINUTES,
     expectedAmount,
     attendance: AttendanceStatus.ATTENDED,
-    content: student.content,
+    content: input.content,
   });
 
   if (history === 'paid_pix') {
@@ -391,22 +450,7 @@ async function seedStudentHistory(
       PaymentMethod.PIX,
       dateKey,
     );
-    return;
   }
-
-  if (history === 'advance') {
-    // Class settled; leftover Pix advance remains on the student record.
-    await payClass(
-      studentId,
-      session.id,
-      expectedAmount,
-      PaymentMethod.PIX,
-      dateKey,
-    );
-    return;
-  }
-
-  // attended_pending: Compareceu with open balance (no allocation).
 }
 
 async function main() {
@@ -432,23 +476,43 @@ async function main() {
         advanceBalanceCash: studentData.advanceBalanceCash ?? 0,
         active: true,
         recurrences: {
-          create: [studentData.recurrence],
+          create: studentData.recurrences,
         },
       },
     });
 
     studentIds[studentData.name] = student.id;
 
-    await seedStudentHistory(studentData, student.id, occupiedSlots);
+    let occurrenceIndex = 0;
+    for (const recurrence of studentData.recurrences) {
+      const pastDates = getPastOccurrenceDates(
+        recurrence.weekday,
+        recurrence.startTime,
+      );
 
-    generatedRows.push(
-      ...buildGeneratedClassData(
-        student.id,
-        studentData.hourlyRate,
-        studentData.recurrence,
-        occupiedSlots,
-      ),
-    );
+      for (const dateKey of pastDates) {
+        await seedOccurrence({
+          student: studentData,
+          studentId: student.id,
+          recurrence,
+          dateKey,
+          history: historyKindFor(studentData.name, occurrenceIndex),
+          content:
+            studentData.contents[occurrenceIndex % studentData.contents.length],
+          occupied: occupiedSlots,
+        });
+        occurrenceIndex += 1;
+      }
+
+      generatedRows.push(
+        ...buildGeneratedClassData(
+          student.id,
+          studentData.hourlyRate,
+          recurrence,
+          occupiedSlots,
+        ),
+      );
+    }
   }
 
   if (generatedRows.length > 0) {
