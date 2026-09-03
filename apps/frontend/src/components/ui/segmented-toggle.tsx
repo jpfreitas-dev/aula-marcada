@@ -10,7 +10,7 @@ const toggleRoot = tv({
   variants: {
     fullWidth: {
       true: 'w-full',
-      false: '',
+      false: 'mx-auto',
     },
   },
   defaultVariants: {

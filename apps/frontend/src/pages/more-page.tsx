@@ -78,11 +78,15 @@ function InstallAppCard() {
           </Button>
         ) : null}
 
-        {!canInstall && !isIos ? (
+        {!canInstall ? (
           <p className="mt-3 rounded-md bg-bg-subtle px-3 py-2.5 text-sm text-text-muted">
-            Abra o menu do navegador (⋮) e escolha{' '}
+            Para instalar, abra o menu ou as opções do seu navegador e selecione{' '}
             <span className="font-medium text-text-main">
               Instalar aplicativo
+            </span>{' '}
+            ou{' '}
+            <span className="font-medium text-text-main">
+              Adicionar à Tela de Início
             </span>
             .
           </p>
@@ -126,7 +130,7 @@ function ThemeCard() {
         onChange={setTheme}
         options={themeOptions}
         fullWidth
-        className="mt-3 max-w-xs"
+        className="mt-3 sm:max-w-xs sm:self-start"
       />
     </SettingRow>
   );
@@ -162,14 +166,14 @@ function SettingRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-4">
-      <SettingIcon name={icon} />
-      <div className="min-w-0 flex-1">
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-4">
+        <SettingIcon name={icon} />
         <h3 className="font-display text-sm font-semibold text-text-main">
           {title}
         </h3>
-        {children}
       </div>
+      <div className="flex w-full flex-col gap-3">{children}</div>
     </div>
   );
 }
