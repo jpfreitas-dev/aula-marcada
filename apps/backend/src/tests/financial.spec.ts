@@ -1,3 +1,6 @@
+import { AttendanceStatus, ClassPeriod } from '../../generated/prisma/client';
+import { prisma } from './setup';
+import { dateFromDateKey } from '@/utils/workday';
 import { resolveFinancialPeriod } from '@/utils/financial-period';
 import {
   addWorkdays,
@@ -6,6 +9,7 @@ import {
   toDateKey,
 } from '@/utils/workday';
 import { authRequest } from './helpers/auth-request';
+import { getFutureClassDate, getPastClassDate } from './helpers/dates';
 
 function futureWeekDates() {
   const anchor = addWorkdays(new Date(), 10);
@@ -263,6 +267,61 @@ describe('financial API', () => {
         absenceValue: 80,
       },
     ]);
+  });
+
+  it('excludes fully made-up absences from impact and student absence stats', async () => {
+    const absenceDate = getPastClassDate(10);
+    const student = await createActiveStudent('Aluno Reposição');
+    const absence = await prisma.class.create({
+      data: {
+        studentId: student.id,
+        date: dateFromDateKey(absenceDate),
+        period: ClassPeriod.MORNING,
+        startTime: '08:00',
+        endTime: '09:00',
+        durationMinutes: 60,
+        expectedAmount: 60,
+        attendance: AttendanceStatus.ABSENT,
+        pendingMakeupMinutes: 60,
+      },
+    });
+
+    const beforeMakeup = await authRequest.get('/financial/dashboard').query({
+      granularity: 'week',
+      referenceDate: absenceDate,
+    });
+
+    expect(beforeMakeup.status).toBe(200);
+    expect(beforeMakeup.body.absenceImpact).toBe(60);
+    expect(beforeMakeup.body.studentAbsences).toEqual([
+      {
+        studentId: student.id,
+        studentName: student.name,
+        absenceValue: 60,
+      },
+    ]);
+
+    const makeupResponse = await authRequest.post('/classes').send({
+      studentId: student.id,
+      date: getFutureClassDate(15),
+      period: 'morning',
+      startTime: '08:00',
+      durationMinutes: 60,
+      expectedAmount: 60,
+      isMakeupOnly: true,
+      linkedAbsenceIds: [absence.id],
+    });
+
+    expect(makeupResponse.status).toBe(201);
+
+    const afterMakeup = await authRequest.get('/financial/dashboard').query({
+      granularity: 'week',
+      referenceDate: absenceDate,
+    });
+
+    expect(afterMakeup.status).toBe(200);
+    expect(afterMakeup.body.absenceImpact).toBe(0);
+    expect(afterMakeup.body.studentAbsences).toEqual([]);
   });
 
   it('rejects invalid query parameters', async () => {
