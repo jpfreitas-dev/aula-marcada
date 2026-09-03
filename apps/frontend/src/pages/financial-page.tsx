@@ -7,6 +7,7 @@ import { FinancialSummaryGrid } from '@/components/financial/financial-summary-g
 import { Icon } from '@/components/ui/icon';
 import { PeriodNavigator } from '@/components/ui/period-navigator';
 import { SegmentedToggle } from '@/components/ui/segmented-toggle';
+import { FinancialSkeleton } from '@/components/ui/skeleton';
 import { useAgendaRefresh } from '@/context/agenda-refresh-context';
 import { getFinancialDashboard } from '@/services/financial-service';
 import { listStudents } from '@/services/student-service';
@@ -139,11 +140,7 @@ export function FinancialPage() {
   const periodLabel = formatPeriodLabel(granularity, referenceDate);
 
   if (loading && !summary) {
-    return (
-      <p className="text-sm text-text-muted">
-        Carregando informações financeiras...
-      </p>
-    );
+    return <FinancialSkeleton />;
   }
 
   if (error && !summary) {
