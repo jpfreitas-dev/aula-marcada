@@ -28,7 +28,7 @@ export function FinancialComparisonChart({
   }, [points]);
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm md:p-6">
+    <div className="rounded-xl bg-surface p-4 shadow-sm md:p-6">
       <div className="mb-4 flex justify-center gap-4 md:mb-6">
         <div className="flex items-center gap-1.5">
           <div

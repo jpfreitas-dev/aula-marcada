@@ -182,7 +182,7 @@ export function FinancialPage() {
           <select
             value={studentFilter}
             onChange={(event) => setStudentFilter(event.target.value)}
-            className="h-12 w-full cursor-pointer appearance-none rounded-md border border-outline-variant/30 bg-surface py-0 pl-3 pr-10 text-sm font-medium leading-none text-text-main shadow-sm focus:ring-0"
+            className="h-12 w-full cursor-pointer appearance-none rounded-md border border-outline-variant/30 bg-surface py-0 pl-3 pr-10 text-sm font-medium leading-none text-text-main shadow-sm outline-none focus:outline-none focus:ring-0"
           >
             {studentOptions.map((option) => (
               <option key={option.id} value={option.id}>
@@ -223,7 +223,7 @@ export function FinancialPage() {
           absences={summary.studentAbsences}
         />
       ) : (
-        <p className="rounded-xl border border-outline-variant/20 bg-white p-4 text-sm text-text-muted shadow-sm">
+        <p className="rounded-xl border border-outline-variant/20 bg-surface p-4 text-sm text-text-muted shadow-sm">
           Selecione &quot;Todos os alunos&quot; para ver as estatísticas
           comparativas por aluno.
         </p>

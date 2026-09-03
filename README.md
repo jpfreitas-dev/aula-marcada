@@ -112,3 +112,21 @@ Depois do primeiro deploy:
 npm run test:api    # Vitest + PostgreSQL de teste
 npm run test:e2e    # Playwright (requer app rodando)
 ```
+
+## Instalar como app (PWA)
+
+No navegador compatível (Chrome/Edge no desktop ou Android):
+
+1. Faça login normalmente.
+2. Abra **Mais** na navegação inferior.
+3. Toque em **Instalar aplicativo** (ou **Instalar** no cartão).
+
+No **iPhone (Safari)**, a instalação é manual: **Compartilhar → Adicionar à Tela de Início**. A página **Mais** exibe o link **Como instalar no iPhone** com os passos.
+
+Após instalado, o app abre em tela cheia (`standalone`) com ícone **AULA MARCADA** na tela inicial.
+
+### Performance (notas)
+
+- A agenda mantém o conteúdo anterior com opacidade reduzida enquanto carrega outro dia/semana.
+- A API evita regenerar aulas recorrentes em listagens consecutivas (throttle de ~5 min no horizonte de 3 meses).
+- A lista de alunos atualiza localmente após cadastro, sem refetch completo imediato.

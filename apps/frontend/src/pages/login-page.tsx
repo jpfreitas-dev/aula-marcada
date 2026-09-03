@@ -40,8 +40,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-bg-subtle px-margin-main py-stack-md md:px-6">
-      <section className="w-full max-w-lg rounded-md border border-outline-variant/30 bg-white p-card-padding shadow-sm">
+    <div className="flex min-h-dvh items-center justify-center bg-bg-subtle px-margin-main py-stack-md pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] md:px-6">
+      <section className="w-full max-w-lg rounded-md border border-outline-variant/30 bg-surface p-card-padding shadow-sm">
         <h1 className="font-display text-headline-md font-semibold text-purple-900">
           Aula Marcada
         </h1>

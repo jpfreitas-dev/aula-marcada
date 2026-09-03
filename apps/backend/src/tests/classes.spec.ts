@@ -275,6 +275,53 @@ describe('classes API', () => {
     expect(generated.length).toBeGreaterThan(10);
   });
 
+  it('does not regenerate duplicate classes on consecutive week listings', async () => {
+    const created = await authRequest.post('/students').send({
+      name: 'Aluno Throttle',
+      guardianName: 'Responsável',
+      phone: '(11) 98888-1103',
+      hourlyRate: 60,
+      recurrences: [
+        {
+          weekday: 3,
+          startTime: '08:00',
+          endTime: '09:00',
+        },
+      ],
+    });
+
+    await prisma.class.deleteMany({ where: { studentId: created.body.id } });
+
+    const weekStart = getWeekStartKeyForDate(getFutureClassDate());
+
+    const firstStartedAt = Date.now();
+    const firstResponse = await authRequest.get(
+      `/classes/week?start=${weekStart}`,
+    );
+    const firstDurationMs = Date.now() - firstStartedAt;
+    expect(firstResponse.status).toBe(200);
+
+    const afterFirst = await prisma.class.findMany({
+      where: { studentId: created.body.id },
+    });
+    expect(afterFirst.length).toBeGreaterThan(10);
+
+    const secondStartedAt = Date.now();
+    const secondResponse = await authRequest.get(
+      `/classes/week?start=${weekStart}`,
+    );
+    const secondDurationMs = Date.now() - secondStartedAt;
+
+    expect(secondResponse.status).toBe(200);
+
+    const afterSecond = await prisma.class.findMany({
+      where: { studentId: created.body.id },
+    });
+
+    expect(afterSecond.length).toBe(afterFirst.length);
+    expect(secondDurationMs).toBeLessThanOrEqual(firstDurationMs);
+  });
+
   it('creates an ad-hoc class on a past weekday', async () => {
     const student = await createActiveStudent();
     const classDate = getPastClassDate();

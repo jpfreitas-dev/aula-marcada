@@ -20,11 +20,11 @@ export const studentConfigLabelClassName =
   'mb-1 ml-1 block text-sm text-text-muted';
 
 export const studentConfigFieldClassName =
-  'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-lg border border-outline-variant/40 bg-surface px-3 py-2.5 text-sm text-text-main shadow-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
 /** Recurrence row wrapper — no focus ring (focus lives on inner controls). */
 export const studentConfigRowClassName =
-  'w-full rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm text-text-main shadow-sm';
+  'w-full rounded-lg border border-outline-variant/40 bg-surface px-3 py-2.5 text-sm text-text-main shadow-sm';
 
 function createRecurrenceRow(
   defaultRow: Pick<

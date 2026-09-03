@@ -471,7 +471,7 @@ export function ClassDetailModal({
                 onClick={() => toggleAttendance('attended')}
                 className={`flex-1 rounded-md px-3 py-2 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                   attendance === 'attended'
-                    ? 'bg-emerald-100 font-semibold text-emerald-800 shadow-sm'
+                    ? 'bg-status-success-container font-semibold text-status-success shadow-sm'
                     : 'font-medium text-on-surface-variant'
                 }`}
               >
@@ -483,7 +483,7 @@ export function ClassDetailModal({
                 onClick={() => toggleAttendance('absent')}
                 className={`flex-1 rounded-md px-3 py-2 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                   attendance === 'absent'
-                    ? 'bg-red-100 font-semibold text-red-800 shadow-sm'
+                    ? 'bg-status-danger-container font-semibold text-status-danger shadow-sm'
                     : 'font-medium text-on-surface-variant'
                 }`}
               >
@@ -523,7 +523,7 @@ export function ClassDetailModal({
                         onClick={() => handleSelectPaymentMethod(method)}
                         className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
                           paymentSelection === method
-                            ? 'border-status-success/20 bg-emerald-100 text-emerald-800'
+                            ? 'border-status-success/30 bg-status-success-container text-status-success'
                             : 'border-outline-variant bg-surface text-on-surface-variant'
                         }`}
                       >
@@ -536,7 +536,7 @@ export function ClassDetailModal({
                         onClick={() => handleSelectPaymentMethod('unpaid')}
                         className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
                           paymentSelection === 'unpaid'
-                            ? 'border-status-warning/20 bg-amber-100 text-amber-800'
+                            ? 'border-status-warning/30 bg-status-warning-container text-status-warning'
                             : 'border-outline-variant bg-surface text-on-surface-variant'
                         }`}
                       >

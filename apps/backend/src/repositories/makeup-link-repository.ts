@@ -18,6 +18,29 @@ class MakeupLinkRepository {
     return links.map((link) => link.absenceClassId);
   }
 
+  async findAbsenceIdsByMakeupClassIds(
+    makeupClassIds: string[],
+    db?: DatabaseClient,
+  ): Promise<Map<string, string[]>> {
+    if (makeupClassIds.length === 0) {
+      return new Map();
+    }
+
+    const links = await client(db).makeupLink.findMany({
+      where: { makeupClassId: { in: makeupClassIds } },
+      select: { makeupClassId: true, absenceClassId: true },
+    });
+
+    const map = new Map<string, string[]>();
+    for (const link of links) {
+      const existing = map.get(link.makeupClassId) ?? [];
+      existing.push(link.absenceClassId);
+      map.set(link.makeupClassId, existing);
+    }
+
+    return map;
+  }
+
   async findByMakeupClassId(makeupClassId: string, db?: DatabaseClient) {
     return client(db).makeupLink.findMany({ where: { makeupClassId } });
   }

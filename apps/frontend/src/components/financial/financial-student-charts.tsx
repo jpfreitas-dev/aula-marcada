@@ -35,7 +35,7 @@ function ChartSection({
   const chartSlices = aggregateSlicesForPie(slices, { formatOthersLegend });
 
   return (
-    <section className="flex h-full flex-1 flex-col gap-3 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-sm md:p-5">
+    <section className="flex h-full flex-1 flex-col gap-3 rounded-xl border border-outline-variant/20 bg-surface p-4 shadow-sm md:p-5">
       <h3 className="font-display text-sm font-bold text-text-main">{title}</h3>
       <div className="flex w-full flex-col items-center gap-4 overflow-visible md:gap-5">
         <FinancialPieChart slices={chartSlices} />

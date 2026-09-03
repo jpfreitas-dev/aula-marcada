@@ -117,7 +117,7 @@ function ReceivePaymentForm({
         </p>
 
         {pending.amount > 0 ? (
-          <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-status-warning">
+          <p className="rounded-md bg-status-warning-container px-3 py-2 text-sm text-status-warning">
             Pendente: {formatCurrency(pending.amount)}. O valor quita as aulas
             mais antigas primeiro.
           </p>
@@ -146,7 +146,7 @@ function ReceivePaymentForm({
                 onClick={() => setPaymentMethod(option.value)}
                 className={`flex-1 rounded-full border px-4 py-2 text-sm font-medium ${
                   paymentMethod === option.value
-                    ? 'border-status-success/20 bg-emerald-100 text-emerald-800'
+                    ? 'border-status-success/30 bg-status-success-container text-status-success'
                     : 'border-outline-variant bg-surface text-on-surface-variant'
                 }`}
               >

@@ -11,12 +11,13 @@ import {
   type StudentPersonalFieldsValue,
 } from '@/components/students/student-personal-fields';
 import { createStudent } from '@/services/student-service';
+import type { Student } from '@/types';
 import { parseCurrencyInput } from '@/utils/class-value';
 
 type CreateStudentModalProps = {
   open: boolean;
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved?: (student: Student) => void;
 };
 
 export function CreateStudentModal({
@@ -42,7 +43,7 @@ function CreateStudentForm({
   onSaved,
 }: {
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved?: (student: Student) => void;
 }) {
   const [personal, setPersonal] = useState<StudentPersonalFieldsValue>({
     name: '',
@@ -59,12 +60,12 @@ function CreateStudentForm({
     setError(null);
 
     try {
-      await createStudent({
+      const createdStudent = await createStudent({
         ...personal,
         hourlyRate: parseCurrencyInput(hourlyRateInput),
         recurrences: toCreateRecurrenceInputs(recurrences),
       });
-      onSaved?.();
+      onSaved?.(createdStudent);
       onClose();
     } catch (saveError) {
       setError(
@@ -94,7 +95,7 @@ function CreateStudentForm({
         onClearError={() => setError(null)}
       />
 
-      <section className="rounded-xl border border-purple-100 bg-bg-subtle p-4">
+      <section className="rounded-xl border border-outline-variant/40 bg-bg-subtle p-4">
         <StudentRecurrenceConfigFields
           hourlyRateInput={hourlyRateInput}
           onHourlyRateChange={(value) => {

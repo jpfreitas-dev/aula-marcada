@@ -8,9 +8,7 @@ class ListStudents {
     search?: string,
   ): Promise<StudentResponse[]> {
     const students = await studentRepository.list(filter, search);
-    return Promise.all(
-      students.map((student) => buildStudentResponse.execute(student)),
-    );
+    return buildStudentResponse.executeMany(students);
   }
 }
 

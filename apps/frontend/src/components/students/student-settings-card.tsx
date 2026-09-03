@@ -15,7 +15,7 @@ export function StudentSettingsCard({
   onEdit,
 }: StudentSettingsCardProps) {
   return (
-    <section className="rounded-xl border border-outline-variant/30 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
           Valor e recorrência

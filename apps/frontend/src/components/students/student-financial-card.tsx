@@ -19,7 +19,7 @@ export function StudentFinancialCard({
   onReceivePayment,
 }: StudentFinancialCardProps) {
   return (
-    <section className="rounded-xl border border-outline-variant/30 bg-white p-4 shadow-sm">
+    <section className="rounded-xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
         Financeiro
       </h3>

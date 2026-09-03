@@ -25,7 +25,9 @@ test('bottom navigation routes between main screens', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Semana' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Mais' }).click();
-  await expect(page.getByRole('heading', { name: 'Mais' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Mais', exact: true }),
+  ).toBeVisible();
 
   await page.getByRole('link', { name: 'Início' }).click();
   await expect(page.getByRole('button', { name: 'Dia' })).toBeVisible();

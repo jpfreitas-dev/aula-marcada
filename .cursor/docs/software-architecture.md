@@ -666,6 +666,17 @@ Tipos compartilhados do frontend.
 
 Funções auxiliares puras.
 
+## 4.1.1 PWA (instalável)
+
+O frontend usa `vite-plugin-pwa` com service worker em produção (`registerType: 'autoUpdate'`; SW desabilitado em dev).
+
+- Manifest em `apps/frontend/vite.config.ts` (nome **AULA MARCADA**, `pt-BR`, `standalone`, cores do design system).
+- Ícones em `apps/frontend/public/` (`favicon`, `apple-touch-icon`, `pwa-192`, `pwa-512`, maskable).
+- Registro do SW em `main.tsx` via `virtual:pwa-register`.
+- Workbox: precache do build; runtime cache apenas para Google Fonts; **sem cache de API**.
+- CTA de instalação na página **Mais** (`usePwaInstall`: `beforeinstallprompt`, detecção de standalone/iOS).
+- Banner offline leve + `env(safe-area-inset-*)` no shell para modo standalone.
+
 ---
 
 # 4.2 Roteamento
